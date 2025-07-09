@@ -95,7 +95,7 @@ fun LoginForm(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
-            else CircularProgressIndicator(modifier = Modifier.size(16.dp))
+            else CircularProgressIndicator(modifier = Modifier.size(18.dp))
         }
     }
 }

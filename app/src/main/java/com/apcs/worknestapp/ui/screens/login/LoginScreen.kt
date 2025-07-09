@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -66,14 +67,12 @@ fun LoginScreen(
         Image(
             painter = painterResource(R.drawable.login_decor),
             contentDescription = null,
-            modifier = Modifier
-                .fillMaxHeight(0.5f)
-                .aspectRatio(1f)
+            modifier = Modifier.fillMaxHeight(0.4f)
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.5f)
+                .fillMaxHeight(0.6f)
                 .verticalScroll(scrollState)
                 .imePadding()
                 .padding(horizontal = 24.dp)
@@ -112,7 +111,7 @@ fun LoginScreen(
                 onFailure = {
                     focusManager.clearFocus()
                     snackbarHost.showSnackbar(
-                        message = "FAIL: Login failed",
+                        message = "Fail: Login failed",
                         withDismissAction = true,
                         duration = SnackbarDuration.Short
                     )
@@ -140,7 +139,7 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold,
                 )
             }
-
+            
             Spacer(modifier = Modifier.height(40.dp))
         }
     }

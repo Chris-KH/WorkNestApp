@@ -65,9 +65,7 @@ fun SignUpScreen(
         Image(
             painter = painterResource(R.drawable.signup_decor),
             contentDescription = null,
-            modifier = Modifier
-                .fillMaxHeight(0.3f)
-                .aspectRatio(1f)
+            modifier = Modifier.fillMaxHeight(0.3f)
         )
         Column(
             modifier = Modifier
@@ -111,7 +109,7 @@ fun SignUpScreen(
                 onFailure = { it ->
                     focusManager.clearFocus()
                     snackbarHost.showSnackbar(
-                        message = "FAIL: $it",
+                        message = "Fail: $it",
                         withDismissAction = true,
                         duration = SnackbarDuration.Short
                     )
