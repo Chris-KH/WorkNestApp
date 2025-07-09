@@ -1,0 +1,120 @@
+package com.apcs.worknestapp.auth
+
+import com.apcs.worknestapp.domain.logic.Validator
+import com.apcs.worknestapp.domain.models.UserProfile
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+
+class AuthRepositoryImpl @Inject constructor() : AuthRepository {
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
+
+    private val _user = MutableStateFlow<FirebaseUser?>(null)
+    override val user: StateFlow<FirebaseUser?> = _user
+
+    private val _profile = MutableStateFlow<UserProfile?>(null)
+    override val profile: StateFlow<UserProfile?> = _profile
+
+    private suspend fun getUserRemoteProfile(uid: String): UserProfile {
+        val snapshot = firestore.collection("users")
+            .document(uid)
+            .get()
+            .await()
+
+        if (!snapshot.exists()) throw Exception("Cannot load profile data")
+
+        return snapshot.toObject(UserProfile::class.java)
+            ?: throw Exception("Invalid profile data")
+    }
+
+    override suspend fun checkAuth() {
+        val currentUser = auth.currentUser
+        if (currentUser == null) throw Exception("Check auth fail")
+
+        val remoteProfile = getUserRemoteProfile(currentUser.uid)
+        _profile.value = remoteProfile
+        _user.value = currentUser
+    }
+
+    override suspend fun signUpWithEmailPassword(email: String, password: String, name: String) {
+        if (
+            !Validator.isValidEmail(email) ||
+            !Validator.isStrongPassword(password) ||
+            !Validator.isUserName(name)
+        ) throw Exception("Wrong email and password format")
+
+        val res = auth.createUserWithEmailAndPassword(email, password).await()
+        val authUser = res.user
+
+        if (authUser == null) throw Exception("Create user failed")
+        val newProfile = UserProfile(
+            docId = authUser.uid,
+            name = name,
+            email = email,
+        )
+        firestore.collection("users").document(authUser.uid).set(newProfile, SetOptions.merge())
+
+        _profile.value = newProfile
+        _user.value = authUser
+    }
+
+    override suspend fun login(email: String, password: String) {
+        val res = auth.signInWithEmailAndPassword(email, password).await()
+        val authUser = res.user
+
+        if (authUser == null) throw Exception("Login failed for some reason")
+
+        val remoteProfile = getUserRemoteProfile(authUser.uid)
+        _profile.value = remoteProfile
+        _user.value = authUser
+    }
+
+    override suspend fun updateUserName(name: String) {
+        val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
+        if (name.isBlank()) throw Exception("Name cannot be blank")
+
+        firestore.collection("users")
+            .document(uid)
+            .update("name", name.trim())
+            .await()
+
+        _profile.update { it?.copy(name = name.trim()) }
+    }
+
+    override suspend fun updateUserPhone(phone: String) {
+        val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
+        if (phone.isBlank()) throw Exception("Phone cannot be blank")
+
+        firestore.collection("users")
+            .document(uid)
+            .update("phone", phone.trim())
+            .await()
+
+        _profile.update { it?.copy(phone = phone.trim()) }
+    }
+
+    override suspend fun updateUserAddress(address: String) {
+        val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
+        if (address.isBlank()) throw Exception("Address cannot be blank")
+
+        firestore.collection("users")
+            .document(uid)
+            .update("address", address)
+            .await()
+
+        _profile.update { it?.copy(address = address) }
+    }
+
+    override suspend fun signOut() {
+        auth.signOut()
+        _profile.value = null
+        _user.value = null
+    }
+}
