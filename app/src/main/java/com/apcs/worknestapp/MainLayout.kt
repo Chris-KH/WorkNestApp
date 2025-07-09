@@ -13,18 +13,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.apcs.worknestapp.state.rememberNetworkState
 import com.apcs.worknestapp.ui.components.CustomSnackBar
+import com.apcs.worknestapp.ui.screens.Screen
 
 @Composable
 fun MainLayout(startDestination: String) {
     val isNetworkConnected by rememberNetworkState()
     val navController: NavHostController = rememberNavController()
     val snackbarHost = remember { SnackbarHostState() }
-//    val navBackStackEntry by navController.currentBackStackEntryAsState()
-//    val currentRoute = navBackStackEntry?.destination?.route
-//    val currentScreen = Screen.fromRoute(currentRoute)
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val currentScreen = Screen.fromRoute(currentRoute)
 
     LaunchedEffect(isNetworkConnected) {
         if (!isNetworkConnected) {
@@ -54,7 +56,7 @@ fun MainLayout(startDestination: String) {
         AppNavHost(
             navController = navController,
             snackbarHost = snackbarHost,
-            //startDestination = startDestination,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding),
         )
     }
