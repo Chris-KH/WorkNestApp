@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -33,14 +34,14 @@ fun NameInput(
         enabled = enabled,
         leadingIcon = {
             Icon(
-                painter = painterResource(R.drawable.fill_user),
+                painter = painterResource(R.drawable.outline_user),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
         },
         textStyle = TextStyle(
-            fontSize = 15.sp,
+            fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onBackground,
             fontFamily = Poppins,
             fontWeight = FontWeight.Medium
@@ -49,12 +50,18 @@ fun NameInput(
         label = {
             Text(
                 text = "Name",
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 fontFamily = Poppins,
                 fontWeight = FontWeight.Medium
             )
         },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            errorContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
+        ),
         modifier = modifier
             .fillMaxWidth()
             .height(64.dp)

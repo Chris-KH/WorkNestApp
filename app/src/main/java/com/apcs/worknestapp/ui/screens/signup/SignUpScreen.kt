@@ -1,17 +1,16 @@
-package com.apcs.worknestapp.ui.screens.login
+package com.apcs.worknestapp.ui.screens.signup
 
-import com.apcs.worknestapp.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
@@ -22,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -32,10 +30,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.screens.Screen
 
 @Composable
-fun LoginScreen(
+fun SignUpScreen(
     navController: NavHostController,
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -58,8 +57,9 @@ fun LoginScreen(
         contentAlignment = Alignment.TopCenter
     ) {
         Image(
-            painter = painterResource(R.drawable.login_decor),
+            painter = painterResource(R.drawable.signup_decor),
             contentDescription = null,
+            modifier = Modifier.fillMaxWidth(0.7f)
         )
         Column(
             modifier = Modifier
@@ -74,13 +74,13 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = "Login",
+                    text = "Register",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 44.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "Please Sign in to continue.",
+                    text = "Create a new account.",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
@@ -89,17 +89,17 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            LoginForm(
+            SignUpForm(
                 onSuccess = {
                     focusManager.clearFocus()
                     navController.navigate(Screen.Home.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onFailure = {
+                onFailure = { it ->
                     focusManager.clearFocus()
                     snackbarHost.showSnackbar(
-                        message = "FAIL: Login failed",
+                        message = "FAIL: $it",
                         withDismissAction = true,
                         duration = SnackbarDuration.Short
                     )
@@ -109,7 +109,7 @@ fun LoginScreen(
             TextButton(
                 onClick = {
                     navController.popBackStack()
-                    navController.navigate(Screen.SignUp.route)
+                    navController.navigate(Screen.Login.route)
                 },
                 modifier = Modifier,
             ) {
@@ -119,8 +119,8 @@ fun LoginScreen(
                             style = SpanStyle(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        ) { append("Don't have any account? ") }
-                        append("Sign Up")
+                        ) { append("Already have an account? ") }
+                        append("Login")
                     },
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.primary,

@@ -24,23 +24,21 @@ private val DarkColorScheme = darkColorScheme(
     onTertiary = Color(0xFFFFF8E1), // OK
     error = Color(0xFFCF6679), //OK
     onError = Color(0xFFFFFFFF), //OK
-    outline = Color(0xFFA6988A),
 )
 
 private val LightColorScheme = lightColorScheme(
     background = Color(0xFFFFFFFF), // OK
     onBackground = Color(0xFF000000), //OK
-    surface = Color(0xFFEEEEEE), //OK
+    surface = Color(0xFFEEEEF1), //OK
     onSurface = Color(0xFF000000), //OK
-    primary = Purple40, //TODO
-    onPrimary = Purple80, //TODO
+    primary = Color(0xFF143F6B), //TODO
+    onPrimary = Color(0xFFFFFFFF), //TODO
     secondary = Color(0xFF1B3B1B), //Ok
     onSecondary = Color(0xFFDFFFE2), //OK
     tertiary = Color(0xFFE3960E), //OK
     onTertiary = Color(0xFFFFF8E1), //OK
     error = Color(0xFFB00020), //OK
     onError = Color(0xFFFFFFFF), //OK
-    outline = Color(0xFFD9D0C2),
 )
 
 @Composable
