@@ -9,10 +9,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +47,7 @@ fun LoginScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
+    val scrollState = rememberScrollState()
 
     Box(
         modifier = modifier
@@ -60,13 +66,20 @@ fun LoginScreen(
         Image(
             painter = painterResource(R.drawable.login_decor),
             contentDescription = null,
+            modifier = Modifier
+                .fillMaxHeight(0.5f)
+                .aspectRatio(1f)
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(0.5f)
+                .verticalScroll(scrollState)
+                .imePadding()
                 .padding(horizontal = 24.dp)
                 .align(alignment = Alignment.BottomCenter),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom,
         ) {
             Column(
                 modifier = Modifier

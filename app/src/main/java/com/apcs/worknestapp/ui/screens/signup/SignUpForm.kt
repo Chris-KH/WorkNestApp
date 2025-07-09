@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,7 +44,6 @@ fun SignUpForm(
 ) {
     val authViewModel = LocalAuthViewModel.current
     val coroutineScope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -93,7 +93,7 @@ fun SignUpForm(
 
     Column(
         modifier = modifier
-            .verticalScroll(scrollState)
+            //.verticalScroll(scrollState)
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
