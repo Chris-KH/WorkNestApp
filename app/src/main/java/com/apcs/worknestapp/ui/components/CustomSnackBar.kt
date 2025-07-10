@@ -1,10 +1,12 @@
 package com.apcs.worknestapp.ui.components
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import kotlin.text.contains
 
 enum class SnackbarType {
@@ -53,6 +55,8 @@ fun CustomSnackBar(data: SnackbarData) {
         snackbarData = data,
         containerColor = background,
         contentColor = contentColor,
-        actionColor = actionColor
+        actionColor = actionColor,
+        dismissActionContentColor = contentColor,
+        shape = RoundedCornerShape(25)
     )
 }

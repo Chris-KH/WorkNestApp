@@ -22,7 +22,7 @@ private val DarkColorScheme = darkColorScheme(
     onSecondary = Color(0xFFDFFFE2), //OK
     tertiary = Color(0xFFF9A825), //OK
     onTertiary = Color(0xFFFFF8E1), // OK
-    error = Color(0xFFCF6679), //OK
+    error = Color(0xFFAA3D3D), //OK
     onError = Color(0xFFFFFFFF), //OK
 )
 

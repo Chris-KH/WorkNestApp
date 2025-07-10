@@ -84,7 +84,7 @@ fun LoginScreen(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "Please Sign in to continue.",
+                    text = "Sign in to continue.",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,

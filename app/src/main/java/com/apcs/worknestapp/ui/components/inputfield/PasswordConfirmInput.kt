@@ -80,7 +80,7 @@ fun PasswordConfirmInput(
         onValueChange = onValueChange,
         label = {
             Text(
-                text = "Password confirm",
+                text = "Confirm",
                 fontSize = 14.sp,
                 fontFamily = Poppins,
                 fontWeight = FontWeight.Medium
