@@ -55,7 +55,6 @@ fun LoginForm(
             },
             enabled = !isLoading,
         )
-        Spacer(modifier = Modifier.height(8.dp))
         PasswordInput(
             value = password,
             onValueChange = {
@@ -92,7 +91,7 @@ fun LoginForm(
                 Text(
                     "Login",
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 14.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             else CircularProgressIndicator(modifier = Modifier.size(18.dp))

@@ -55,7 +55,6 @@ fun EmailInput(
         label = {
             Text(
                 text = "Email",
-                fontSize = 14.sp,
                 fontFamily = Poppins,
                 fontWeight = FontWeight.Medium,
             )
@@ -67,8 +66,6 @@ fun EmailInput(
             errorContainerColor = MaterialTheme.colorScheme.surface,
             disabledContainerColor = MaterialTheme.colorScheme.surface,
         ),
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp)
+        modifier = modifier.fillMaxWidth()
     )
 }

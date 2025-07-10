@@ -42,6 +42,7 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
                     launchSingleTop = true
                 }
             }
+
             NavIcon(
                 screen = Screen.Profile,
                 currentScreen = currentScreen,

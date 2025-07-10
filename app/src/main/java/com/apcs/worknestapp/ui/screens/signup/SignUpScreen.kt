@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -45,6 +46,7 @@ fun SignUpScreen(
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
+    val density = LocalDensity.current
     val interactionSource = remember { MutableInteractionSource() }
     val scrollState = rememberScrollState()
 
@@ -127,9 +129,9 @@ fun SignUpScreen(
                         ) { append("Already have an account? ") }
                         append("Login")
                     },
-                    fontSize = 14.sp,
+                    fontSize = with(density) { 16.dp.toSp() },
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
 

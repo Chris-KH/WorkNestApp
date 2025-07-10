@@ -50,9 +50,8 @@ fun NameInput(
         label = {
             Text(
                 text = "Name",
-                fontSize = 14.sp,
                 fontFamily = Poppins,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
         },
         shape = RoundedCornerShape(24.dp),
@@ -62,8 +61,6 @@ fun NameInput(
             errorContainerColor = MaterialTheme.colorScheme.surface,
             disabledContainerColor = MaterialTheme.colorScheme.surface,
         ),
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp)
+        modifier = modifier.fillMaxWidth()
     )
 }
