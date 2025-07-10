@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,6 +24,7 @@ class AuthViewModel @Inject constructor(
     fun checkAuth() {
         viewModelScope.launch {
             _isCheckingAuth.value = true
+            //delay(5000)
             try {
                 repository.checkAuth()
                 Log.d("AuthViewModel", "Profile: ${repository.profile.value}")
@@ -97,7 +99,7 @@ class AuthViewModel @Inject constructor(
             false
         }
     }
-    
+
     suspend fun signOut() {
         sessionManager.signOutAndClearAll()
     }
