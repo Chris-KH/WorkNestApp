@@ -16,8 +16,8 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = Color(0xFFFFFFFF), //OK
     surface = Color(0xFF303030), // OK
     onSurface = Color(0xFFFFFFFF), //OK
-    primary = Purple80, //TODO
-    onPrimary = Purple80, //TODO
+    primary = Color(0xFFBC8AF9), //TODO
+    onPrimary = Color(0xFF000000), //TODO
     secondary = Color(0xFF2E7D32), //OK
     onSecondary = Color(0xFFDFFFE2), //OK
     tertiary = Color(0xFFF9A825), //OK
@@ -31,9 +31,9 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color(0xFF000000), //OK
     surface = Color(0xFFEEEEF1), //OK
     onSurface = Color(0xFF000000), //OK
-    primary = Color(0xFF143F6B), //TODO
-    onPrimary = Color(0xFFFFFFFF), //TODO
-    secondary = Color(0xFF1B3B1B), //Ok
+    primary = Color(0xFF1D5797), //OK
+    onPrimary = Color(0xFFFFFFFF), //OK
+    secondary = Color(0xFF2C632C), //Ok
     onSecondary = Color(0xFFDFFFE2), //OK
     tertiary = Color(0xFFE3960E), //OK
     onTertiary = Color(0xFFFFF8E1), //OK
@@ -44,7 +44,6 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun WorkNestAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
@@ -64,3 +63,36 @@ fun WorkNestAppTheme(
         content = content
     )
 }
+
+
+/*
+private val DarkColorScheme = darkColorScheme(
+    background = Color(0xFF181818), //OK
+    onBackground = Color(0xFFFFFFFF), //OK
+    surface = Color(0xFF303030), // OK
+    onSurface = Color(0xFFFFFFFF), //OK
+    primary = Color(0xFFBC8AF9), //OK
+    onPrimary = Color(0xFF000000), //OK
+    secondary = Color(0xFF2E7D32), //OK
+    onSecondary = Color(0xFFDFFFE2), //OK
+    tertiary = Color(0xFFF9A825), //OK
+    onTertiary = Color(0xFFFFF8E1), // OK
+    error = Color(0xFFCF6679), //OK
+    onError = Color(0xFFFFFFFF), //OK
+)
+
+private val LightColorScheme = lightColorScheme(
+    background = Color(0xFFFFFFFF), // OK
+    onBackground = Color(0xFF000000), //OK
+    surface = Color(0xFFEEEEF1), //OK
+    onSurface = Color(0xFF000000), //OK
+    primary = Color(0xFF1D5797), //OK
+    onPrimary = Color(0xFFFFFFFF), //OK
+    secondary = Color(0xFF2C632C), //Ok
+    onSecondary = Color(0xFFDFFFE2), //OK
+    tertiary = Color(0xFFE3960E), //OK
+    onTertiary = Color(0xFFFFF8E1), //OK
+    error = Color(0xFFB00020), //OK
+    onError = Color(0xFFFFFFFF), //OK
+)
+ */

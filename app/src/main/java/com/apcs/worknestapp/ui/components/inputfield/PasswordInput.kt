@@ -65,8 +65,8 @@ fun PasswordInput(
             ) {
                 Icon(
                     painter = painterResource(
-                        if (isVisibility && enabled) R.drawable.fill_unseen
-                        else R.drawable.fill_seen
+                        if (isVisibility && enabled) R.drawable.outline_seen
+                        else R.drawable.outline_unseen
                     ),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,

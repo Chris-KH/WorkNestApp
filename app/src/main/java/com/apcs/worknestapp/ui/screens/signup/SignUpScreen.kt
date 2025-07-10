@@ -51,15 +51,11 @@ fun SignUpScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                color = MaterialTheme.colorScheme.background
-            )
+            .background(MaterialTheme.colorScheme.background)
             .clickable(
                 indication = null,
                 interactionSource = interactionSource
-            ) {
-                focusManager.clearFocus()
-            },
+            ) { focusManager.clearFocus() },
         contentAlignment = Alignment.TopCenter
     ) {
         Image(
@@ -79,8 +75,7 @@ fun SignUpScreen(
             verticalArrangement = Arrangement.Bottom
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
