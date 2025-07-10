@@ -1,8 +1,8 @@
 package com.apcs.worknestapp.di
 
-import com.apcs.worknestapp.auth.AuthRepository
-import com.apcs.worknestapp.auth.AuthRepositoryImpl
-import com.apcs.worknestapp.auth.UserSessionManager
+import com.apcs.worknestapp.data.remote.auth.AuthRepository
+import com.apcs.worknestapp.data.remote.auth.AuthRepositoryImpl
+import com.apcs.worknestapp.data.remote.auth.UserSessionManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

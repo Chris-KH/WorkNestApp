@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.auth
+package com.apcs.worknestapp.data.remote.auth
 
 import javax.inject.Inject
 

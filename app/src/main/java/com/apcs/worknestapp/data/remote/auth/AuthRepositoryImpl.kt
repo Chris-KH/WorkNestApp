@@ -1,7 +1,7 @@
-package com.apcs.worknestapp.auth
+package com.apcs.worknestapp.data.remote.auth
 
 import com.apcs.worknestapp.domain.logic.Validator
-import com.apcs.worknestapp.domain.models.UserProfile
+import com.apcs.worknestapp.data.remote.auth.UserProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore

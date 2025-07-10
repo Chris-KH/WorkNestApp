@@ -10,7 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.apcs.worknestapp.auth.AuthViewModel
+import com.apcs.worknestapp.data.remote.auth.AuthViewModel
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.WorkNestAppTheme

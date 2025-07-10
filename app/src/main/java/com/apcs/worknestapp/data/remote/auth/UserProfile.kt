@@ -1,8 +1,7 @@
-package com.apcs.worknestapp.domain.models
+package com.apcs.worknestapp.data.remote.auth
 
 import com.google.firebase.firestore.DocumentId
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
 
 @Serializable
 data class UserProfile(
