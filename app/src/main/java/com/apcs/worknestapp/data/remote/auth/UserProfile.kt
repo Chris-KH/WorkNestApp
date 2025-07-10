@@ -8,6 +8,7 @@ data class UserProfile(
     @DocumentId val docId: String? = null,
     val name: String? = null,
     val email: String? = null,
+    val avatar: String? = null,
     val phone: String? = null,
     val address: String? = null,
 )

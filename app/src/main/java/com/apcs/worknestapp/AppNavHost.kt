@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.screens.home.HomeScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
+import com.apcs.worknestapp.ui.screens.profile.ProfileScreen
 import com.apcs.worknestapp.ui.screens.signup.SignUpScreen
 
 @Composable
@@ -25,6 +26,13 @@ fun AppNavHost(
     ) {
         composable(route = Screen.Home.route) {
             HomeScreen(navController = navController, modifier = modifier)
+        }
+        composable(route = Screen.Profile.route) {
+            ProfileScreen(
+                navController = navController,
+                snackbarHost = snackbarHost,
+                modifier = modifier,
+            )
         }
         composable(route = Screen.Login.route) {
             LoginScreen(

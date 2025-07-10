@@ -18,6 +18,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.apcs.worknestapp.state.rememberNetworkState
 import com.apcs.worknestapp.ui.components.CustomSnackBar
+import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
+import com.apcs.worknestapp.ui.components.topbar.TopBarForScreen
 import com.apcs.worknestapp.ui.screens.Screen
 
 @Composable
@@ -40,17 +42,9 @@ fun MainLayout(startDestination: String) {
     }
 
     Scaffold(
-        topBar = {
-            //TODO
-        },
-        bottomBar = {
-            //TODO
-        },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHost) { data ->
-                CustomSnackBar(data = data)
-            }
-        },
+        topBar = { TopBarForScreen(screen = currentScreen, navController = navController) },
+        bottomBar = { BottomBarForScreen(screen = currentScreen, navController = navController) },
+        snackbarHost = { SnackbarHost(snackbarHost) { CustomSnackBar(data = it) } },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxSize(),
     ) { innerPadding ->
