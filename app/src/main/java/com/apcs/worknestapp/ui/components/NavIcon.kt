@@ -51,7 +51,7 @@ fun NavIcon(
             Icon(
                 painter = painterResource(icon),
                 contentDescription = screen.route,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(24.dp),
                 tint = if (selected) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             )
