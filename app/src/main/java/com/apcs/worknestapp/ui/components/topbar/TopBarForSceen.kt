@@ -8,10 +8,12 @@ import com.apcs.worknestapp.ui.screens.Screen
 @Composable
 fun TopBarForScreen(screen: Screen?, navController: NavHostController) {
     when (screen) {
-        Screen.Home,
-        Screen.Profile,
-            -> {
-                
+        Screen.Home -> {
+            TopBarHomeScreen(navController = navController)
+        }
+
+        Screen.Profile -> {
+            TopBarProfileScreen(navController = navController)
         }
 
         else -> {}
