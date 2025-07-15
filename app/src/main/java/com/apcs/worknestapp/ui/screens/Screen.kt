@@ -12,6 +12,7 @@ sealed class Screen(
     object Login : Screen(route = "login", title = "Login")
     object SignUp : Screen(route = "signup", title = "Sign Up")
     object Home : Screen(route = "home", title = "Home")
+    object NotificationScreen : Screen(route = "notification", title = "Notifications")
     object Profile : Screen(route = "profile", title = "Profile")
 
     companion object {
@@ -21,6 +22,7 @@ sealed class Screen(
                 SignUp,
                 Home,
                 Profile,
+                NotificationScreen,
             )
         }
 

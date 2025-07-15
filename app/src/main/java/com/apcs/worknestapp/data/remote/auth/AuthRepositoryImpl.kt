@@ -3,9 +3,11 @@ package com.apcs.worknestapp.data.remote.auth
 import android.util.Log
 import com.apcs.worknestapp.domain.logic.Validator
 import com.apcs.worknestapp.data.remote.auth.UserProfile
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,14 +56,24 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
 
         val res = auth.createUserWithEmailAndPassword(email, password).await()
         val authUser = res.user
-
         if (authUser == null) throw Exception("Create user failed")
+
+        val createdAt = authUser.metadata?.creationTimestamp?.let {
+            Timestamp(
+                seconds = it / 1000,
+                nanoseconds = (it % 1000 * 1_000_000).toInt()
+            )
+        } ?: Timestamp.now()
+
         val newProfile = UserProfile(
             docId = authUser.uid,
             name = name,
             email = email,
+            createdAt = createdAt
         )
+
         firestore.collection("users").document(authUser.uid).set(newProfile, SetOptions.merge())
+            .await()
 
         _profile.value = newProfile
         _user.value = authUser
@@ -87,11 +99,20 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
             val remoteProfile = getUserRemoteProfile(authUser.uid)
             _profile.value = remoteProfile
         } catch (e: Exception) {
+            val createdAt = authUser.metadata?.creationTimestamp?.let {
+                Timestamp(
+                    seconds = it / 1000,
+                    nanoseconds = (it % 1000 * 1_000_000).toInt()
+                )
+            } ?: Timestamp.now()
+
             val newProfile = UserProfile(
+                docId = authUser.uid,
                 name = authUser.displayName,
                 avatar = if (authUser.photoUrl == null) null else authUser.photoUrl.toString(),
                 email = authUser.email,
                 phone = authUser.phoneNumber,
+                createdAt = createdAt,
             )
 
             firestore.collection("users").document(authUser.uid)

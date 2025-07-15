@@ -16,6 +16,10 @@ fun TopBarForScreen(screen: Screen?, navController: NavHostController) {
             TopBarProfileScreen(navController = navController)
         }
 
+        Screen.NotificationScreen -> {
+            TopBarNotificationScreen(navController = navController)
+        }
+
         else -> {}
     }
 }

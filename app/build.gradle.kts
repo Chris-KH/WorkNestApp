@@ -22,8 +22,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+//    signingConfigs {
+//        create("release") {
+//            storeFile = file("keystore/worknestapp-release-key.jks")
+//            storePassword = "0123456789"
+//            keyAlias = "release-key1"
+//            keyPassword = "0123456789"
+//        }
+//    }
+
     buildTypes {
         release {
+            //signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
