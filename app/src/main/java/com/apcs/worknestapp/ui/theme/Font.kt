@@ -29,3 +29,11 @@ val Poppins = FontFamily(
     Font(R.font.poppins_italic_extrabold, FontWeight.ExtraBold, FontStyle.Italic),
     Font(R.font.poppins_italic_black, FontWeight.Black, FontStyle.Italic),
 )
+
+val Roboto = FontFamily(
+    // Regular weights
+    Font(R.font.roboto_normal, FontWeight.Normal, FontStyle.Normal),
+    Font(R.font.roboto_medium, FontWeight.Medium, FontStyle.Normal),
+    Font(R.font.roboto_semibold, FontWeight.SemiBold, FontStyle.Normal),
+    Font(R.font.roboto_bold, FontWeight.Bold, FontStyle.Normal),
+)

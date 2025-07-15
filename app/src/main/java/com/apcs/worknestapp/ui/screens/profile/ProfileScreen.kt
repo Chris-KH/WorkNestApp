@@ -29,11 +29,18 @@ fun ProfileScreen(
         Button(
             onClick = {
                 coroutineScope.launch {
-                    authViewModel.signOut()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) {
-                            inclusive = true
+                    val isSuccess = authViewModel.signOut()
+                    if (isSuccess) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) {
+                                inclusive = true
+                            }
                         }
+                    } else {
+                        snackbarHost.showSnackbar(
+                            message = "Fail: Sign out fail, try again late",
+                            withDismissAction = true,
+                        )
                     }
                 }
             }

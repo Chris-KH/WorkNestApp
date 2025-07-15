@@ -23,7 +23,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -50,6 +53,8 @@ fun SignUpScreen(
     val interactionSource = remember { MutableInteractionSource() }
     val scrollState = rememberScrollState()
 
+    var isSigningUp by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -63,12 +68,12 @@ fun SignUpScreen(
         Image(
             painter = painterResource(R.drawable.signup_decor),
             contentDescription = null,
-            modifier = Modifier.fillMaxHeight(0.3f)
+            modifier = Modifier.fillMaxHeight(0.35f)
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.7f)
+                .fillMaxHeight(0.65f)
                 .verticalScroll(scrollState)
                 .imePadding()
                 .padding(horizontal = 24.dp)
@@ -97,13 +102,17 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             SignUpForm(
+                enabled = !isSigningUp,
+                onSubmit = { isSigningUp = true },
                 onSuccess = {
+                    isSigningUp = false
                     focusManager.clearFocus()
                     navController.navigate(Screen.Home.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onFailure = { it ->
+                    isSigningUp = false
                     focusManager.clearFocus()
                     snackbarHost.showSnackbar(
                         message = "Fail: $it",
@@ -135,7 +144,7 @@ fun SignUpScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

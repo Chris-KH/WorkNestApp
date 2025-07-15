@@ -3,6 +3,7 @@ package com.apcs.worknestapp.data.remote.auth
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,13 +13,25 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val repository: AuthRepository,
+    private val googleAuthUiClient: GoogleAuthUiClient,
     private val sessionManager: UserSessionManager,
 ) : ViewModel() {
+    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
     val profile = repository.profile
     val user = repository.user
 
     private val _isCheckingAuth = MutableStateFlow(true)
     val isCheckingAuth: StateFlow<Boolean> = _isCheckingAuth
+
+//    init {
+//        firebaseAuth.addAuthStateListener { auth ->
+//            if (auth.currentUser == null) {
+//                viewModelScope.launch {
+//                    signOut()
+//                }
+//            }
+//        }
+//    }
 
     fun checkAuth() {
         viewModelScope.launch {
@@ -56,6 +69,18 @@ class AuthViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e("AuthViewModel", "Login failed", e)
             signOut()
+            false
+        }
+    }
+
+    suspend fun loginWithGoogle(idToken: String?): Boolean {
+        return try {
+            if (idToken == null) throw Exception("ID token null")
+
+            repository.loginWithGoogle(idToken);
+            true
+        } catch (e: Exception) {
+            Log.e("AuthViewModel", "Google login failed", e)
             false
         }
     }
@@ -99,7 +124,14 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    suspend fun signOut() {
-        sessionManager.signOutAndClearAll()
+    suspend fun signOut(): Boolean {
+        return try {
+            googleAuthUiClient.clearCredential()
+            sessionManager.signOutAndClearAll()
+            true
+        } catch (e: Exception) {
+            Log.e("AuthViewModel", "Logout failed", e)
+            false
+        }
     }
 }

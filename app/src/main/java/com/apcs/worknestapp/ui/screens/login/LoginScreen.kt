@@ -22,7 +22,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -36,7 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.components.SignInWithGoogleButton
+import com.apcs.worknestapp.ui.components.TextDivider
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun LoginScreen(
@@ -48,6 +54,8 @@ fun LoginScreen(
     val density = LocalDensity.current
     val interactionSource = remember { MutableInteractionSource() }
     val scrollState = rememberScrollState()
+
+    var isLogging by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -62,12 +70,12 @@ fun LoginScreen(
         Image(
             painter = painterResource(R.drawable.login_decor),
             contentDescription = null,
-            modifier = Modifier.fillMaxHeight(0.45f)
+            modifier = Modifier.fillMaxHeight(0.4f)
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.55f)
+                .fillMaxHeight(0.6f)
                 .verticalScroll(scrollState)
                 .imePadding()
                 .padding(horizontal = 24.dp)
@@ -96,13 +104,17 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             LoginForm(
+                enabled = !isLogging,
+                onSubmit = { isLogging = true },
                 onSuccess = {
+                    isLogging = false
                     focusManager.clearFocus()
                     navController.navigate(Screen.Home.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onFailure = {
+                    isLogging = false
                     focusManager.clearFocus()
                     snackbarHost.showSnackbar(
                         message = "Fail: Login failed",
@@ -112,12 +124,36 @@ fun LoginScreen(
                 }
             )
 
+            TextDivider(
+                text = "Or",
+                thickness = 2.dp,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
+
+            SignInWithGoogleButton(
+                enabled = !isLogging,
+                onSubmit = { isLogging = true },
+                onSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onFailure = {
+                    snackbarHost.showSnackbar(
+                        message = "Fail: Login with google failed.",
+                        withDismissAction = true,
+                    )
+                },
+            )
+
             TextButton(
+                enabled = !isLogging,
                 onClick = {
                     navController.popBackStack()
                     navController.navigate(Screen.SignUp.route)
                 },
-                modifier = Modifier,
             ) {
                 Text(
                     text = buildAnnotatedString {
@@ -134,7 +170,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

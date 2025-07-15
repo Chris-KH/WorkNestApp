@@ -33,16 +33,17 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginForm(
+    onSubmit: () -> Unit,
     onSuccess: suspend () -> Unit,
     onFailure: suspend () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val authViewModel = LocalAuthViewModel.current
     val coroutineScope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -53,14 +54,14 @@ fun LoginForm(
             onValueChange = {
                 email = it
             },
-            enabled = !isLoading,
+            enabled = enabled,
         )
         PasswordInput(
             value = password,
             onValueChange = {
                 password = it
             },
-            enabled = !isLoading,
+            enabled = enabled,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -68,9 +69,8 @@ fun LoginForm(
             onClick = {
                 if (email.isBlank() || password.isBlank()) return@Button
                 coroutineScope.launch {
-                    isLoading = true
+                    onSubmit()
                     val isSuccess = authViewModel.login(email.trim(), password.trim())
-                    isLoading = false
                     email = ""
                     password = ""
 
@@ -82,12 +82,13 @@ fun LoginForm(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ),
-            enabled = !isLoading,
-            contentPadding = PaddingValues(vertical = 16.dp),
+            enabled = enabled,
             shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
         ) {
-            if (!isLoading)
+            if (enabled)
                 Text(
                     "Login",
                     color = MaterialTheme.colorScheme.onPrimary,

@@ -1,11 +1,14 @@
 package com.apcs.worknestapp.di
 
+import android.content.Context
 import com.apcs.worknestapp.data.remote.auth.AuthRepository
 import com.apcs.worknestapp.data.remote.auth.AuthRepositoryImpl
+import com.apcs.worknestapp.data.remote.auth.GoogleAuthUiClient
 import com.apcs.worknestapp.data.remote.auth.UserSessionManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 

@@ -36,6 +36,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SignUpForm(
+    enabled: Boolean,
+    onSubmit: () -> Unit,
     onSuccess: suspend () -> Unit,
     onFailure: suspend (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -54,7 +56,6 @@ fun SignUpForm(
     var passwordConfirmError by remember { mutableStateOf<String?>(null) }
 
     var firstMount by remember { mutableStateOf(true) }
-    var isLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         firstMount = false
@@ -103,7 +104,7 @@ fun SignUpForm(
                     else if (!Validator.isValidEmail(it)) "Invalid email format"
                     else null
             },
-            enabled = !isLoading,
+            enabled = enabled,
             modifier = Modifier.onFocusChanged { focusState ->
                 if (!focusState.isFocused && !firstMount) {
                     emailError =
@@ -128,7 +129,7 @@ fun SignUpForm(
                     else if (!Validator.isUserName(name)) "Invalid user name"
                     else null
             },
-            enabled = !isLoading,
+            enabled = enabled,
             modifier = Modifier.onFocusChanged { focusState ->
                 if (!focusState.isFocused && !firstMount) {
                     nameError =
@@ -145,7 +146,7 @@ fun SignUpForm(
 
         PasswordInput(
             value = password,
-            enabled = !isLoading,
+            enabled = enabled,
             isError = passwordError != null,
             onValueChange = {
                 password = it
@@ -170,7 +171,7 @@ fun SignUpForm(
 
         PasswordConfirmInput(
             value = passwordConfirm,
-            enabled = !isLoading,
+            enabled = enabled,
             isError = passwordConfirmError != null,
             onValueChange = {
                 passwordConfirm = it
@@ -200,14 +201,13 @@ fun SignUpForm(
                 if (!validData()) return@Button
 
                 coroutineScope.launch {
-                    isLoading = true
+                    onSubmit()
                     val message = authViewModel.signUpWithEmailPassword(
                         email = email,
                         password = password,
                         name = name
                     )
                     resetField()
-                    isLoading = false
 
                     if (message == null) onSuccess();
                     else onFailure(message)
@@ -217,12 +217,13 @@ fun SignUpForm(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ),
-            enabled = !isLoading,
-            contentPadding = PaddingValues(vertical = 16.dp),
+            enabled = enabled,
             shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
         ) {
-            if (!isLoading)
+            if (enabled)
                 Text(
                     "Sign Up",
                     color = MaterialTheme.colorScheme.onPrimary,

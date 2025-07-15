@@ -10,6 +10,7 @@ interface AuthRepository {
 
     suspend fun signUpWithEmailPassword(email: String, password: String, name: String)
     suspend fun login(email: String, password: String)
+    suspend fun loginWithGoogle(idToken: String)
     suspend fun updateUserName(name: String)
     suspend fun updateUserPhone(phone: String)
     suspend fun updateUserAddress(address: String)
