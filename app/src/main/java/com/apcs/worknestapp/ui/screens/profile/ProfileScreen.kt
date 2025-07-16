@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.ui.screens.profile
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -26,26 +27,30 @@ fun ProfileScreen(
     Box(
         modifier = modifier,
     ) {
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    val isSuccess = authViewModel.signOut()
-                    if (isSuccess) {
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(0) {
-                                inclusive = true
+        LazyColumn {
+            items(count = 100) {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val isSuccess = authViewModel.signOut()
+                            if (isSuccess) {
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(0) {
+                                        inclusive = true
+                                    }
+                                }
+                            } else {
+                                snackbarHost.showSnackbar(
+                                    message = "Fail: Sign out fail, try again late",
+                                    withDismissAction = true,
+                                )
                             }
                         }
-                    } else {
-                        snackbarHost.showSnackbar(
-                            message = "Fail: Sign out fail, try again late",
-                            withDismissAction = true,
-                        )
                     }
+                ) {
+                    Text(text = "Log out", modifier = Modifier)
                 }
             }
-        ) {
-            Text(text = "Log out", modifier = Modifier)
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.screens
+package com.apcs.worknestapp.ui.screens.notification
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text

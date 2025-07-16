@@ -1,13 +1,10 @@
 package com.apcs.worknestapp.data.remote.auth
 
-import android.util.Log
 import com.apcs.worknestapp.domain.logic.Validator
-import com.apcs.worknestapp.data.remote.auth.UserProfile
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,9 +88,9 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
     }
 
     override suspend fun loginWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null);
-        val result = auth.signInWithCredential(credential).await();
-        val authUser = result.user ?: throw Exception("Google login failed");
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        val result = auth.signInWithCredential(credential).await()
+        val authUser = result.user ?: throw Exception("Google login failed")
 
         try {
             val remoteProfile = getUserRemoteProfile(authUser.uid)
@@ -120,7 +117,7 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
             _profile.value = newProfile
         }
 
-        _user.value = authUser;
+        _user.value = authUser
     }
 
     override suspend fun updateUserName(name: String) {

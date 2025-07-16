@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,7 +18,10 @@ import androidx.navigation.NavHostController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarHomeScreen(navController: NavHostController) {
+fun TopBarHomeScreen(
+    navController: NavHostController,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
+) {
     TopAppBar(
         title = {
             Text(
@@ -31,6 +35,7 @@ fun TopBarHomeScreen(navController: NavHostController) {
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
         ),
+        scrollBehavior = scrollBehavior,
         modifier = Modifier
     )
 }
