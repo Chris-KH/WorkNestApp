@@ -3,51 +3,38 @@ package com.apcs.worknestapp.ui.screens.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.apcs.worknestapp.LocalAuthViewModel
-import com.apcs.worknestapp.R
-import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.screens.Screen
-import com.apcs.worknestapp.ui.theme.Inter
-import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
@@ -56,167 +43,102 @@ fun ProfileScreen(
 ) {
     val authViewModel = LocalAuthViewModel.current
     val profile = authViewModel.profile.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    val overscrollEffect = rememberOverscrollEffect()
 
-    Box(
+    var isRefreshing by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val pullRefreshState = rememberPullToRefreshState()
+
+    PullToRefreshBox(
+        state = pullRefreshState,
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            coroutineScope.launch {
+                val isSuccess = authViewModel.loadUserProfile()
+                isRefreshing = false
+                if (!isSuccess) {
+                    snackbarHost.showSnackbar(
+                        message = "Refresh user profile fail",
+                        withDismissAction = true,
+                        duration = SnackbarDuration.Short,
+                    )
+                }
+            }
+        },
+        indicator = {
+            PullToRefreshDefaults.Indicator(
+                state = pullRefreshState,
+                isRefreshing = isRefreshing,
+                modifier = Modifier.align(Alignment.TopCenter),
+                containerColor = MaterialTheme.colorScheme.surface,
+                color = MaterialTheme.colorScheme.primary
+            )
+        },
+        contentAlignment = Alignment.TopCenter,
         modifier = modifier
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
+                .verticalScroll(
+                    state = scrollState,
+                    overscrollEffect = overscrollEffect,
+                )
                 .padding(top = 12.dp)
                 .padding(horizontal = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(profile.value?.avatar)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.fade_image),
-                    error = painterResource(R.drawable.fade_avatar_fallback),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    filterQuality = FilterQuality.Medium,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .size(80.dp),
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = profile.value?.name ?: "Anonymous",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        lineHeight = 20.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = profile.value?.email ?: "",
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp,
-                        lineHeight = 18.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
+            ProfileHeader(
+                imageUrl = profile.value?.avatar,
+                name = profile.value?.name,
+                email = profile.value?.email,
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
+            EditProfileButton(onClick = { navController.navigate(Screen.EditProfile.route) })
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = { navController.navigate(Screen.EditProfile.route) },
-                contentPadding = PaddingValues(vertical = 8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    painterResource(R.drawable.fill_edit_pen),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Edit profile",
-                    fontFamily = Inter,
-                    fontSize = 14.sp,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(
-                        elevation = 2.dp,
-                        shape = RoundedCornerShape(16.dp),
-                    )
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(16.dp),
-                    )
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "About me",
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = profile.value?.bio ?: "_____",
-                        fontFamily = Roboto,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 16.sp,
-                        lineHeight = 20.sp,
-                    )
-                }
-                Spacer(modifier = Modifier.height(20.dp))
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Joined since",
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text =
-                            if (profile.value?.createdAt != null)
-                                DateFormater.format(profile.value?.createdAt!!.toDate())
-                            else "No information",
-                        fontFamily = Roboto,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 16.sp,
-                        lineHeight = 20.sp,
-                    )
-                }
-            }
-
-
-            /*     repeat(100) {
-                     Button(
-                         onClick = {
-                             coroutineScope.launch {
-                                 val isSuccess = authViewModel.signOut()
-                                 if (isSuccess) {
-                                     navController.navigate(Screen.Login.route) {
-                                         popUpTo(0) {
-                                             inclusive = true
-                                         }
-                                     }
-                                 } else {
-                                     snackbarHost.showSnackbar(
-                                         message = "Fail: Sign out fail, try again late",
-                                         withDismissAction = true,
-                                     )
-                                 }
-                             }
-                         }
-                     ) {
-                         Text(
-                             text = "Log out",
-                             fontFamily = Inter,
-                             modifier = Modifier
-                         )
-                     }
-                 }
-                 */
+            ProfileInfoCard(
+                bio = profile.value?.bio,
+                createdAt = profile.value?.createdAt,
+            )
         }
     }
+
+    /* Box(
+         modifier = modifier
+             .fillMaxSize()
+             .background(MaterialTheme.colorScheme.background)
+             .verticalScroll(
+                 state = scrollState,
+                 overscrollEffect = overscrollEffect,
+             )
+     ) {
+         Column(
+             modifier = Modifier
+                 .fillMaxSize()
+                 .padding(top = 12.dp)
+                 .padding(horizontal = 12.dp),
+             horizontalAlignment = Alignment.CenterHorizontally,
+         ) {
+             ProfileHeader(
+                 imageUrl = profile.value?.avatar,
+                 name = profile.value?.name,
+                 email = profile.value?.email,
+             )
+
+             Spacer(modifier = Modifier.height(16.dp))
+             EditProfileButton(onClick = { navController.navigate(Screen.EditProfile.route) })
+             Spacer(modifier = Modifier.height(24.dp))
+
+             ProfileInfoCard(
+                 bio = profile.value?.bio,
+                 createdAt = profile.value?.createdAt,
+             )
+         }
+     }*/
 }

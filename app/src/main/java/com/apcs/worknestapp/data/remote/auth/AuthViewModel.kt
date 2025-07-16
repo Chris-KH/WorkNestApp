@@ -36,7 +36,6 @@ class AuthViewModel @Inject constructor(
     fun checkAuth() {
         viewModelScope.launch {
             _isCheckingAuth.value = true
-            //delay(5000)
             try {
                 repository.checkAuth()
                 Log.d("AuthViewModel", "Profile: ${repository.profile.value}")
@@ -46,6 +45,16 @@ class AuthViewModel @Inject constructor(
             } finally {
                 _isCheckingAuth.value = false
             }
+        }
+    }
+
+    suspend fun loadUserProfile(): Boolean {
+        return try {
+            repository.loadUserProfile()
+            true
+        } catch (e: Exception) {
+            Log.e("AuthViewModel", "Load user profile failed", e)
+            false
         }
     }
 

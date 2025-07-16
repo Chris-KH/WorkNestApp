@@ -24,10 +24,10 @@ enum class SnackbarType {
 @Composable
 fun CustomSnackBar(data: SnackbarData) {
     val type = when {
-        data.visuals.message.contains("Success:", ignoreCase = true) -> SnackbarType.SUCCESS
-        data.visuals.message.contains("Error:", ignoreCase = true) -> SnackbarType.ERROR
-        data.visuals.message.contains("Fail:", ignoreCase = true) -> SnackbarType.FAIL
-        data.visuals.message.contains("Warning:", ignoreCase = true) -> SnackbarType.WARNING
+        data.visuals.message.contains("Success", ignoreCase = true) -> SnackbarType.SUCCESS
+        data.visuals.message.contains("Error", ignoreCase = true) -> SnackbarType.ERROR
+        data.visuals.message.contains("Fail", ignoreCase = true) -> SnackbarType.FAIL
+        data.visuals.message.contains("Warning", ignoreCase = true) -> SnackbarType.WARNING
         else -> SnackbarType.INFO
     }
 

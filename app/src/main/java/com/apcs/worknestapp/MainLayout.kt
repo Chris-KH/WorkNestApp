@@ -96,9 +96,7 @@ fun MainLayout(startDestination: String) {
                 )
             }
 
-            composable(
-                route = Screen.Profile.route,
-            ) {
+            composable(route = Screen.Profile.route) {
                 ProfileScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,

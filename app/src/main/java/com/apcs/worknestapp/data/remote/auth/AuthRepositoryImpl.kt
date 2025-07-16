@@ -35,12 +35,16 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
             ?: throw Exception("Invalid profile data")
     }
 
-    override suspend fun checkAuth() {
-        val currentUser = auth.currentUser
-        if (currentUser == null) throw Exception("Check auth fail")
+    override suspend fun loadUserProfile() {
+        val authUser = auth.currentUser ?: throw Exception("No user logged in")
 
-        val remoteProfile = getUserRemoteProfile(currentUser.uid)
-        _profile.value = remoteProfile
+        _profile.value = getUserRemoteProfile(authUser.uid)
+    }
+
+    override suspend fun checkAuth() {
+        val currentUser = auth.currentUser ?: throw Exception("Check auth fail")
+
+        _profile.value = getUserRemoteProfile(currentUser.uid)
         _user.value = currentUser
     }
 
@@ -81,9 +85,8 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
         val authUser = res.user
 
         if (authUser == null) throw Exception("Login failed for some reason")
-
-        val remoteProfile = getUserRemoteProfile(authUser.uid)
-        _profile.value = remoteProfile
+        
+        _profile.value = getUserRemoteProfile(authUser.uid)
         _user.value = authUser
     }
 
