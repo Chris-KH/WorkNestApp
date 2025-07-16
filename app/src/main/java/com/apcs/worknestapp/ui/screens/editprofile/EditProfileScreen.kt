@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.screens.setting
+package com.apcs.worknestapp.ui.screens.editprofile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -15,7 +15,7 @@ import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 
 @Composable
-fun SettingScreen(
+fun EditProfileScreen(
     navController: NavHostController,
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -23,7 +23,7 @@ fun SettingScreen(
     Scaffold(
         topBar = {
             ExitOnlyTopBar(
-                screen = Screen.Setting,
+                screen = Screen.EditProfile,
                 navController = navController,
             )
         },
@@ -36,7 +36,8 @@ fun SettingScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface),
         ) {
-            Text(text = "SettingScreen")
+            Text(text = "EditScreen")
         }
     }
+
 }

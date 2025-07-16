@@ -12,9 +12,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    background = Color(0xFF121318), //OK
+    background = Color(0xFF121212), //OK
     onBackground = Color(0xFFFFFFFF), //OK
-    surface = Color(0xFF121318), //OK
+    surface = Color(0xFF202020), //OK
     surfaceContainer = Color(0xFF1E1F25), //OK
     surfaceContainerLowest = Color(0xFF060A0F), //OK
     surfaceContainerHighest = Color(0xFF33343A), //OK
@@ -32,9 +32,9 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    background = Color(0xFFF8FAFF),// OK
+    background = Color(0xFFF0F0F0),// OK
     onBackground = Color(0xFF000000), //OK
-    surface = Color(0xFFF8FAFF), //OK
+    surface = Color(0xFFFFFFFF), //OK
     surfaceContainer = Color(0xFFEDEFF4), //OK
     surfaceContainerLowest = Color(0xFFFFFFFF), //OK
     surfaceContainerHighest = Color(0xFFE2E3E9), //OK

@@ -1,5 +1,10 @@
 package com.apcs.worknestapp
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,6 +30,7 @@ import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
 import com.apcs.worknestapp.ui.components.topbar.TopBarForScreen
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.screens.editprofile.EditProfileScreen
 import com.apcs.worknestapp.ui.screens.home.HomeScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
 import com.apcs.worknestapp.ui.screens.notification.NotificationScreen
@@ -42,7 +48,9 @@ fun MainLayout(startDestination: String) {
     val currentRoute = navBackStackEntry?.destination?.route
     val currentScreen = Screen.fromRoute(currentRoute)
 
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollBehavior = when (currentScreen) {
+        else -> TopAppBarDefaults.pinnedScrollBehavior()
+    }
 
     LaunchedEffect(isNetworkConnected) {
         if (!isNetworkConnected) {
@@ -80,26 +88,68 @@ fun MainLayout(startDestination: String) {
                     modifier = Modifier.padding(innerPadding)
                 )
             }
+
             composable(route = Screen.NotificationScreen.route) {
                 NotificationScreen(
                     navController = navController,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
-            composable(route = Screen.Profile.route) {
+
+            composable(
+                route = Screen.Profile.route,
+            ) {
                 ProfileScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
                     modifier = Modifier.padding(innerPadding),
                 )
             }
-            composable(route = Screen.Setting.route) {
+
+            composable(
+                route = Screen.EditProfile.route,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(700)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(700)
+                    )
+                },
+            ) {
+                EditProfileScreen(
+                    navController = navController,
+                    snackbarHost = snackbarHost,
+                    modifier = Modifier,
+                )
+            }
+
+            composable(
+                route = Screen.Setting.route,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(700)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(700)
+                    )
+                },
+            ) {
                 SettingScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = Modifier,
                 )
             }
+
             composable(route = Screen.Login.route) {
                 LoginScreen(
                     navController = navController,
@@ -107,6 +157,7 @@ fun MainLayout(startDestination: String) {
                     modifier = Modifier.padding(innerPadding),
                 )
             }
+
             composable(route = Screen.SignUp.route) {
                 SignUpScreen(
                     navController = navController,

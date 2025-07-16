@@ -11,5 +11,6 @@ data class UserProfile(
     val avatar: String? = "https://res.cloudinary.com/dgniomynr/image/upload/v1749539388/profile-default-icon_rslcqz.png",
     val phone: String? = null,
     val address: String? = null,
+    val bio: String? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 )

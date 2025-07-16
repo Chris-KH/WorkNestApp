@@ -24,7 +24,7 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
 
         NavigationBar(
             modifier = Modifier.fillMaxWidth(),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             NavItem(
                 screen = Screen.Home,
