@@ -29,6 +29,7 @@ import com.apcs.worknestapp.ui.screens.home.HomeScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
 import com.apcs.worknestapp.ui.screens.notification.NotificationScreen
 import com.apcs.worknestapp.ui.screens.profile.ProfileScreen
+import com.apcs.worknestapp.ui.screens.setting.SettingScreen
 import com.apcs.worknestapp.ui.screens.signup.SignUpScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,6 +88,13 @@ fun MainLayout(startDestination: String) {
             }
             composable(route = Screen.Profile.route) {
                 ProfileScreen(
+                    navController = navController,
+                    snackbarHost = snackbarHost,
+                    modifier = Modifier.padding(innerPadding),
+                )
+            }
+            composable(route = Screen.Setting.route) {
+                SettingScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
                     modifier = Modifier.padding(innerPadding),

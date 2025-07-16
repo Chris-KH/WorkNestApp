@@ -14,6 +14,7 @@ sealed class Screen(
     object Home : Screen(route = "home", title = "Home")
     object NotificationScreen : Screen(route = "notification", title = "Notifications")
     object Profile : Screen(route = "profile", title = "Profile")
+    object Setting : Screen(route = "setting", title = "Settings")
 
     companion object {
         val all: List<Screen> by lazy {
@@ -21,8 +22,9 @@ sealed class Screen(
                 Login,
                 SignUp,
                 Home,
-                Profile,
                 NotificationScreen,
+                Profile,
+                Setting,
             )
         }
 

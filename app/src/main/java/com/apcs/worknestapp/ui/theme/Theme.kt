@@ -12,33 +12,44 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    background = Color(red = 18, green = 18, blue = 18), //OK
+    background = Color(0xFF121318), //OK
     onBackground = Color(0xFFFFFFFF), //OK
-    surface = Color(red = 32, green = 32, blue = 32), // OK
-    surfaceVariant = Color(red = 62, green = 50, blue = 73, alpha = 255),
-    onSurface = Color(0xFFFFFFFF), //OK
-    primary = Color(0xFFBC8AF9), //OK
+    surface = Color(0xFF121318), //OK
+    surfaceContainer = Color(0xFF1E1F25), //OK
+    surfaceContainerLowest = Color(0xFF060A0F), //OK
+    surfaceContainerHighest = Color(0xFF33343A), //OK
+    surfaceVariant = Color(0xFF45464F),//OK
+    onSurface = Color(0xFFFFFFFF),//OK
+    primary = Color(0xFFB2C5FF), //OK
     onPrimary = Color(0xFF000000), //OK
+    secondary = Color(0xFFC0C6DD),//OK
+    secondaryContainer = Color(0xFF414659), //OK
+    onSecondary = Color(0xFF000000), //OK
     error = Color(0xFFAA3D3D), //OK
     onError = Color(0xFFFFFFFF), //OK
+    outline = Color(0xFF8f909a), //OK
+    outlineVariant = Color(0xFF45464F) //OK
 )
 
 private val LightColorScheme = lightColorScheme(
-    background = Color(red = 240, green = 240, blue = 240),// OK
+    background = Color(0xFFF8FAFF),// OK
     onBackground = Color(0xFF000000), //OK
-    surface = Color(red = 255, green = 255, blue = 255), //OK
-    surfaceVariant = Color(red = 228, green = 231, blue = 237, alpha = 255),
+    surface = Color(0xFFF8FAFF), //OK
+    surfaceContainer = Color(0xFFEDEFF4), //OK
+    surfaceContainerLowest = Color(0xFFFFFFFF), //OK
+    surfaceContainerHighest = Color(0xFFE2E3E9), //OK
+    surfaceVariant = Color(0xFFE1E2EC),//OK
     onSurface = Color(0xFF000000), //OK
-    primary = Color(0xFF145AB4), //OK
+    primary = Color(0xFF495D92), //OK
     onPrimary = Color(0xFFFFFFFF), //OK
-    secondary = Color(0xFF2E76BB),
-    secondaryContainer = Color(0xFFE1EEF6),
-    onSecondary = Color(0xFFFFFFFF),
+    secondary = Color(0xFF585E71),//OK
+    secondaryContainer = Color(0xFFDDE2f9),//OK
+    onSecondary = Color(0xFFFFFFFF),//OK
     error = Color(0xFFB00020), //OK
     onError = Color(0xFFFFFFFF), //OK
+    outline = Color(0xFF757780), //OK
+    outlineVariant = Color(0xFFC5C6D0) //OK
 )
-
-//    primary = Color(0xFF1D5797), //OK
 
 @Composable
 fun WorkNestAppTheme(
