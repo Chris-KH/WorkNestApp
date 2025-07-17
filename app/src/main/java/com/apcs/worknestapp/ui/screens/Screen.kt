@@ -12,6 +12,7 @@ sealed class Screen(
     object Login : Screen(route = "login", title = "Login")
     object SignUp : Screen(route = "signup", title = "Sign Up")
     object Home : Screen(route = "home", title = "Home")
+    object Note : Screen(route = "note", title = "Notes")
     object NotificationScreen : Screen(route = "notification", title = "Notifications")
     object Profile : Screen(route = "profile", title = "Profile")
     object EditProfile : Screen(route = "edit-profile", title = "Edit profile")
@@ -23,6 +24,7 @@ sealed class Screen(
                 Login,
                 SignUp,
                 Home,
+                Note,
                 NotificationScreen,
                 Profile,
                 EditProfile,

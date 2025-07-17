@@ -42,7 +42,7 @@ fun ProfileHeader(
                 .build(),
             placeholder = painterResource(R.drawable.fade_avatar_fallback),
             error = painterResource(R.drawable.fade_avatar_fallback),
-            contentDescription = null,
+            contentDescription = "Avatar",
             contentScale = ContentScale.Crop,
             filterQuality = FilterQuality.Medium,
             modifier = Modifier

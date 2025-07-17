@@ -1,6 +1,5 @@
 package com.apcs.worknestapp.data.remote.auth
 
-import com.apcs.worknestapp.data.remote.auth.UserProfile
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.StateFlow
 
@@ -13,6 +12,7 @@ interface AuthRepository {
     suspend fun loginWithGoogle(idToken: String)
     suspend fun loadUserProfile()
     suspend fun updateUserName(name: String)
+    suspend fun updateUserAvatar(avatar: String)
     suspend fun updateUserPhone(phone: String)
     suspend fun updateUserAddress(address: String)
     suspend fun checkAuth()

@@ -33,6 +33,7 @@ import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.screens.editprofile.EditProfileScreen
 import com.apcs.worknestapp.ui.screens.home.HomeScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
+import com.apcs.worknestapp.ui.screens.note.NoteScreen
 import com.apcs.worknestapp.ui.screens.notification.NotificationScreen
 import com.apcs.worknestapp.ui.screens.profile.ProfileScreen
 import com.apcs.worknestapp.ui.screens.setting.SettingScreen
@@ -86,6 +87,14 @@ fun MainLayout(startDestination: String) {
                 HomeScreen(
                     navController = navController,
                     modifier = Modifier.padding(innerPadding)
+                )
+            }
+
+            composable(route = Screen.Note.route) {
+                NoteScreen(
+                    navController = navController,
+                    snackbarHost = snackbarHost,
+                    modifier = Modifier,
                 )
             }
 

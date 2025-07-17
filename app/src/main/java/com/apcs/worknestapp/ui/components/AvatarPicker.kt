@@ -2,12 +2,10 @@ package com.apcs.worknestapp.ui.components
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.GetContent
@@ -28,6 +26,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -46,16 +46,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.theme.Roboto
-import com.apcs.worknestapp.utils.FileUtils
 import com.apcs.worknestapp.utils.FileUtils.createImageFileUri
 import kotlinx.coroutines.launch
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +64,7 @@ fun AvatarPicker(
     val context = LocalContext.current
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
+    var showBottomSheet by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     // Launcher for photo picker
@@ -75,11 +73,16 @@ fun AvatarPicker(
         onResult = { uri: Uri? ->
             if (uri != null) {
                 println("Selected from library: $uri")
-                // TODO: Lưu URI này, hiển thị ảnh, tải lên server, v.v.
+                // TODO: Upload photo to server
                 // Persist media file access:
                 // context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             } else {
-                println("No media selected from library")
+                coroutineScope.launch {
+                    snackbarHost.showSnackbar(
+                        message = "No photos selected",
+                        withDismissAction = true,
+                    )
+                }
             }
         }
     )
@@ -90,9 +93,14 @@ fun AvatarPicker(
         onResult = { uri: Uri? ->
             if (uri != null) {
                 println("Selected from legacy gallery: $uri")
-                // TODO: Lưu URI này, hiển thị ảnh, tải lên server, v.v.
+                // TODO: Upload photo to server
             } else {
-                println("No image selected from legacy gallery")
+                coroutineScope.launch {
+                    snackbarHost.showSnackbar(
+                        message = "No photos selected",
+                        withDismissAction = true,
+                    )
+                }
             }
         }
     )
@@ -100,16 +108,44 @@ fun AvatarPicker(
     val requestReadPermissionsLauncher = rememberLauncherForActivityResult(
         contract = RequestMultiplePermissions()
     ) { permissions ->
-        val granted = permissions.entries.all { it.value }
-        if (granted) {
+        val isGranted = permissions.entries.all { it.value }
+        if (isGranted) {
             pickImageLegacyLauncher.launch("image/*")
         } else {
-            coroutineScope.launch {
-                snackbarHost.showSnackbar(
-                    message = "Fail: Permission is denied",
-                    withDismissAction = true,
-                    duration = SnackbarDuration.Long,
+            val readImagePermission =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    Manifest.permission.READ_MEDIA_IMAGES
+                } else {
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                }
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    context as Activity,
+                    readImagePermission,
                 )
+            ) {
+                coroutineScope.launch {
+                    snackbarHost.showSnackbar(
+                        message = "Media permission is required",
+                        withDismissAction = true,
+                    )
+                }
+            } else {
+                coroutineScope.launch {
+                    val isClicked = snackbarHost.showSnackbar(
+                        message = "Media permission is required",
+                        withDismissAction = true,
+                        actionLabel = "Settings"
+                    )
+
+                    if (isClicked == SnackbarResult.ActionPerformed) {
+                        val intent = Intent(
+                            android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.fromParts("package", context.packageName, null)
+                        )
+                        context.startActivity(intent)
+                    }
+                }
             }
         }
     }
@@ -118,11 +154,12 @@ fun AvatarPicker(
         if (PickVisualMedia.isPhotoPickerAvailable(context)) {
             pickMediaLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
         } else {
-            val readImagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                Manifest.permission.READ_MEDIA_IMAGES
-            } else {
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            }
+            val readImagePermission =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    Manifest.permission.READ_MEDIA_IMAGES
+                } else {
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                }
 
             if (ContextCompat.checkSelfPermission(
                     context,
@@ -131,10 +168,7 @@ fun AvatarPicker(
             ) {
                 pickImageLegacyLauncher.launch("image/*")
             } else {
-                // Request permission
-                requestReadPermissionsLauncher.launch(
-                    arrayOf(readImagePermission)
-                )
+                requestReadPermissionsLauncher.launch(arrayOf(readImagePermission))
             }
         }
     }
@@ -144,13 +178,18 @@ fun AvatarPicker(
         contract = TakePicture(),
         onResult = { success: Boolean ->
             if (success) {
-                // Ảnh đã được chụp và lưu vào tempImageUri
                 println("Photo taken: $tempImageUri")
                 // TODO: Xử lý tempImageUri (hiển thị, tải lên, xóa file tạm)
             } else {
                 tempImageUri?.let { uri ->
                     context.contentResolver.delete(uri, null, null)
                     tempImageUri = null
+                }
+                coroutineScope.launch {
+                    snackbarHost.showSnackbar(
+                        message = "Take photo is cancelled",
+                        withDismissAction = true,
+                    )
                 }
             }
         }
@@ -168,17 +207,28 @@ fun AvatarPicker(
                     Manifest.permission.CAMERA
                 )
             ) {
-                // TODO: Hiển thị SnackBar/AlertDialog giải thích tại sao cần quyền
-                println("Camera permission denied (rationale should be shown)")
+                coroutineScope.launch {
+                    snackbarHost.showSnackbar(
+                        message = "Camera permission is required",
+                        withDismissAction = true,
+                    )
+                }
             } else {
-                // TODO: Hiển thị SnackBar/AlertDialog hướng dẫn người dùng vào cài đặt
-                println("Camera permission denied permanently. Direct user to settings.")
-                // Mở cài đặt ứng dụng
-//                val intent = Intent(
-//                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-//                    Uri.fromParts("package", context.packageName, null)
-//                )
-//                context.startActivity(intent)
+                coroutineScope.launch {
+                    val isClicked = snackbarHost.showSnackbar(
+                        message = "Camera permission is required",
+                        withDismissAction = true,
+                        actionLabel = "Settings"
+                    )
+
+                    if (isClicked == SnackbarResult.ActionPerformed) {
+                        val intent = Intent(
+                            android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.fromParts("package", context.packageName, null)
+                        )
+                        context.startActivity(intent)
+                    }
+                }
             }
         }
     }
@@ -192,21 +242,9 @@ fun AvatarPicker(
                 tempImageUri?.let { takePhotoLauncher.launch(it) }
             }
 
-            ActivityCompat.shouldShowRequestPermissionRationale(
-                context as Activity, Manifest.permission.CAMERA
-            ) -> {
-                // TODO: Hiển thị SnackBar/AlertDialog giải thích trước khi yêu cầu lại
-                println("Show rationale for camera permission before asking again.")
-                requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-            }
-
-            else -> {
-                requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-            }
+            else -> requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
-
-    var showBottomSheet by remember { mutableStateOf(false) }
 
     if (showBottomSheet) {
         AvatarBottomSheet(
@@ -222,22 +260,45 @@ fun AvatarPicker(
             .padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(R.drawable.fade_avatar_fallback),
-            contentDescription = "Avatar place holder",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(72.dp)
-                .border(
-                    width = (0.5).dp,
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-                .clip(CircleShape)
-                .clickable(
-                    onClick = { showBottomSheet = true },
-                ),
-        )
+        if (isLoading) {
+            Image(
+                painter = painterResource(R.drawable.fade_avatar_fallback),
+                contentDescription = "Avatar place holder",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(72.dp)
+                    .border(
+                        width = (0.5).dp,
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                    .clip(CircleShape)
+            )
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                error = painterResource(R.drawable.fade_avatar_fallback),
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
+                filterQuality = FilterQuality.Medium,
+                modifier = Modifier
+                    .size(72.dp)
+                    .border(
+                        width = (0.5).dp,
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                    .clip(CircleShape)
+                    .clickable(
+                        onClick = { showBottomSheet = true },
+                    ),
+            )
+        }
+
         Text(
             text = "Edit avatar",
             fontSize = 12.sp,

@@ -85,7 +85,7 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
         val authUser = res.user
 
         if (authUser == null) throw Exception("Login failed for some reason")
-        
+
         _profile.value = getUserRemoteProfile(authUser.uid)
         _user.value = authUser
     }
@@ -133,6 +133,18 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
             .await()
 
         _profile.update { it?.copy(name = name.trim()) }
+    }
+
+    override suspend fun updateUserAvatar(avatar: String) {
+        val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
+        if (avatar.isBlank()) throw Exception("Avatar cannot be blank")
+
+        firestore.collection("users")
+            .document(uid)
+            .update("avatar", avatar.trim())
+            .await()
+
+        _profile.update { it?.copy(avatar = avatar.trim()) }
     }
 
     override suspend fun updateUserPhone(phone: String) {

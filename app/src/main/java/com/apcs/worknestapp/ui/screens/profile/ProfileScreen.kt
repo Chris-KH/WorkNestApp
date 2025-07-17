@@ -99,7 +99,11 @@ fun ProfileScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            EditProfileButton(onClick = { navController.navigate(Screen.EditProfile.route) })
+            EditProfileButton(
+                onClick = {
+                    navController.navigate(Screen.EditProfile.route)
+                }
+            )
             Spacer(modifier = Modifier.height(24.dp))
 
             ProfileInfoCard(

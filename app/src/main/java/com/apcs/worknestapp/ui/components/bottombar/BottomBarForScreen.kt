@@ -10,6 +10,7 @@ fun BottomBarForScreen(screen: Screen?, navController: NavHostController) {
         Screen.Home,
         Screen.Profile,
         Screen.NotificationScreen,
+        Screen.Note,
             -> {
             MainBottomBar(currentScreen = screen, navController = navController)
         }

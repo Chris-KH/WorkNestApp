@@ -27,6 +27,7 @@ fun RowScope.NavItem(
         is Screen.Home -> if (selected) R.drawable.fill_home else R.drawable.outline_home
         is Screen.Profile -> if (selected) R.drawable.fill_profile else R.drawable.outline_profile
         is Screen.NotificationScreen -> if (selected) R.drawable.fill_bell else R.drawable.outline_bell
+        is Screen.Note -> if (selected) R.drawable.fill_note else R.drawable.outline_note
         else -> if (selected) R.drawable.fill_unknown else R.drawable.outline_unknown
     }
 

@@ -36,6 +36,15 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
                 }
             }
             NavItem(
+                screen = Screen.Note,
+                currentScreen = currentScreen,
+            ) {
+                navController.navigate(Screen.Note.route) {
+                    popUpTo(Screen.Note.route) { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
+            NavItem(
                 screen = Screen.NotificationScreen,
                 currentScreen = currentScreen,
             ) {
