@@ -49,6 +49,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.apcs.worknestapp.utils.FileUtils
+import com.apcs.worknestapp.utils.FileUtils.createImageFileUri
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
@@ -249,20 +251,4 @@ fun AvatarPicker(
             thickness = (0.5).dp,
         )
     }
-}
-
-fun createImageFileUri(context: Context): Uri {
-    val format = SimpleDateFormat("yyyyMMdd_HH:mm:ss", Locale.getDefault())
-    val timestamp = format.format(Date())
-
-    val imageFileName = "JPEG_${timestamp}"
-
-    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-    val imageFile = File.createTempFile(imageFileName, ".jpg", storageDir)
-
-    return FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.provider", // Authority match AndroidManifest.xml
-        imageFile
-    )
 }
