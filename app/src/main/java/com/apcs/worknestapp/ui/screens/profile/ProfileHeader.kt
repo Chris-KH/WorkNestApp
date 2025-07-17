@@ -40,7 +40,7 @@ fun ProfileHeader(
                 .data(imageUrl)
                 .crossfade(true)
                 .build(),
-            placeholder = painterResource(R.drawable.fade_image),
+            placeholder = painterResource(R.drawable.fade_avatar_fallback),
             error = painterResource(R.drawable.fade_avatar_fallback),
             contentDescription = null,
             contentScale = ContentScale.Crop,

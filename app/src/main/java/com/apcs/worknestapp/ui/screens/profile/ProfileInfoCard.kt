@@ -58,6 +58,7 @@ fun ProfileInfoCard(
                 fontSize = 14.sp,
                 textAlign = TextAlign.Justify,
                 lineHeight = 14.sp,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
         HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))

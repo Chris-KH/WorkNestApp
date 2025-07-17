@@ -1,10 +1,17 @@
 package com.apcs.worknestapp.ui.screens.editprofile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -19,11 +26,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
+import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.components.AvatarBottomSheet
+import com.apcs.worknestapp.ui.components.AvatarPicker
 import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
 import com.apcs.worknestapp.ui.screens.Screen
-import kotlinx.coroutines.delay
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun EditProfileScreen(
@@ -33,7 +49,6 @@ fun EditProfileScreen(
 ) {
     val authViewModel = LocalAuthViewModel.current
     val profile = authViewModel.profile.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
 
     var isLoading by remember { mutableStateOf(false) }
 
@@ -54,18 +69,17 @@ fun EditProfileScreen(
         modifier = modifier,
     ) { innerPadding ->
         Box(
+            contentAlignment = Alignment.TopCenter,
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface),
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(alignment = Alignment.Center)
-                )
-            } else {
-                Text(text = "EditScreen")
-            }
+            AvatarPicker(
+                imageUrl = profile.value?.avatar,
+                isLoading = isLoading,
+                snackbarHost = snackbarHost,
+            )
         }
     }
 }

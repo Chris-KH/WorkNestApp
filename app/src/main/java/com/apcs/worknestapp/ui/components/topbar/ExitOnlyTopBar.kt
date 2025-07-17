@@ -41,7 +41,7 @@ fun ExitOnlyTopBar(
                     text = screen.title,
                     fontWeight = FontWeight.Bold,
                     fontFamily = Roboto,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     letterSpacing = (0).sp,
                     lineHeight = 24.sp,
                     modifier = Modifier
