@@ -22,7 +22,6 @@ fun NoteScreen(
         topBar = {
             TopBarNoteScreen(
                 navController = navController,
-                scrollBehavior = null,
             )
         },
         modifier = modifier,

@@ -25,7 +25,6 @@ import com.apcs.worknestapp.ui.screens.Screen
 @Composable
 fun TopBarProfileScreen(
     navController: NavHostController,
-    scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         TopAppBar(
@@ -54,7 +53,6 @@ fun TopBarProfileScreen(
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                 actionIconContentColor = MaterialTheme.colorScheme.onSurface,
             ),
-            scrollBehavior = scrollBehavior,
             modifier = Modifier,
         )
 

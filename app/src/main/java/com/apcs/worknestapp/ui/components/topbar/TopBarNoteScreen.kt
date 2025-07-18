@@ -19,7 +19,6 @@ import androidx.navigation.NavHostController
 @Composable
 fun TopBarNoteScreen(
     navController: NavHostController,
-    scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         TopAppBar(
@@ -40,7 +39,6 @@ fun TopBarNoteScreen(
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                 actionIconContentColor = MaterialTheme.colorScheme.onSurface,
             ),
-            scrollBehavior = scrollBehavior,
             modifier = Modifier
         )
 

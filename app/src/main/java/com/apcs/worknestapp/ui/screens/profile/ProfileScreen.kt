@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -33,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
+import com.apcs.worknestapp.ui.components.topbar.TopBarNoteScreen
+import com.apcs.worknestapp.ui.components.topbar.TopBarProfileScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
 
@@ -52,109 +55,86 @@ fun ProfileScreen(
     val coroutineScope = rememberCoroutineScope()
     val pullRefreshState = rememberPullToRefreshState()
 
-    PullToRefreshBox(
-        state = pullRefreshState,
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            coroutineScope.launch {
-                val isSuccess = authViewModel.loadUserProfile()
-                isRefreshing = false
-                if (!isSuccess) {
-                    snackbarHost.showSnackbar(
-                        message = "Refresh user profile fail",
-                        withDismissAction = true,
-                        duration = SnackbarDuration.Short,
-                    )
-                }
-            }
-        },
-        indicator = {
-            PullToRefreshDefaults.Indicator(
-                state = pullRefreshState,
-                isRefreshing = isRefreshing,
-                modifier = Modifier.align(Alignment.TopCenter),
-                containerColor = MaterialTheme.colorScheme.surface,
-                color = MaterialTheme.colorScheme.primary
+    Scaffold(
+        topBar = {
+            TopBarProfileScreen(
+                navController = navController,
             )
         },
-        contentAlignment = Alignment.TopCenter,
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(
-                    state = scrollState,
-                    overscrollEffect = overscrollEffect,
-                )
-                .padding(top = 12.dp)
-                .padding(horizontal = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            ProfileHeader(
-                imageUrl = profile.value?.avatar,
-                name = profile.value?.name,
-                email = profile.value?.email,
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-            EditProfileButton(
-                onClick = {
-                    navController.navigate(Screen.EditProfile.route)
-                }
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-
-            ProfileInfoCard(
-                bio = profile.value?.bio,
-                createdAt = profile.value?.createdAt,
-            )
-        }
-
-        Button(
-            onClick = {
+        modifier = modifier,
+    ) { innerPadding ->
+        PullToRefreshBox(
+            state = pullRefreshState,
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
                 coroutineScope.launch {
-                    authViewModel.signOut()
+                    val isSuccess = authViewModel.loadUserProfile()
+                    isRefreshing = false
+                    if (!isSuccess) {
+                        snackbarHost.showSnackbar(
+                            message = "Refresh user profile fail",
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Short,
+                        )
+                    }
                 }
-            }
+            },
+            indicator = {
+                PullToRefreshDefaults.Indicator(
+                    state = pullRefreshState,
+                    isRefreshing = isRefreshing,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            contentAlignment = Alignment.TopCenter,
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            Text(text = "SignOut")
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(
+                        state = scrollState,
+                        overscrollEffect = overscrollEffect,
+                    )
+                    .padding(top = 12.dp)
+                    .padding(horizontal = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                ProfileHeader(
+                    imageUrl = profile.value?.avatar,
+                    name = profile.value?.name,
+                    email = profile.value?.email,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                EditProfileButton(
+                    onClick = {
+                        navController.navigate(Screen.EditProfile.route)
+                    }
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+
+                ProfileInfoCard(
+                    bio = profile.value?.bio,
+                    createdAt = profile.value?.createdAt,
+                )
+            }
+
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        authViewModel.signOut()
+                    }
+                }
+            ) {
+                Text(text = "SignOut")
+            }
         }
     }
-
-    /* Box(
-         modifier = modifier
-             .fillMaxSize()
-             .background(MaterialTheme.colorScheme.background)
-             .verticalScroll(
-                 state = scrollState,
-                 overscrollEffect = overscrollEffect,
-             )
-     ) {
-         Column(
-             modifier = Modifier
-                 .fillMaxSize()
-                 .padding(top = 12.dp)
-                 .padding(horizontal = 12.dp),
-             horizontalAlignment = Alignment.CenterHorizontally,
-         ) {
-             ProfileHeader(
-                 imageUrl = profile.value?.avatar,
-                 name = profile.value?.name,
-                 email = profile.value?.email,
-             )
-
-             Spacer(modifier = Modifier.height(16.dp))
-             EditProfileButton(onClick = { navController.navigate(Screen.EditProfile.route) })
-             Spacer(modifier = Modifier.height(24.dp))
-
-             ProfileInfoCard(
-                 bio = profile.value?.bio,
-                 createdAt = profile.value?.createdAt,
-             )
-         }
-     }*/
 }

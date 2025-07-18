@@ -49,10 +49,6 @@ fun MainLayout(startDestination: String) {
     val currentRoute = navBackStackEntry?.destination?.route
     val currentScreen = Screen.fromRoute(currentRoute)
 
-    val scrollBehavior = when (currentScreen) {
-        else -> TopAppBarDefaults.pinnedScrollBehavior()
-    }
-
     LaunchedEffect(isNetworkConnected) {
         if (!isNetworkConnected) {
             snackbarHost.showSnackbar(
@@ -64,19 +60,11 @@ fun MainLayout(startDestination: String) {
     }
 
     Scaffold(
-        topBar = {
-            TopBarForScreen(
-                screen = currentScreen,
-                navController = navController,
-                scrollBehavior = scrollBehavior,
-            )
-        },
+        topBar = {},
         bottomBar = { BottomBarForScreen(screen = currentScreen, navController = navController) },
         snackbarHost = { SnackbarHost(snackbarHost) { CustomSnackBar(data = it) } },
         containerColor = MaterialTheme.colorScheme.background,
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -86,7 +74,7 @@ fun MainLayout(startDestination: String) {
             composable(route = Screen.Home.route) {
                 HomeScreen(
                     navController = navController,
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier,
                 )
             }
 
@@ -101,7 +89,8 @@ fun MainLayout(startDestination: String) {
             composable(route = Screen.Notification.route) {
                 NotificationScreen(
                     navController = navController,
-                    modifier = Modifier.padding(innerPadding),
+                    snackbarHost = snackbarHost,
+                    modifier = Modifier,
                 )
             }
 
@@ -109,7 +98,7 @@ fun MainLayout(startDestination: String) {
                 ProfileScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = Modifier,
                 )
             }
 

@@ -12,20 +12,18 @@ import com.apcs.worknestapp.ui.screens.Screen
 fun TopBarForScreen(
     screen: Screen?,
     navController: NavHostController,
-    scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     when (screen) {
         Screen.Home -> {
-            TopBarHomeScreen(navController = navController, scrollBehavior = scrollBehavior)
+            TopBarHomeScreen(navController = navController)
         }
 
         Screen.Profile -> {
-            TopBarProfileScreen(navController = navController, scrollBehavior = scrollBehavior)
+            TopBarProfileScreen(navController = navController)
         }
 
-
         Screen.Notification -> {
-            TopBarNotificationScreen(navController = navController, scrollBehavior = scrollBehavior)
+            TopBarNotificationScreen(navController = navController)
         }
 
 
