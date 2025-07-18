@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.theme.Poppins
 
 @Composable
 fun SignUpScreen(
@@ -88,6 +89,7 @@ fun SignUpScreen(
                 Text(
                     text = "Register",
                     color = MaterialTheme.colorScheme.primary,
+                    fontFamily = Poppins,
                     fontSize = 44.sp,
                     fontWeight = FontWeight.SemiBold,
                 )

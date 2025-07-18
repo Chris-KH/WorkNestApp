@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.theme.Poppins
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun NameInput(
@@ -41,15 +42,18 @@ fun NameInput(
         },
         textStyle = TextStyle(
             fontSize = 14.sp,
+            lineHeight = 14.sp,
+            fontFamily = Roboto,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = Poppins,
-            fontWeight = FontWeight.Medium
         ),
         onValueChange = onValueChange,
         label = {
             Text(
                 text = "Name",
-                fontFamily = Poppins,
+                fontSize = 14.sp,
+                lineHeight = 14.sp,
+                fontFamily = Roboto,
                 fontWeight = FontWeight.Medium,
             )
         },

@@ -23,6 +23,7 @@ fun EditItemColumn(
                     label = label,
                     value = value ?: "",
                     labelWidth = maxLabelWidth,
+                    isLastItem = index + 1 == items.size,
                     onClick = { onItemClick(label) }
                 )
             }.first().measure(constraints)

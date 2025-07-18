@@ -9,35 +9,35 @@ import androidx.compose.ui.unit.sp
 // Set of Material typography styles to start with
 val Typography = Typography(
     bodyLarge = TextStyle(
-        fontFamily = Inter,
+        fontFamily = Roboto,
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = Inter,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
         lineHeight = 22.sp,
         letterSpacing = 0.sp
     ),
-    bodySmall = TextStyle(
-        fontFamily = Inter,
+    bodyMedium = TextStyle(
+        fontFamily = Roboto,
         fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
+        fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.sp
     ),
+    bodySmall = TextStyle(
+        fontFamily = Roboto,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.sp
+    ),
     titleLarge = TextStyle(
-        fontFamily = Inter,
+        fontFamily = Roboto,
         fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
-        lineHeight = 28.sp,
+        lineHeight = 30.sp,
         letterSpacing = 0.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = Inter,
+        fontFamily = Roboto,
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
         lineHeight = 16.sp,

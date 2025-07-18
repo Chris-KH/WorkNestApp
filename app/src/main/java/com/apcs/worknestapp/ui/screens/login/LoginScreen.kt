@@ -42,6 +42,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.SignInWithGoogleButton
 import com.apcs.worknestapp.ui.components.TextDivider
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.theme.Poppins
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
@@ -90,6 +91,7 @@ fun LoginScreen(
                 Text(
                     text = "Login",
                     color = MaterialTheme.colorScheme.primary,
+                    fontFamily = Poppins,
                     fontSize = 44.sp,
                     fontWeight = FontWeight.SemiBold,
                 )

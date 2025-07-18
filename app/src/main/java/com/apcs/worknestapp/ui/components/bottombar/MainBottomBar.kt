@@ -17,8 +17,8 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider(
             modifier = Modifier.fillMaxWidth(),
-            thickness = (0.7).dp,
-            color = MaterialTheme.colorScheme.outlineVariant
+            thickness = (0.5).dp,
+            color = MaterialTheme.colorScheme.outlineVariant,
         )
 
         NavigationBar(

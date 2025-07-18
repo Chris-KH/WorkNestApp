@@ -70,7 +70,7 @@ fun EditProfileScreen(
         topBar = {
             ExitOnlyTopBar(
                 navController = navController,
-                screen = Screen.Setting
+                screen = Screen.EditProfile
             )
         },
         containerColor = MaterialTheme.colorScheme.surface,
@@ -79,11 +79,7 @@ fun EditProfileScreen(
         Box(
             contentAlignment = Alignment.TopCenter,
             modifier = Modifier
-                .padding(
-                    top = innerPadding.calculateTopPadding(),
-                    start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                    end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                )
+                .padding(innerPadding)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
                 .verticalScroll(rememberScrollState()),
@@ -99,6 +95,7 @@ fun EditProfileScreen(
                 )
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant,
+                    thickness = (0.5).dp,
                 )
 
                 if (isLoading) {
@@ -106,10 +103,10 @@ fun EditProfileScreen(
                         CircularProgressIndicator()
                     }
                 } else {
-
                     EditItemColumn(
                         items = listOf(
                             "Name" to profile.value?.name,
+                            "Pronouns" to null,
                             "Bio" to profile.value?.bio,
                         ),
                         onItemClick = { field ->
@@ -118,10 +115,9 @@ fun EditProfileScreen(
                     )
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = (0.5).dp,
                     )
                 }
-
-                Spacer(modifier = Modifier.height(innerPadding.calculateBottomPadding()))
             }
         }
     }
