@@ -41,7 +41,7 @@ fun RowScope.NavItem(
             Icon(
                 painter = painterResource(icon),
                 contentDescription = screen.route,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(24.dp),
             )
         },
         label = {
@@ -53,41 +53,10 @@ fun RowScope.NavItem(
             )
         },
         colors = NavigationBarItemDefaults.colors(
-            //indicatorColor = MaterialTheme.colorScheme.success
             selectedIconColor = MaterialTheme.colorScheme.primary,
             selectedTextColor = MaterialTheme.colorScheme.primary,
             unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
         )
     )
-
-    /*    Box(
-            modifier = modifier
-                .clickable { if (!selected) onClick() },
-            contentAlignment = Alignment.Center
-        ) {
-
-            Column(
-                modifier = Modifier,
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = screen.route,
-                    modifier = Modifier.size(24.dp),
-                    tint = if (selected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = screen.title,
-                    color = if (selected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    fontSize = fixedTextSize,
-                    lineHeight = fixedTextSize,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }*/
 }
