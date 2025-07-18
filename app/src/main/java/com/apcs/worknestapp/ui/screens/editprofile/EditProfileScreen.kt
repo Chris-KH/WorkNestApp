@@ -8,6 +8,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,24 +41,36 @@ fun EditProfileScreen(
         authViewModel.loadUserProfile()
         isLoading = false
     }
-    
-    Box(
-        contentAlignment = Alignment.TopCenter,
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface),
-    ) {
-        AvatarPicker(
-            imageUrl = profile.value?.avatar,
-            isLoading = isLoading,
-            snackbarHost = snackbarHost,
-        )
 
-        if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    Scaffold(
+        topBar = {
+            ExitOnlyTopBar(
+                navController = navController,
+                screen = Screen.Setting
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        modifier = modifier,
+    ) { innerPadding ->
+        Box(
+            contentAlignment = Alignment.TopCenter,
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface),
+        ) {
+            AvatarPicker(
+                imageUrl = profile.value?.avatar,
+                isLoading = isLoading,
+                snackbarHost = snackbarHost,
+            )
+
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
-        }
 
+        }
     }
 }

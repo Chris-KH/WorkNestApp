@@ -98,10 +98,10 @@ fun MainLayout(startDestination: String) {
                 )
             }
 
-            composable(route = Screen.NotificationScreen.route) {
+            composable(route = Screen.Notification.route) {
                 NotificationScreen(
                     navController = navController,
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(innerPadding),
                 )
             }
 
@@ -131,7 +131,7 @@ fun MainLayout(startDestination: String) {
                 EditProfileScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = Modifier,
                 )
             }
 
@@ -153,7 +153,7 @@ fun MainLayout(startDestination: String) {
                 SettingScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = Modifier,
                 )
             }
 

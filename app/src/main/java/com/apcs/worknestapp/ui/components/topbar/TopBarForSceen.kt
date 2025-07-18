@@ -23,13 +23,8 @@ fun TopBarForScreen(
             TopBarProfileScreen(navController = navController, scrollBehavior = scrollBehavior)
         }
 
-        Screen.EditProfile,
-        Screen.Setting,
-            -> {
-            ExitOnlyTopBar(navController = navController, screen = screen)
-        }
 
-        Screen.NotificationScreen -> {
+        Screen.Notification -> {
             TopBarNotificationScreen(navController = navController, scrollBehavior = scrollBehavior)
         }
 
