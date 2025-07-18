@@ -20,23 +20,11 @@ fun SettingScreen(
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        topBar = {
-            ExitOnlyTopBar(
-                screen = Screen.Setting,
-                navController = navController,
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        modifier = modifier,
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface),
-        ) {
-            Text(text = "SettingScreen")
-        }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
+        Text(text = "SettingScreen")
     }
 }

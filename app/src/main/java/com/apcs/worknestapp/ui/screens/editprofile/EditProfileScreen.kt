@@ -40,35 +40,24 @@ fun EditProfileScreen(
         authViewModel.loadUserProfile()
         isLoading = false
     }
+    
+    Box(
+        contentAlignment = Alignment.TopCenter,
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
+        AvatarPicker(
+            imageUrl = profile.value?.avatar,
+            isLoading = isLoading,
+            snackbarHost = snackbarHost,
+        )
 
-    Scaffold(
-        topBar = {
-            ExitOnlyTopBar(
-                screen = Screen.EditProfile,
-                navController = navController,
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        modifier = modifier,
-    ) { innerPadding ->
-        Box(
-            contentAlignment = Alignment.TopCenter,
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface),
-        ) {
-            AvatarPicker(
-                imageUrl = profile.value?.avatar,
-                isLoading = isLoading,
-                snackbarHost = snackbarHost,
-            )
-
-            if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
         }
+
     }
 }

@@ -30,10 +30,9 @@ import com.apcs.worknestapp.ui.theme.Roboto
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExitOnlyTopBar(
-    screen: Screen,
     navController: NavHostController,
-
-    ) {
+    screen: Screen,
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         CenterAlignedTopAppBar(
             title = {

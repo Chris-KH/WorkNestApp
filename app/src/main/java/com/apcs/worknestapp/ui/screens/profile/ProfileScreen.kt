@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
@@ -110,6 +112,16 @@ fun ProfileScreen(
                 bio = profile.value?.bio,
                 createdAt = profile.value?.createdAt,
             )
+        }
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    authViewModel.signOut()
+                }
+            }
+        ) {
+            Text(text = "SignOut")
         }
     }
 
