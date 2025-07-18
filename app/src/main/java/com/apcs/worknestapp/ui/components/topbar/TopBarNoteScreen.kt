@@ -44,7 +44,6 @@ fun TopBarNoteScreen(
 
         HorizontalDivider(
             modifier = Modifier.fillMaxWidth(),
-            thickness = (0.5).dp,
             color = MaterialTheme.colorScheme.outlineVariant
         )
     }

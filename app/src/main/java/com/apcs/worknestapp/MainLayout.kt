@@ -49,6 +49,8 @@ fun MainLayout(startDestination: String) {
     val currentRoute = navBackStackEntry?.destination?.route
     val currentScreen = Screen.fromRoute(currentRoute)
 
+    val transitionDuration = 500
+
     LaunchedEffect(isNetworkConnected) {
         if (!isNetworkConnected) {
             snackbarHost.showSnackbar(
@@ -69,6 +71,8 @@ fun MainLayout(startDestination: String) {
         NavHost(
             navController = navController,
             startDestination = startDestination,
+            enterTransition = { fadeIn(animationSpec = tween(transitionDuration)) },
+            exitTransition = { fadeOut(animationSpec = tween(transitionDuration)) },
             modifier = Modifier,
         ) {
             composable(route = Screen.Home.route) {
@@ -94,7 +98,18 @@ fun MainLayout(startDestination: String) {
                 )
             }
 
-            composable(route = Screen.Profile.route) {
+            composable(
+                route = Screen.Profile.route,
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(transitionDuration))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+            ) {
                 ProfileScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
@@ -107,13 +122,13 @@ fun MainLayout(startDestination: String) {
                 enterTransition = {
                     slideInHorizontally(
                         initialOffsetX = { it },
-                        animationSpec = tween(700)
+                        animationSpec = tween(transitionDuration)
                     )
                 },
                 exitTransition = {
                     slideOutHorizontally(
                         targetOffsetX = { it },
-                        animationSpec = tween(700)
+                        animationSpec = tween(transitionDuration)
                     )
                 },
             ) {
@@ -129,13 +144,13 @@ fun MainLayout(startDestination: String) {
                 enterTransition = {
                     slideInHorizontally(
                         initialOffsetX = { it },
-                        animationSpec = tween(700)
+                        animationSpec = tween(transitionDuration)
                     )
                 },
                 exitTransition = {
                     slideOutHorizontally(
                         targetOffsetX = { it },
-                        animationSpec = tween(700)
+                        animationSpec = tween(transitionDuration)
                     )
                 },
             ) {

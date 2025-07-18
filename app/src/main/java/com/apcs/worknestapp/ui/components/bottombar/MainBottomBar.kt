@@ -1,6 +1,5 @@
 package com.apcs.worknestapp.ui.components.bottombar
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.HorizontalDivider
@@ -18,7 +17,7 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider(
             modifier = Modifier.fillMaxWidth(),
-            thickness = (0.5).dp,
+            thickness = (0.7).dp,
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
@@ -40,7 +39,7 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
                 currentScreen = currentScreen,
             ) {
                 navController.navigate(Screen.Note.route) {
-                    popUpTo(Screen.Note.route) { inclusive = false }
+                    popUpTo(Screen.Home.route) { inclusive = false }
                     launchSingleTop = true
                 }
             }
@@ -49,7 +48,7 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
                 currentScreen = currentScreen,
             ) {
                 navController.navigate(Screen.Notification.route) {
-                    popUpTo(Screen.Notification.route) { inclusive = false }
+                    popUpTo(Screen.Home.route) { inclusive = false }
                     launchSingleTop = true
                 }
             }
@@ -58,7 +57,7 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
                 currentScreen = currentScreen,
             ) {
                 navController.navigate(Screen.Profile.route) {
-                    popUpTo(Screen.Profile.route) { inclusive = false }
+                    popUpTo(Screen.Home.route) { inclusive = false }
                     launchSingleTop = true
                 }
             }

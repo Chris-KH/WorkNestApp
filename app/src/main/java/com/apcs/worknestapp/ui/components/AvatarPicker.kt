@@ -246,27 +246,26 @@ fun AvatarPicker(
         }
     }
 
-    if (showBottomSheet) {
-        AvatarBottomSheet(
-            onDismiss = { showBottomSheet = false },
-            onTakePhoto = onTakePhoto,
-            onChooseFromLibrary = onChooseFromLibrary,
-        )
-    }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if (showBottomSheet) {
+            AvatarBottomSheet(
+                onDismiss = { showBottomSheet = false },
+                onTakePhoto = onTakePhoto,
+                onChooseFromLibrary = onChooseFromLibrary,
+            )
+        }
         if (isLoading) {
             Image(
                 painter = painterResource(R.drawable.fade_avatar_fallback),
                 contentDescription = "Avatar place holder",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(80.dp)
                     .border(
                         width = (0.5).dp,
                         shape = CircleShape,
@@ -286,7 +285,7 @@ fun AvatarPicker(
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.Medium,
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(80.dp)
                     .border(
                         width = (0.5).dp,
                         shape = CircleShape,
@@ -306,10 +305,6 @@ fun AvatarPicker(
             fontFamily = Roboto,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(vertical = 4.dp)
-        )
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant,
-            thickness = (0.5).dp,
         )
     }
 }
