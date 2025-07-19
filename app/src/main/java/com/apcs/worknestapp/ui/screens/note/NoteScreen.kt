@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.ui.screens.note
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -22,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -44,17 +52,6 @@ fun NoteScreen(
                 navController = navController,
             )
         },
-        bottomBar = {
-            OutlinedTextField(
-                value = noteText,
-                onValueChange = { noteText = it },
-                label = { Text("New") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp) ,
-                maxLines = 2
-            )
-        },
         modifier = modifier,
     ) { innerPadding ->
         Column(
@@ -62,10 +59,37 @@ fun NoteScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            OutlinedTextField(
+                value = noteText,
+                onValueChange = { noteText = it },
+                label = { Text("New Note") },
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            if (noteText.isNotBlank()) {
+                                notes = notes + noteText
+                                noteText = ""
+                            }
+                        },
+                        enabled = noteText.isNotBlank()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AddCircle,
+                            contentDescription = "Save New Note"
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp, bottom = 16.dp),
+                singleLine = true
+            )
             if (notes.isEmpty()) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .weight(1f)
+                        .fillMaxWidth()
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -74,14 +98,14 @@ fun NoteScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier
-                        .weight(1f) // Allow LazyColumn to take available space
+                        .weight(1f)
                         .fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    items(notes, key = { note -> note }) { note ->
+                    items(notes, key = { note -> note}) { note ->
                         NoteItem(
-                            note = note,
-                            onClick = {} //onNoteClick(note) } // implement later
+                            note = note.toString(),
+                            onClick = { /* onNoteClick(note) */ }
                         )
                     }
                 }
@@ -90,25 +114,30 @@ fun NoteScreen(
     }
 }
 
-
 @Composable
 fun NoteItem(
-    //note: Note,
     note: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-) {
 
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .padding(vertical = 4.dp, horizontal = 8.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant.copy(
+                    alpha = 0.5f
+                )
+            )
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(all = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = note,
-            fontSize = 18.sp, // Slightly larger font for titles
+            fontSize = 18.sp,
             modifier = Modifier.weight(1f)
         )
     }
