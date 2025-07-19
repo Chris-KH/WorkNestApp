@@ -76,7 +76,7 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.6f)
+                .fillMaxHeight(0.60f)
                 .verticalScroll(scrollState)
                 .imePadding()
                 .padding(horizontal = 24.dp)
@@ -103,7 +103,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             LoginForm(
                 enabled = !isLogging,
