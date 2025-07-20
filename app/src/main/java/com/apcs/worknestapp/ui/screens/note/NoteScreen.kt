@@ -47,6 +47,13 @@ fun NoteScreen(
         topBar = {
             TopBarNoteScreen(
                 navController = navController,
+                menuExpanded = showMenu,
+                onMenuClick = {
+                    showMenu = !showMenu
+                },
+                onDismissMenu = {
+                    showMenu = false
+                },
             )
         },
         modifier = modifier,
