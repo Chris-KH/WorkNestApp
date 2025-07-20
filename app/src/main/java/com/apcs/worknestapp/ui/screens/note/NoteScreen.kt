@@ -1,11 +1,8 @@
 package com.apcs.worknestapp.ui.screens.note
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -29,9 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.ui.components.topbar.TopBarNoteScreen
 
@@ -62,7 +59,8 @@ fun NoteScreen(
             OutlinedTextField(
                 value = noteText,
                 onValueChange = { noteText = it },
-                label = { Text("New Note") },
+                label = null,
+                placeholder = { Text("New note") },
                 trailingIcon = {
                     IconButton(
                         onClick = {
@@ -83,7 +81,16 @@ fun NoteScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(top = 8.dp, bottom = 16.dp),
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary
+                )
             )
             if (notes.isEmpty()) {
                 Box(
@@ -93,7 +100,7 @@ fun NoteScreen(
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No notes yet. Add one below!")
+                    Text("No notes yet. Add one!")
                 }
             } else {
                 LazyColumn(
@@ -114,31 +121,3 @@ fun NoteScreen(
     }
 }
 
-@Composable
-fun NoteItem(
-    note: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 8.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(
-                    alpha = 0.5f
-                )
-            )
-            .clickable(onClick = onClick)
-            .padding(all = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = note,
-            fontSize = 18.sp,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
