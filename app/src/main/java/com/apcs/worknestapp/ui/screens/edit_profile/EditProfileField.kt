@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.screens.edit_profile_detail
+package com.apcs.worknestapp.ui.screens.edit_profile
 
 enum class EditProfileField(val fieldName: String) {
     NAME("Name"),

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.theme.Inter
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun EditItemRow(
@@ -52,19 +53,20 @@ fun EditItemRow(
                 label = label,
                 modifier = Modifier.width(labelDp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = if (value.isNotBlank()) value else label,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
-                fontFamily = Inter,
+                fontFamily = Roboto,
                 lineHeight = 18.sp,
+                letterSpacing = 0.sp,
                 color =
                     if (value.isNotBlank()) MaterialTheme.colorScheme.onBackground
                     else MaterialTheme.colorScheme.outline,
                 modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 painter = painterResource(R.drawable.symbol_angle_arrow),
                 contentDescription = "Go edit",
@@ -77,7 +79,7 @@ fun EditItemRow(
             HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = labelDp + 12.dp + 12.dp),
+                    .padding(start = labelDp + 8.dp + 8.dp),
                 color = MaterialTheme.colorScheme.outlineVariant,
                 thickness = (0.5).dp,
             )

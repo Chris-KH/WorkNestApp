@@ -1,9 +1,11 @@
 package com.apcs.worknestapp.ui.screens.edit_profile_detail
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,9 +32,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -40,8 +44,10 @@ import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.DiscardChangeDialog
 import com.apcs.worknestapp.ui.components.topbar.EditProfileDetailTopBar
+import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.launch
+import kotlin.math.min
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,8 +60,10 @@ fun EditProfileDetailScreen(
 ) {
     val authViewModel = LocalAuthViewModel.current
     val profile = authViewModel.profile.collectAsState()
+
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
+
     var showAlert by remember { mutableStateOf(false) }
     var isSubmitting by remember { mutableStateOf(false) }
 
@@ -85,8 +93,10 @@ fun EditProfileDetailScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (value == initialValue) navController.popBackStack()
-                            else showAlert = true
+                            if (value == initialValue) {
+                                focusRequester.freeFocus()
+                                navController.popBackStack()
+                            } else showAlert = true
                         },
                         enabled = !isSubmitting,
                     ) {
@@ -116,8 +126,10 @@ fun EditProfileDetailScreen(
                                             -> authViewModel.updateUserBio(value)
                                     }
                                     isSubmitting = false
-                                    if (isSuccess) navController.popBackStack()
-                                    else {
+                                    if (isSuccess) {
+                                        focusRequester.freeFocus()
+                                        navController.popBackStack()
+                                    } else {
                                         snackbarHost.showSnackbar(
                                             message = "Update ${field.fieldName.lowercase()} failed",
                                             withDismissAction = true,
@@ -136,7 +148,7 @@ fun EditProfileDetailScreen(
                         }
                     } else {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -149,12 +161,14 @@ fun EditProfileDetailScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .imePadding()
         ) {
             if (showAlert) {
                 DiscardChangeDialog(
                     onDismissRequest = { showAlert = false },
                     onDiscard = {
                         showAlert = false
+                        focusRequester.freeFocus()
                         navController.popBackStack()
                     },
                     onCancel = { showAlert = false }
@@ -163,13 +177,18 @@ fun EditProfileDetailScreen(
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .padding(top = 16.dp)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 OutlinedTextField(
                     value = value,
-                    onValueChange = { value = it },
+                    onValueChange = {
+                        value = if (field == EditProfileField.BIO) {
+                            it.substring(0, min(150, it.length))
+                        } else it
+                    },
                     enabled = !isSubmitting,
                     label = {
                         Text(
@@ -180,7 +199,7 @@ fun EditProfileDetailScreen(
                     },
                     placeholder = {
                         Text(
-                            text = "Field",
+                            text = "Type something...",
                             fontSize = 14.sp,
                             lineHeight = 14.sp,
                         )
@@ -192,12 +211,23 @@ fun EditProfileDetailScreen(
                         lineHeight = 14.sp,
                         letterSpacing = 0.sp,
                     ),
-                    shape = RoundedCornerShape(50f),
-                    singleLine = true,
+                    shape = RoundedCornerShape(40f),
+                    singleLine = (field != EditProfileField.BIO),
                     modifier = Modifier
                         .focusRequester(focusRequester)
                         .fillMaxWidth()
                 )
+
+                if (field == EditProfileField.BIO) {
+                    Text(
+                        text = "${value.length} / 150",
+                        fontSize = 12.sp,
+                        lineHeight = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }

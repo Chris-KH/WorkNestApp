@@ -32,7 +32,7 @@ import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileScreen
 import com.apcs.worknestapp.ui.screens.edit_profile_detail.EditProfileDetailScreen
-import com.apcs.worknestapp.ui.screens.edit_profile_detail.EditProfileField
+import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.screens.home.HomeScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
 import com.apcs.worknestapp.ui.screens.note.NoteScreen

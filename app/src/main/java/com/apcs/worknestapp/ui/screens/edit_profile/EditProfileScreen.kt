@@ -29,7 +29,7 @@ import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.ui.components.AvatarPicker
 import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
 import com.apcs.worknestapp.ui.screens.Screen
-import com.apcs.worknestapp.ui.screens.edit_profile_detail.EditProfileField
+import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
