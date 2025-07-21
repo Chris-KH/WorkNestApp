@@ -1,0 +1,51 @@
+package com.apcs.worknestapp.ui.screens.setting_detail
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
+import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.screens.setting.SettingField
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingDetailScreen(
+    field: SettingField,
+    navController: NavHostController,
+    snackbarHost: SnackbarHostState,
+    modifier: Modifier = Modifier,
+) {
+    Scaffold(
+        topBar = {
+            ExitOnlyTopBar(
+                navController = navController,
+                screen = Screen.SettingDetail,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.onBackground,
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        modifier = modifier,
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Text(text = "Setting ${field.fieldName}")
+        }
+    }
+}

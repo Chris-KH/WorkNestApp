@@ -1,10 +1,5 @@
 package com.apcs.worknestapp.ui.screens
 
-import android.util.Log
-import kotlin.collections.find
-import kotlin.text.startsWith
-import kotlin.text.substringBefore
-
 sealed class Screen(
     val route: String,
     val title: String,
@@ -18,6 +13,7 @@ sealed class Screen(
     object EditProfile : Screen(route = "edit-profile", title = "Edit Profile")
     object EditProfileDetail : Screen(route = "edit-profile-detail/{field}", title = "Edit Details")
     object Setting : Screen(route = "setting", title = "Settings")
+    object SettingDetail : Screen(route = "setting-detail/{field}", title = "Setting Details")
 
     companion object {
         val all: List<Screen> by lazy {
@@ -31,6 +27,7 @@ sealed class Screen(
                 EditProfile,
                 EditProfileDetail,
                 Setting,
+                SettingDetail,
             )
         }
 

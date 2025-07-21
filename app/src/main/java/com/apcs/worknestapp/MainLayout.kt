@@ -38,7 +38,9 @@ import com.apcs.worknestapp.ui.screens.login.LoginScreen
 import com.apcs.worknestapp.ui.screens.note.NoteScreen
 import com.apcs.worknestapp.ui.screens.notification.NotificationScreen
 import com.apcs.worknestapp.ui.screens.profile.ProfileScreen
+import com.apcs.worknestapp.ui.screens.setting.SettingField
 import com.apcs.worknestapp.ui.screens.setting.SettingScreen
+import com.apcs.worknestapp.ui.screens.setting_detail.SettingDetailScreen
 import com.apcs.worknestapp.ui.screens.signup.SignUpScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,9 +130,7 @@ fun MainLayout(startDestination: String) {
                     )
                 },
                 popEnterTransition = {
-                    fadeIn(
-                        animationSpec = tween(transitionDuration),
-                    )
+                    fadeIn(animationSpec = tween(transitionDuration))
                 },
                 popExitTransition = {
                     slideOutHorizontally(
@@ -192,7 +192,10 @@ fun MainLayout(startDestination: String) {
                         animationSpec = tween(transitionDuration)
                     )
                 },
-                exitTransition = {
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(transitionDuration))
+                },
+                popExitTransition = {
                     slideOutHorizontally(
                         targetOffsetX = { it },
                         animationSpec = tween(transitionDuration)
@@ -204,6 +207,44 @@ fun MainLayout(startDestination: String) {
                     snackbarHost = snackbarHost,
                     modifier = Modifier,
                 )
+            }
+
+            composable(
+                route = Screen.SettingDetail.route,
+                arguments = listOf(navArgument("field") {
+                    type = NavType.StringType
+                    nullable = false
+                }),
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+            ) { backStackEntry ->
+                val rawField = backStackEntry.arguments?.getString("field")
+                val field = SettingField.fromRoute(rawField)
+
+                if (field != null) {
+                    SettingDetailScreen(
+                        field = field,
+                        navController = navController,
+                        snackbarHost = snackbarHost,
+                        modifier = Modifier,
+                    )
+                } else {
+                    FallbackScreen(
+                        message = "Cannot open this setting screen for some reason, try again later.",
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
             }
 
             composable(route = Screen.Login.route) {

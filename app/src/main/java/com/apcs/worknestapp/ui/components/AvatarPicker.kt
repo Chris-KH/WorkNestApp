@@ -355,10 +355,10 @@ fun AvatarPicker(
         Text(
             text = "Edit avatar",
             fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Medium,
             fontFamily = Roboto,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(vertical = 4.dp)
+            modifier = Modifier.padding(vertical = 8.dp)
         )
     }
 }

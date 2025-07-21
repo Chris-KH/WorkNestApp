@@ -52,7 +52,9 @@ fun ProfileInfoCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = (bio ?: "_____"),
+                text =
+                    if (bio == null || bio.isEmpty()) "..."
+                    else bio,
                 fontFamily = Roboto,
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,

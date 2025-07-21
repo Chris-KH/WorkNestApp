@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,8 +30,8 @@ import com.apcs.worknestapp.ui.theme.Roboto
 fun SettingRow(
     text: String,
     @DrawableRes icon: Int,
-    containerColor: Color,
-    contentColor: Color,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     modifier: Modifier = Modifier,
     showArrow: Boolean = true,
     shape: Shape = RectangleShape,
