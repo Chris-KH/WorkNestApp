@@ -98,7 +98,7 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
         try {
             val remoteProfile = getUserRemoteProfile(authUser.uid)
             _profile.value = remoteProfile
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             val createdAt = authUser.metadata?.creationTimestamp?.let {
                 Timestamp(
                     seconds = it / 1000,
@@ -161,7 +161,6 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
 
     override suspend fun updateUserAddress(address: String) {
         val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
-        if (address.isBlank()) throw Exception("Address cannot be blank")
 
         firestore.collection("users")
             .document(uid)
@@ -169,6 +168,28 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
             .await()
 
         _profile.update { it?.copy(address = address) }
+    }
+
+    override suspend fun updateUserBio(bio: String) {
+        val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
+
+        firestore.collection("users")
+            .document(uid)
+            .update("bio", bio)
+            .await()
+
+        _profile.update { it?.copy(bio = bio) }
+    }
+
+    override suspend fun updateUserPronouns(pronouns: String) {
+        val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
+
+        firestore.collection("users")
+            .document(uid)
+            .update("pronouns", pronouns)
+            .await()
+
+        _profile.update { it?.copy(pronouns = pronouns) }
     }
 
     override suspend fun signOut() {

@@ -319,7 +319,7 @@ fun AvatarPicker(
                 contentDescription = "Avatar place holder",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(96.dp)
                     .border(
                         width = (0.5).dp,
                         shape = CircleShape,
@@ -339,7 +339,7 @@ fun AvatarPicker(
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.Medium,
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(96.dp)
                     .border(
                         width = (0.5).dp,
                         shape = CircleShape,

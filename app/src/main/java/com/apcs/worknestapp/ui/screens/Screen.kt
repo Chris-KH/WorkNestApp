@@ -15,7 +15,7 @@ sealed class Screen(
     object Note : Screen(route = "note", title = "Notes")
     object Notification : Screen(route = "notification", title = "Notifications")
     object Profile : Screen(route = "profile", title = "Profile")
-    object EditProfile : Screen(route = "edit-profile", title = "Edit profile")
+    object EditProfile : Screen(route = "edit-profile", title = "Edit Profile")
     object Setting : Screen(route = "setting", title = "Settings")
 
     companion object {

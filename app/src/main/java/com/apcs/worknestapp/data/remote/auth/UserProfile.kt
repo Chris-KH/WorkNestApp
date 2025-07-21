@@ -12,5 +12,6 @@ data class UserProfile(
     val phone: String? = null,
     val address: String? = null,
     val bio: String? = null,
+    val pronouns: String? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 )

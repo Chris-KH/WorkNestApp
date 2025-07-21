@@ -110,6 +110,7 @@ fun ProfileScreen(
                     imageUrl = profile.value?.avatar,
                     name = profile.value?.name,
                     email = profile.value?.email,
+                    pronouns = profile.value?.pronouns,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

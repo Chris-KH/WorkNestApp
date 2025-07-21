@@ -40,6 +40,22 @@ val Inter = FontFamily(
     Font(R.font.inter_italic_extrabold, FontWeight.ExtraBold, FontStyle.Italic),
 )
 
+val Montserrat = FontFamily(
+    // Regular weights
+    Font(R.font.montserrat_normal, FontWeight.Normal, FontStyle.Normal),
+    Font(R.font.montserrat_medium, FontWeight.Medium, FontStyle.Normal),
+    Font(R.font.montserrat_semibold, FontWeight.SemiBold, FontStyle.Normal),
+    Font(R.font.montserrat_bold, FontWeight.Bold, FontStyle.Normal),
+    Font(R.font.montserrat_extrabold, FontWeight.ExtraBold, FontStyle.Normal),
+
+    // Italic weights
+    Font(R.font.montserrat_italic_normal, FontWeight.Normal, FontStyle.Italic),
+    Font(R.font.montserrat_italic_medium, FontWeight.Medium, FontStyle.Italic),
+    Font(R.font.montserrat_italic_semibold, FontWeight.SemiBold, FontStyle.Italic),
+    Font(R.font.montserrat_italic_bold, FontWeight.Bold, FontStyle.Italic),
+    Font(R.font.montserrat_italic_extrabold, FontWeight.ExtraBold, FontStyle.Italic),
+)
+
 
 val Roboto = FontFamily(
     // Regular weights

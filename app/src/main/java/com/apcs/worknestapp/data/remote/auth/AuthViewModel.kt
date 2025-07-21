@@ -146,6 +146,32 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    suspend fun updateUserBio(
+        bio: String?,
+    ): Boolean {
+        return try {
+            if (bio == null) throw Exception("User bio cannot be null")
+            repository.updateUserBio(bio)
+            true
+        } catch(e: Exception) {
+            Log.e("AuthViewModel", "Update user bio failed", e)
+            false
+        }
+    }
+
+    suspend fun updateUserPronouns(
+        pronouns: String?,
+    ): Boolean {
+        return try {
+            if (pronouns == null) throw Exception("User pronouns cannot be null")
+            repository.updateUserPronouns(pronouns)
+            true
+        } catch(e: Exception) {
+            Log.e("AuthViewModel", "Update user pronouns failed", e)
+            false
+        }
+    }
+
     suspend fun signOut(): Boolean {
         return try {
             googleAuthUiClient.clearCredential()

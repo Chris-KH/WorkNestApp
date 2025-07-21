@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,12 +25,15 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.theme.Inter
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun ProfileHeader(
     imageUrl: String?,
     name: String?,
     email: String?,
+    pronouns: String?,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -53,14 +57,30 @@ fun ProfileHeader(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = name ?: "Anonymous",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                lineHeight = 28.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(
+                modifier = Modifier,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = (name ?: "Anonymous"),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 20.sp,
+                    lineHeight = 28.sp,
+                )
+
+                if (pronouns != null) {
+                    Text(
+                        text = "\u0020\u00b7\u0020" + (pronouns),
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.outline,
+                        fontFamily = Inter,
+                        fontSize = 12.sp,
+                        lineHeight = 12.sp,
+                    )
+                }
+            }
+
             Text(
                 text = email ?: "",
                 fontWeight = FontWeight.Normal,

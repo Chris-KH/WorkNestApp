@@ -116,7 +116,7 @@ fun EditProfileScreen(
                     EditItemColumn(
                         items = listOf(
                             "Name" to profile.value?.name,
-                            "Pronouns" to null,
+                            "Pronouns" to profile.value?.pronouns,
                             "Bio" to profile.value?.bio,
                         ),
                         onItemClick = { field ->
