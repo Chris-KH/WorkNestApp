@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.screens.editprofile
+package com.apcs.worknestapp.ui.screens.edit_profile
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

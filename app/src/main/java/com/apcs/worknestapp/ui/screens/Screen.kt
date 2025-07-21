@@ -16,6 +16,7 @@ sealed class Screen(
     object Notification : Screen(route = "notification", title = "Notifications")
     object Profile : Screen(route = "profile", title = "Profile")
     object EditProfile : Screen(route = "edit-profile", title = "Edit Profile")
+    object EditProfileDetail : Screen(route = "edit-profile-detail/{field}", title = "Edit Details")
     object Setting : Screen(route = "setting", title = "Settings")
 
     companion object {
@@ -28,6 +29,7 @@ sealed class Screen(
                 Notification,
                 Profile,
                 EditProfile,
+                EditProfileDetail,
                 Setting,
             )
         }

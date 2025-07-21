@@ -66,7 +66,7 @@ fun ProfileHeader(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 20.sp,
-                    lineHeight = 28.sp,
+                    lineHeight = 20.sp,
                 )
 
                 if (pronouns != null) {

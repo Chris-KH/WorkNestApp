@@ -13,24 +13,26 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.apcs.worknestapp.state.rememberNetworkState
 import com.apcs.worknestapp.ui.components.CustomSnackBar
+import com.apcs.worknestapp.ui.components.FallbackScreen
 import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
-import com.apcs.worknestapp.ui.components.topbar.TopBarForScreen
 import com.apcs.worknestapp.ui.screens.Screen
-import com.apcs.worknestapp.ui.screens.editprofile.EditProfileScreen
+import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileScreen
+import com.apcs.worknestapp.ui.screens.edit_profile_detail.EditProfileDetailScreen
+import com.apcs.worknestapp.ui.screens.edit_profile_detail.EditProfileField
 import com.apcs.worknestapp.ui.screens.home.HomeScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
 import com.apcs.worknestapp.ui.screens.note.NoteScreen
@@ -125,7 +127,12 @@ fun MainLayout(startDestination: String) {
                         animationSpec = tween(transitionDuration)
                     )
                 },
-                exitTransition = {
+                popEnterTransition = {
+                    fadeIn(
+                        animationSpec = tween(transitionDuration),
+                    )
+                },
+                popExitTransition = {
                     slideOutHorizontally(
                         targetOffsetX = { it },
                         animationSpec = tween(transitionDuration)
@@ -137,6 +144,44 @@ fun MainLayout(startDestination: String) {
                     snackbarHost = snackbarHost,
                     modifier = Modifier,
                 )
+            }
+
+            composable(
+                route = Screen.EditProfileDetail.route,
+                arguments = listOf(navArgument("field") {
+                    type = NavType.StringType
+                    nullable = false
+                }),
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+            ) { backStackEntry ->
+                val rawField = backStackEntry.arguments?.getString("field")
+                val field = EditProfileField.fromRoute(rawField)
+
+                if (field != null) {
+                    EditProfileDetailScreen(
+                        field = field,
+                        navController = navController,
+                        snackbarHost = snackbarHost,
+                        modifier = Modifier,
+                    )
+                } else {
+                    FallbackScreen(
+                        message = "Cannot open this edit screen for some reason, try again later.",
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
             }
 
             composable(

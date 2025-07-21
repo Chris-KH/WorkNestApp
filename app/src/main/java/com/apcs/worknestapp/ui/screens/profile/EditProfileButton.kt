@@ -23,15 +23,15 @@ fun EditProfileButton(
 ) {
     Button(
         onClick = onClick,
-        contentPadding = PaddingValues(vertical = 8.dp),
+        contentPadding = PaddingValues(vertical = 0.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(
             painterResource(R.drawable.fill_edit_pen),
-            contentDescription = null,
-            modifier = Modifier.size(18.dp)
+            contentDescription = "Edit profile",
+            modifier = Modifier.size(16.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = "Edit profile",
             fontWeight = FontWeight.SemiBold,
