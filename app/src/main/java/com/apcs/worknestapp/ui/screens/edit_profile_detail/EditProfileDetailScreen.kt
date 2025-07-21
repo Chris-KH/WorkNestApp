@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -43,7 +42,7 @@ import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.DiscardChangeDialog
-import com.apcs.worknestapp.ui.components.topbar.EditProfileDetailTopBar
+import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.launch
@@ -82,7 +81,7 @@ fun EditProfileDetailScreen(
 
     Scaffold(
         topBar = {
-            EditProfileDetailTopBar(
+            CustomTopBar(
                 field = field.fieldName,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,

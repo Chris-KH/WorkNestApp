@@ -3,7 +3,10 @@ package com.apcs.worknestapp.ui.screens.setting_detail
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -11,9 +14,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
-import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.screens.setting.SettingField
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,26 +32,65 @@ fun SettingDetailScreen(
 ) {
     Scaffold(
         topBar = {
-            ExitOnlyTopBar(
-                navController = navController,
-                screen = Screen.SettingDetail,
+            CustomTopBar(
+                field = field.fieldName,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground,
                     actionIconContentColor = MaterialTheme.colorScheme.onBackground,
-                )
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.symbol_angle_arrow),
+                            contentDescription = "back",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(90f)
+                        )
+                    }
+                },
+                actions = {}
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier,
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            Text(text = "Setting ${field.fieldName}")
+        when(field) {
+            SettingField.ACCOUNT -> SettingAccount(
+                navController = navController,
+                snackbarHost = snackbarHost,
+                modifier = Modifier.padding(innerPadding),
+            )
+
+            SettingField.THEME -> SettingTheme(
+                navController = navController,
+                snackbarHost = snackbarHost,
+                modifier = Modifier.padding(innerPadding),
+            )
+
+            SettingField.LANGUAGE -> SettingLanguage(
+                navController = navController,
+                snackbarHost = snackbarHost,
+                modifier = Modifier.padding(innerPadding),
+            )
+
+            SettingField.NOTIFICATION -> SettingNotification(
+                navController = navController,
+                snackbarHost = snackbarHost,
+                modifier = Modifier.padding(innerPadding),
+            )
+
+            SettingField.ABOUT -> SettingAbout(
+                navController = navController,
+                snackbarHost = snackbarHost,
+                modifier = Modifier.padding(innerPadding),
+            )
         }
     }
 }

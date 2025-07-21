@@ -19,7 +19,7 @@ import com.apcs.worknestapp.ui.theme.Roboto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditProfileDetailTopBar(
+fun CustomTopBar(
     field: String,
     colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
     navigationIcon: @Composable (() -> Unit) = {},
