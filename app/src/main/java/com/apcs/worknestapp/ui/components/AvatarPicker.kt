@@ -22,9 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -49,33 +47,91 @@ import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.domain.logic.MyCloudinary.uploadAvatarToCloudinary
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.apcs.worknestapp.utils.FileUtils.copyUriToTempFile
 import com.apcs.worknestapp.utils.FileUtils.createImageFileUri
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvatarPicker(
+    userId: String?,
     imageUrl: String?,
     isLoading: Boolean,
     snackbarHost: SnackbarHostState,
 ) {
+    val authViewModel = LocalAuthViewModel.current
     val context = LocalContext.current
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
     var showBottomSheet by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    fun uploadImage(uri: Uri, isFromCamera: Boolean = false) {
+        coroutineScope.launch {
+            val file = copyUriToTempFile(context, uri)
+            if (file != null) {
+                uploadAvatarToCloudinary(
+                    context = context,
+                    file = file,
+                    folder = "/$userId",
+                    onSuccess = { url ->
+                        if (isFromCamera) {
+                            tempImageUri?.let { uri ->
+                                context.contentResolver.delete(uri, null, null)
+                                tempImageUri = null
+                            }
+                        }
+                        coroutineScope.launch {
+                            val isSuccess = authViewModel.updateUserAvatar(url)
+                            if (isSuccess) {
+                                snackbarHost.showSnackbar(
+                                    message = "Upload successful",
+                                    withDismissAction = true,
+                                )
+                            } else {
+                                snackbarHost.showSnackbar(
+                                    message = "Upload avatar failed",
+                                    withDismissAction = true,
+                                )
+                            }
+                        }
+                    },
+                    onError = { error ->
+                        if (isFromCamera) {
+                            tempImageUri?.let { uri ->
+                                context.contentResolver.delete(uri, null, null)
+                                tempImageUri = null
+                            }
+                        }
+                        coroutineScope.launch {
+                            snackbarHost.showSnackbar(
+                                message = "Upload avatar failed: $error",
+                                withDismissAction = true,
+                            )
+                        }
+                    }
+                )
+            } else {
+                snackbarHost.showSnackbar(
+                    message = "Fail: Cannot read image file",
+                    withDismissAction = true,
+                )
+            }
+        }
+    }
+
     // Launcher for photo picker
     val pickMediaLauncher = rememberLauncherForActivityResult(
         contract = PickVisualMedia(),
         onResult = { uri: Uri? ->
+            // Persist media file access: context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             if (uri != null) {
-                println("Selected from library: $uri")
-                // TODO: Upload photo to server
-                // Persist media file access:
-                // context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                uploadImage(uri)
             } else {
                 coroutineScope.launch {
                     snackbarHost.showSnackbar(
@@ -92,8 +148,7 @@ fun AvatarPicker(
         contract = GetContent(), // "image/*" open gallery
         onResult = { uri: Uri? ->
             if (uri != null) {
-                println("Selected from legacy gallery: $uri")
-                // TODO: Upload photo to server
+                uploadImage(uri)
             } else {
                 coroutineScope.launch {
                     snackbarHost.showSnackbar(
@@ -178,8 +233,7 @@ fun AvatarPicker(
         contract = TakePicture(),
         onResult = { success: Boolean ->
             if (success) {
-                println("Photo taken: $tempImageUri")
-                // TODO: Xử lý tempImageUri (hiển thị, tải lên, xóa file tạm)
+                uploadImage(tempImageUri!!, true)
             } else {
                 tempImageUri?.let { uri ->
                     context.contentResolver.delete(uri, null, null)

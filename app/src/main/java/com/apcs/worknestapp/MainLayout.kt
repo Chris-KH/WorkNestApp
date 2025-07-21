@@ -49,7 +49,7 @@ fun MainLayout(startDestination: String) {
     val currentRoute = navBackStackEntry?.destination?.route
     val currentScreen = Screen.fromRoute(currentRoute)
 
-    val transitionDuration = 400
+    val transitionDuration = 500
 
     LaunchedEffect(isNetworkConnected) {
         if (!isNetworkConnected) {

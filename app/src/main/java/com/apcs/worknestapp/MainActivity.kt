@@ -14,9 +14,9 @@ import com.apcs.worknestapp.data.remote.auth.AuthViewModel
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.WorkNestAppTheme
+import com.cloudinary.android.MediaManager
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
-import kotlin.getValue
 
 val LocalAuthViewModel = staticCompositionLocalOf<AuthViewModel> {
     error("AuthViewModel not provided")
@@ -28,6 +28,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         FirebaseApp.initializeApp(this)
+
+        val config = hashMapOf(
+            "cloud_name" to "dgniomynr",
+            "secure" to true
+        )
+        MediaManager.init(this, config)
+
         super.onCreate(savedInstanceState)
         installSplashScreen()
 

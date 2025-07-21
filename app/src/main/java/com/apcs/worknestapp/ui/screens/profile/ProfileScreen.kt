@@ -125,16 +125,6 @@ fun ProfileScreen(
                     createdAt = profile.value?.createdAt,
                 )
             }
-
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        authViewModel.signOut()
-                    }
-                }
-            ) {
-                Text(text = "SignOut")
-            }
         }
     }
 }

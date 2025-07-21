@@ -19,7 +19,7 @@ fun EditItemLabel(
         fontWeight = FontWeight.Medium,
         fontFamily = Inter,
         lineHeight = 18.sp,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = MaterialTheme.colorScheme.onBackground,
         modifier = modifier,
     )
 }

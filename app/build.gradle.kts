@@ -81,6 +81,10 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
+    //Cloudinary
+    implementation(libs.cloudinary.android)
+    implementation(libs.cloudinary.android.core)
+
     //Room
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)

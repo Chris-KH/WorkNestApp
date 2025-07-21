@@ -39,7 +39,7 @@ class AuthViewModel @Inject constructor(
             try {
                 repository.checkAuth()
                 Log.d("AuthViewModel", "Profile: ${repository.profile.value}")
-            } catch (e: Exception) {
+            } catch(e: Exception) {
                 signOut()
                 Log.e("AuthViewModel", "Check failed", e)
             } finally {
@@ -52,7 +52,7 @@ class AuthViewModel @Inject constructor(
         return try {
             repository.loadUserProfile()
             true
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("AuthViewModel", "Load user profile failed", e)
             false
         }
@@ -63,7 +63,7 @@ class AuthViewModel @Inject constructor(
             repository.signUpWithEmailPassword(email = email, password = password, name = name)
             Log.d("AuthViewModel", "Signup success")
             null
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("AuthViewModel", "Signup failed", e)
             signOut()
             e.message ?: "Signup failed for some reason"
@@ -75,7 +75,7 @@ class AuthViewModel @Inject constructor(
             repository.login(email, password)
             Log.d("AuthViewModel", "Login success")
             true
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("AuthViewModel", "Login failed", e)
             signOut()
             false
@@ -88,7 +88,7 @@ class AuthViewModel @Inject constructor(
 
             repository.loginWithGoogle(idToken);
             true
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("AuthViewModel", "Google login failed", e)
             false
         }
@@ -101,7 +101,7 @@ class AuthViewModel @Inject constructor(
             if (name == null) throw Exception("User name cannot be null")
             repository.updateUserName(name)
             true
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("AuthViewModel", "Update user name failed", e)
             false
         }
@@ -114,7 +114,7 @@ class AuthViewModel @Inject constructor(
             if (phone == null) throw Exception("User phone cannot be null")
             repository.updateUserPhone(phone)
             true
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("AuthViewModel", "Update user phone failed", e)
             false
         }
@@ -127,8 +127,21 @@ class AuthViewModel @Inject constructor(
             if (address == null) throw Exception("User address cannot be null")
             repository.updateUserAddress(address)
             true
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("AuthViewModel", "Update user address failed", e)
+            false
+        }
+    }
+
+    suspend fun updateUserAvatar(
+        avatar: String?,
+    ): Boolean {
+        return try {
+            if (avatar == null) throw Exception("User avatar cannot be null")
+            repository.updateUserAvatar(avatar)
+            true
+        } catch(e: Exception) {
+            Log.e("AuthViewModel", "Update user avatar failed", e)
             false
         }
     }
@@ -138,7 +151,7 @@ class AuthViewModel @Inject constructor(
             googleAuthUiClient.clearCredential()
             sessionManager.signOutAndClearAll()
             true
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("AuthViewModel", "Logout failed", e)
             false
         }

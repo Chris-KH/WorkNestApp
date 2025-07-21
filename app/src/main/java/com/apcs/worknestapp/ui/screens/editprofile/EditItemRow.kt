@@ -65,7 +65,7 @@ fun EditItemRow(
                 fontFamily = Inter,
                 lineHeight = 18.sp,
                 color =
-                    if (value.isNotBlank()) MaterialTheme.colorScheme.onSurface
+                    if (value.isNotBlank()) MaterialTheme.colorScheme.onBackground
                     else MaterialTheme.colorScheme.outline,
                 modifier = Modifier.weight(1f)
             )

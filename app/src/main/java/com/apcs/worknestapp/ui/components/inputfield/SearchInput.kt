@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.ui.components.inputfield
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
@@ -54,6 +55,8 @@ fun SearchInput(
     val borderColor =
         if (isFocused) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.outlineVariant
+
+    val animationDuration = 200
 
 
     Row(
@@ -124,11 +127,17 @@ fun SearchInput(
         AnimatedVisibility(
             visible = isFocused,
             enter = slideInHorizontally(
-                initialOffsetX = { it }
-            ) + expandHorizontally(),
+                initialOffsetX = { it },
+                animationSpec = tween(animationDuration),
+            ) + expandHorizontally(
+                animationSpec = tween(animationDuration),
+            ),
             exit = slideOutHorizontally(
-                targetOffsetX = { it }
-            ) + shrinkHorizontally(),
+                targetOffsetX = { it },
+                animationSpec = tween(animationDuration),
+            ) + shrinkHorizontally(
+                animationSpec = tween(animationDuration),
+            ),
         ) {
             TextButton(
                 onClick = onCancel,

@@ -17,12 +17,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +51,7 @@ import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Inter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     navController: NavHostController,
@@ -70,10 +73,16 @@ fun EditProfileScreen(
         topBar = {
             ExitOnlyTopBar(
                 navController = navController,
-                screen = Screen.EditProfile
+                screen = Screen.EditProfile,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.onBackground,
+                )
             )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier,
     ) { innerPadding ->
         Box(
@@ -81,7 +90,7 @@ fun EditProfileScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState()),
         ) {
             Column(
@@ -89,6 +98,7 @@ fun EditProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 AvatarPicker(
+                    userId = profile.value?.docId,
                     imageUrl = profile.value?.avatar,
                     isLoading = isLoading,
                     snackbarHost = snackbarHost,

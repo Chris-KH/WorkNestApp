@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 private val DarkColorScheme = darkColorScheme(
     background = Color(0xFF0C0E10), //OK
     onBackground = Color(0xFFFFFFFF), //OK
-    surface = Color(0xFF181A1C), //OK
+    surface = Color(0xFF1C1E20), //OK
     surfaceContainer = Color(0xFF1E1F25), //OK
     surfaceContainerLowest = Color(0xFF060A0F), //OK
     surfaceContainerHighest = Color(0xFF33343A), //OK
