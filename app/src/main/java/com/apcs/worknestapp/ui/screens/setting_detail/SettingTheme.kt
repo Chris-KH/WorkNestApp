@@ -65,7 +65,7 @@ fun SettingTheme(
                     }
                 )
                 HorizontalDivider(
-                    thickness = (0.75).dp,
+                    thickness = (0.7).dp,
                     color = MaterialTheme.colorScheme.outlineVariant,
                 )
                 ThemeOption(
@@ -77,7 +77,7 @@ fun SettingTheme(
                     }
                 )
                 HorizontalDivider(
-                    thickness = (0.75).dp,
+                    thickness = (0.7).dp,
                     color = MaterialTheme.colorScheme.outlineVariant,
                 )
                 ThemeOption(
@@ -110,7 +110,7 @@ fun ThemeOption(
                 color = MaterialTheme.colorScheme.surface,
             )
             .padding(
-                vertical = 20.dp, horizontal = 20.dp
+                vertical = 16.dp, horizontal = 16.dp
             )
     ) {
         Icon(
@@ -121,8 +121,8 @@ fun ThemeOption(
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = label,
-            fontSize = 16.sp,
-            lineHeight = 16.sp,
+            fontSize = 14.sp,
+            lineHeight = 14.sp,
             fontWeight = FontWeight.Normal,
             modifier = Modifier.weight(1f),
         )
@@ -133,7 +133,7 @@ fun ThemeOption(
             ),
             tint = MaterialTheme.colorScheme.primary,
             contentDescription = null,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(20.dp),
         )
     }
 }

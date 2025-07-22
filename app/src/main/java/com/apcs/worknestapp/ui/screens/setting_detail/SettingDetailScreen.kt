@@ -71,6 +71,7 @@ fun SettingDetailScreen(
             )
 
             SettingField.LANGUAGE -> SettingLanguage(
+                snackbarHost = snackbarHost,
                 modifier = Modifier.padding(innerPadding),
             )
 

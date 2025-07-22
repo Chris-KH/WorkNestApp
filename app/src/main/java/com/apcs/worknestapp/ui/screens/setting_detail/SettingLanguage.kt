@@ -17,8 +17,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,11 +29,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingLanguage(
+    snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
+    fun notSupportNotify() {
+        coroutineScope.launch {
+            snackbarHost.showSnackbar(
+                message = "Change language failed. Language does not supported",
+                withDismissAction = true,
+            )
+        }
+    }
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -43,10 +58,28 @@ fun SettingLanguage(
                 .padding(horizontal = 16.dp)
         ) {
             LanguageOption(
-                flag = R.drawable.flag_england,
-                language = "English",
+                flag = R.drawable.flag_us,
+                language = "English, US",
                 isSelected = true,
                 onClick = {}
+            )
+            LanguageOption(
+                flag = R.drawable.flag_uk,
+                language = "English, UK",
+                isSelected = false,
+                onClick = { notSupportNotify() },
+            )
+            LanguageOption(
+                flag = R.drawable.flag_vietnam,
+                language = "Vietnamese",
+                isSelected = false,
+                onClick = { notSupportNotify() },
+            )
+            LanguageOption(
+                flag = R.drawable.flag_china,
+                language = "Chinese",
+                isSelected = false,
+                onClick = { notSupportNotify() },
             )
         }
     }
@@ -75,13 +108,13 @@ fun LanguageOption(
         Image(
             painter = painterResource(flag),
             contentDescription = language,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = language,
-            fontSize = 16.sp,
-            lineHeight = 16.sp,
+            fontSize = 14.sp,
+            lineHeight = 14.sp,
             fontWeight = FontWeight.Normal,
             modifier = Modifier.weight(1f),
         )
@@ -92,7 +125,7 @@ fun LanguageOption(
             ),
             tint = MaterialTheme.colorScheme.primary,
             contentDescription = null,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(20.dp),
         )
     }
 }
