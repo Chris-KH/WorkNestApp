@@ -20,10 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,22 +28,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
-
-enum class ThemeMode {
-    SYSTEM,
-    DARK,
-    LIGHT,
-}
+import com.apcs.worknestapp.data.local.ThemeMode
+import com.apcs.worknestapp.viewmodels.ThemeViewModel
 
 @Composable
 fun SettingTheme(
     navController: NavHostController,
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
+    themeViewModel: ThemeViewModel = hiltViewModel(),
 ) {
-    var themeMode by remember { mutableStateOf<ThemeMode>(ThemeMode.SYSTEM) }
+    val themeState = themeViewModel.theme.collectAsState()
+    val themeMode = themeState.value
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -55,34 +51,46 @@ fun SettingTheme(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 20.dp)
         ) {
             Text(text = "Choose theme")
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(30f))
+                    .clip(RoundedCornerShape(40f))
             ) {
                 ThemeOption(
                     label = "System",
                     isSelected = themeMode == ThemeMode.SYSTEM,
                     leadingIcon = R.drawable.outline_system,
-                    onClick = { themeMode = ThemeMode.SYSTEM }
+                    onClick = {
+                        themeViewModel.saveTheme(ThemeMode.SYSTEM)
+                    }
                 )
-                HorizontalDivider()
+                HorizontalDivider(
+                    thickness = (0.75).dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
                 ThemeOption(
                     label = "Light",
                     isSelected = themeMode == ThemeMode.LIGHT,
                     leadingIcon = R.drawable.outline_sun,
-                    onClick = { themeMode = ThemeMode.LIGHT }
+                    onClick = {
+                        themeViewModel.saveTheme(ThemeMode.LIGHT)
+                    }
                 )
-                HorizontalDivider()
+                HorizontalDivider(
+                    thickness = (0.75).dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
                 ThemeOption(
                     label = "Dark",
                     isSelected = themeMode == ThemeMode.DARK,
                     leadingIcon = R.drawable.outline_moon,
-                    onClick = { themeMode = ThemeMode.DARK }
+                    onClick = {
+                        themeViewModel.saveTheme(ThemeMode.DARK)
+                    }
                 )
             }
         }
@@ -97,8 +105,7 @@ fun ThemeOption(
     onClick: () -> Unit,
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        verticalAlignment = Alignment.CenterVertically, modifier = Modifier
             .clickable(onClick = {
                 if (!isSelected) onClick()
             })
@@ -107,13 +114,13 @@ fun ThemeOption(
                 color = MaterialTheme.colorScheme.surface,
             )
             .padding(
-                vertical = 20.dp, horizontal = 16.dp
+                vertical = 20.dp, horizontal = 20.dp
             )
     ) {
         Icon(
             painter = painterResource(leadingIcon),
             contentDescription = "$label theme",
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(28.dp),
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
