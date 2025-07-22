@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
 import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
 import com.apcs.worknestapp.ui.components.topbar.TopBarNoteScreen
 import com.apcs.worknestapp.ui.components.topbar.TopBarNotificationScreen
@@ -23,6 +24,12 @@ fun NotificationScreen(
     Scaffold(
         topBar = {
             TopBarNotificationScreen(
+                navController = navController,
+            )
+        },
+        bottomBar = {
+            BottomBarForScreen(
+                screen = Screen.Notification,
                 navController = navController,
             )
         },

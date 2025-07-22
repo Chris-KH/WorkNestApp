@@ -49,9 +49,6 @@ fun MainLayout(startDestination: String) {
     val isNetworkConnected by rememberNetworkState()
     val navController: NavHostController = rememberNavController()
     val snackbarHost = remember { SnackbarHostState() }
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val currentScreen = Screen.fromRoute(currentRoute)
 
     val transitionDuration = 500
 
@@ -66,8 +63,6 @@ fun MainLayout(startDestination: String) {
     }
 
     Scaffold(
-        topBar = {},
-        bottomBar = { BottomBarForScreen(screen = currentScreen, navController = navController) },
         snackbarHost = { SnackbarHost(snackbarHost) { CustomSnackBar(data = it) } },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxSize()

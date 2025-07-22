@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
+import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
 import com.apcs.worknestapp.ui.components.topbar.TopBarNoteScreen
 import com.apcs.worknestapp.ui.components.topbar.TopBarProfileScreen
 import com.apcs.worknestapp.ui.screens.Screen
@@ -58,6 +59,12 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopBarProfileScreen(
+                navController = navController,
+            )
+        },
+        bottomBar = {
+            BottomBarForScreen(
+                screen = Screen.Profile,
                 navController = navController,
             )
         },
