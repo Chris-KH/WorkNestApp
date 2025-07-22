@@ -8,6 +8,8 @@ gson = "2.13.1"
 kotlin = "2.1.20"
 ksp = "2.1.20-2.0.1"
 coreKtx = "1.16.0"
+appcompatVersion = "1.7.1"
+cloudinaryAndroid = "3.0.2"
 daggerHiltAndroid = "2.56.2"
 hiltAndroidCompiler = "2.56.2"
 hiltNavigationCompose = "1.2.0"
@@ -62,6 +64,9 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomComp
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomCompiler" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
+cloudinary-android = { module = "com.cloudinary:cloudinary-android", version.ref = "cloudinaryAndroid" }
+cloudinary-android-core = { module = "com.cloudinary:cloudinary-android-core", version.ref = "cloudinaryAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
