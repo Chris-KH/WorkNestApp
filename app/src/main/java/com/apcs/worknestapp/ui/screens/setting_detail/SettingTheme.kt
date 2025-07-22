@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,15 +28,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.local.ThemeMode
 import com.apcs.worknestapp.viewmodels.ThemeViewModel
 
 @Composable
 fun SettingTheme(
-    navController: NavHostController,
-    snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
     themeViewModel: ThemeViewModel = hiltViewModel(),
 ) {
@@ -51,14 +47,14 @@ fun SettingTheme(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 16.dp)
         ) {
             Text(text = "Choose theme")
             Spacer(modifier = Modifier.height(20.dp))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(40f))
+                    .clip(RoundedCornerShape(20f))
             ) {
                 ThemeOption(
                     label = "System",

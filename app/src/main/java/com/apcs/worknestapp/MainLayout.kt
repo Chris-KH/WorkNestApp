@@ -97,18 +97,7 @@ fun MainLayout(startDestination: String) {
                 )
             }
 
-            composable(
-                route = Screen.Profile.route,
-                popEnterTransition = {
-                    fadeIn(animationSpec = tween(transitionDuration))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(transitionDuration)
-                    )
-                },
-            ) {
+            composable(route = Screen.Profile.route) {
                 ProfileScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,

@@ -67,14 +67,10 @@ fun SettingDetailScreen(
             )
 
             SettingField.THEME -> SettingTheme(
-                navController = navController,
-                snackbarHost = snackbarHost,
                 modifier = Modifier.padding(innerPadding),
             )
 
             SettingField.LANGUAGE -> SettingLanguage(
-                navController = navController,
-                snackbarHost = snackbarHost,
                 modifier = Modifier.padding(innerPadding),
             )
 
