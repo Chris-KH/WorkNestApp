@@ -120,7 +120,7 @@ fun ThemeOption(
         Icon(
             painter = painterResource(leadingIcon),
             contentDescription = "$label theme",
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(24.dp),
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(

@@ -14,6 +14,7 @@ sealed class Screen(
     object EditProfileDetail : Screen(route = "edit-profile-detail/{field}", title = "Edit Details")
     object Setting : Screen(route = "setting", title = "Settings")
     object SettingDetail : Screen(route = "setting-detail/{field}", title = "Setting Details")
+    object SettingAccount : Screen(route = "setting/account/{field}", title = "Setting Account")
 
     companion object {
         val all: List<Screen> by lazy {
@@ -28,6 +29,7 @@ sealed class Screen(
                 EditProfileDetail,
                 Setting,
                 SettingDetail,
+                SettingAccount,
             )
         }
 

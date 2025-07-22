@@ -22,17 +22,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.apcs.worknestapp.state.rememberNetworkState
 import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.FallbackScreen
-import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileScreen
 import com.apcs.worknestapp.ui.screens.edit_profile_detail.EditProfileDetailScreen
-import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.screens.home.HomeScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
 import com.apcs.worknestapp.ui.screens.note.NoteScreen
@@ -41,6 +39,8 @@ import com.apcs.worknestapp.ui.screens.profile.ProfileScreen
 import com.apcs.worknestapp.ui.screens.setting.SettingField
 import com.apcs.worknestapp.ui.screens.setting.SettingScreen
 import com.apcs.worknestapp.ui.screens.setting_detail.SettingDetailScreen
+import com.apcs.worknestapp.ui.screens.setting_detail.setting_account.SettingAccountDetailScreen
+import com.apcs.worknestapp.ui.screens.setting_detail.setting_account.SettingAccountField
 import com.apcs.worknestapp.ui.screens.signup.SignUpScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -216,7 +216,10 @@ fun MainLayout(startDestination: String) {
                         animationSpec = tween(transitionDuration)
                     )
                 },
-                exitTransition = {
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(transitionDuration))
+                },
+                popExitTransition = {
                     slideOutHorizontally(
                         targetOffsetX = { it },
                         animationSpec = tween(transitionDuration)
@@ -236,6 +239,47 @@ fun MainLayout(startDestination: String) {
                 } else {
                     FallbackScreen(
                         message = "Cannot open this setting screen for some reason, try again later.",
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+
+            composable(
+                route = Screen.SettingAccount.route,
+                arguments = listOf(navArgument("field") {
+                    type = NavType.StringType
+                    nullable = false
+                }),
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(transitionDuration))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+            ) { backStackEntry ->
+                val rawField = backStackEntry.arguments?.getString("field")
+                val field = SettingAccountField.fromRoute(rawField)
+
+                if (field != null) {
+                    SettingAccountDetailScreen(
+                        field = field,
+                        navController = navController,
+                        snackbarHost = snackbarHost,
+                        modifier = Modifier,
+                    )
+                } else {
+                    FallbackScreen(
+                        message = "Cannot open account setting screen for some reason, try again later.",
                         navController = navController,
                         modifier = Modifier.padding(innerPadding)
                     )
