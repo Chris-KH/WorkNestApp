@@ -8,7 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
 import com.apcs.worknestapp.ui.components.topbar.TopBarHomeScreen
+import com.apcs.worknestapp.ui.screens.Screen
 
 @Composable
 fun HomeScreen(
@@ -18,6 +20,12 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopBarHomeScreen(navController = navController)
+        },
+        bottomBar = {
+            BottomBarForScreen(
+                screen = Screen.Home,
+                navController = navController,
+            )
         },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier,
