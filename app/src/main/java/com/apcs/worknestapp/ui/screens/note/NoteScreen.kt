@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -42,8 +41,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
@@ -102,15 +104,11 @@ fun NoteScreen(
                 .fillMaxSize(),
         ) {
             if (notes.isEmpty()) {
-                Box(
+                EmptyNote(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No notes yet. Add one!")
-                }
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -127,72 +125,19 @@ fun NoteScreen(
                 }
             }
 
-
-            //TODO Tách thành component riêng - Để chung chật quá
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(
-                            topStartPercent = 20,
-                            topEndPercent = 20,
-                        )
-                    )
-                    .padding(16.dp),
-            ) {
-                if (isFocused) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        TextButton(
-                            onClick = { focusManager.clearFocus() },
-                        ) {
-                            Text(text = "Cancel")
-                        }
-                        TextButton(
-                            onClick = {
-                                if (noteText.isNotBlank()) {
-                                    notes = notes + noteText
-                                    noteText = ""
-                                }
-                            },
-                            enabled = noteText.isNotBlank()
-                        ) {
-                            Text(text = "Add")
-                        }
+            AddNoteInput(
+                value = noteText,
+                onValueChange = { noteText = it },
+                onCancel = { focusManager.clearFocus() },
+                onAdd = {
+                    if (noteText.isNotBlank()) {
+                        notes = notes + noteText
+                        noteText = ""
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                OutlinedTextField(
-                    value = noteText,
-                    onValueChange = { noteText = it },
-                    label = null,
-                    interactionSource = interactionSource,
-                    placeholder = { Text("New note") },
-                    trailingIcon = {
-                        IconButton(
-                            onClick = {},
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_link),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 4,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    )
-                )
-            }
+                },
+                isFocused = isFocused,
+                interactionSource = interactionSource,
+            )
         }
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -24,6 +25,7 @@ fun EditProfileButton(
     Button(
         onClick = onClick,
         contentPadding = PaddingValues(vertical = 0.dp),
+        shape = RoundedCornerShape(30f),
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(
@@ -37,6 +39,7 @@ fun EditProfileButton(
             fontWeight = FontWeight.SemiBold,
             fontFamily = Inter,
             fontSize = 14.sp,
+            lineHeight = 14.sp,
         )
     }
 }

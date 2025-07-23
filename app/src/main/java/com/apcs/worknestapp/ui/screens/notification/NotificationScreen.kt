@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -95,7 +96,10 @@ fun NotificationScreen(
                     .fillMaxSize()
             ) {
                 LazyColumn {
-                    itemsIndexed(items = messages) { idx, item ->
+                    itemsIndexed(
+                        items = messages,
+                        key = { idx, _ -> idx }
+                    ) { idx, item ->
                         Text(text = item)
                     }
                 }
