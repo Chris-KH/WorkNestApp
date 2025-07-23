@@ -2,9 +2,12 @@ package com.apcs.worknestapp.ui.screens.notification
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -16,8 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
+import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.TopBarNotificationScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.delay
@@ -46,12 +53,26 @@ fun NotificationScreen(
     Scaffold(
         topBar = {
             TopBarNotificationScreen(
-                navController = navController,
+                actions = {
+                    IconButton(
+                        onClick = {
+
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.symbol_three_dot),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(-90f)
+                        )
+                    }
+                }
             )
         },
         bottomBar = {
-            BottomBarForScreen(
-                screen = Screen.Notification,
+            MainBottomBar(
+                currentScreen = Screen.Notification,
                 navController = navController,
             )
         },

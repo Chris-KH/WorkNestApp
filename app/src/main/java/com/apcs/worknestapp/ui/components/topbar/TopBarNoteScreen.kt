@@ -3,10 +3,10 @@ package com.apcs.worknestapp.ui.components.topbar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,12 +17,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.apcs.worknestapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +46,13 @@ fun TopBarNoteScreen(
             actions = {
                 Box {
                     IconButton(onClick = onMenuClick) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                        Icon(
+                            painter = painterResource(R.drawable.symbol_three_dot),
+                            contentDescription = "More options",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(-90f)
+                        )
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
@@ -57,7 +65,7 @@ fun TopBarNoteScreen(
                         )
                         DropdownMenuItem(
                             text = { Text("Delete All") },
-                            onClick ={},// onDeleteAllClick,
+                            onClick = {},// onDeleteAllClick,
                             leadingIcon = { Icon(Icons.Default.Delete, "Delete All") }
                         )
                         // ... more items ...

@@ -1,26 +1,24 @@
 package com.apcs.worknestapp.ui.screens.profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
-import androidx.compose.material3.pulltorefresh.pullToRefresh
-import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,11 +29,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
-import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
-import com.apcs.worknestapp.ui.components.topbar.TopBarNoteScreen
+import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.TopBarProfileScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
@@ -59,12 +58,22 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopBarProfileScreen(
-                navController = navController,
+                actions = {
+                    IconButton(onClick = {
+                        navController.navigate(Screen.Setting.route)
+                    }) {
+                        Icon(
+                            painter = painterResource(R.drawable.outline_gear),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             )
         },
         bottomBar = {
-            BottomBarForScreen(
-                screen = Screen.Profile,
+            MainBottomBar(
+                currentScreen = Screen.Profile,
                 navController = navController,
             )
         },

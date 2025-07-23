@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,10 +45,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.apcs.worknestapp.ui.components.bottombar.BottomBarForScreen
+import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.TopBarNoteScreen
 import com.apcs.worknestapp.ui.screens.Screen
-import com.apcs.worknestapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,8 +80,8 @@ fun NoteScreen(
             )
         },
         bottomBar = {
-            BottomBarForScreen(
-                screen = Screen.Note,
+            MainBottomBar(
+                currentScreen = Screen.Note,
                 navController = navController,
             )
         },
