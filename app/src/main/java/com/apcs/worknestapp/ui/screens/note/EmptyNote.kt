@@ -59,7 +59,7 @@ fun EmptyNote(
             Text(
                 text = "Capture tasks and ideas as they come, organize when you're already",
                 fontSize = 14.sp,
-                lineHeight = 14.sp,
+                lineHeight = 16.sp,
                 fontFamily = Inter,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Normal

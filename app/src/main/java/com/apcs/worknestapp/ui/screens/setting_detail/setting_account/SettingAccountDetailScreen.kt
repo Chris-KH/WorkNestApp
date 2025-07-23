@@ -3,8 +3,10 @@ package com.apcs.worknestapp.ui.screens.setting_detail.setting_account
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,6 +46,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.DiscardChangeDialog
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
+import kotlinx.coroutines.launch
 import kotlin.math.min
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +75,23 @@ fun SettingAccountDetailScreen(
         }
     }
     var value by remember { mutableStateOf(initialValue) }
+
+    val description = when(field) {
+        SettingAccountField.NAME,
+            -> """
+                Help people discover your account by using the name you're known by:
+                either your full name, nickname or business name
+                """.trimIndent().replace("\n", " ")
+
+        SettingAccountField.EMAIL,
+            -> "Your email is linked to your account and can’t be changed for security reasons"
+
+        SettingAccountField.PHONE,
+            -> "Add a phone number to help secure your account and make it easier to recover"
+
+        SettingAccountField.ADDRESS,
+            -> "Add your address to receive location-based suggestions and services"
+    }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -110,29 +130,31 @@ fun SettingAccountDetailScreen(
                     if (!isSubmitting) {
                         TextButton(
                             onClick = {
-//                                isSubmitting = true
-//                                coroutineScope.launch {
-//                                    val isSuccess = when(field) {
-//                                        EditProfileField.NAME,
-//                                            -> authViewModel.updateUserName(value)
-//
-//                                        EditProfileField.PRONOUNS,
-//                                            -> authViewModel.updateUserPronouns(value)
-//
-//                                        EditProfileField.BIO,
-//                                            -> authViewModel.updateUserBio(value)
-//                                    }
-//                                    isSubmitting = false
-//                                    if (isSuccess) {
-//                                        focusRequester.freeFocus()
-//                                        navController.popBackStack()
-//                                    } else {
-//                                        snackbarHost.showSnackbar(
-//                                            message = "Update ${field.fieldName.lowercase()} failed",
-//                                            withDismissAction = true,
-//                                        )
-//                                    }
-//                                }
+                                isSubmitting = true
+                                coroutineScope.launch {
+                                    val isSuccess = when(field) {
+                                        SettingAccountField.NAME,
+                                            -> authViewModel.updateUserName(value)
+
+                                        SettingAccountField.EMAIL -> false
+
+                                        SettingAccountField.PHONE,
+                                            -> authViewModel.updateUserPhone(value)
+
+                                        SettingAccountField.ADDRESS,
+                                            -> authViewModel.updateUserAddress(value)
+                                    }
+                                    isSubmitting = false
+                                    if (isSuccess) {
+                                        focusRequester.freeFocus()
+                                        navController.popBackStack()
+                                    } else {
+                                        snackbarHost.showSnackbar(
+                                            message = "Update ${field.fieldName.lowercase()} failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
                             },
                             enabled = (value != initialValue),
                         ) {
@@ -157,8 +179,8 @@ fun SettingAccountDetailScreen(
         Box(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize()
-                .imePadding()
+                .fillMaxWidth()
+                .imePadding(),
         ) {
             if (showAlert) {
                 DiscardChangeDialog(
@@ -179,41 +201,54 @@ fun SettingAccountDetailScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = {
-                        value = if (field == SettingAccountField.ADDRESS) {
-                            it.substring(0, min(150, it.length))
-                        } else it
-                    },
-                    enabled = !isSubmitting,
-                    label = {
-                        Text(
-                            text = field.fieldName,
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = {
+                            if (field == SettingAccountField.EMAIL) return@OutlinedTextField
+                            value = if (field == SettingAccountField.ADDRESS) {
+                                it.substring(0, min(150, it.length))
+                            } else it
+                        },
+                        enabled = !isSubmitting,
+                        label = {
+                            Text(
+                                text = field.fieldName,
+                                fontSize = 14.sp,
+                                lineHeight = 14.sp,
+                            )
+                        },
+                        placeholder = {
+                            Text(
+                                text = "Type something...",
+                                fontSize = 14.sp,
+                                lineHeight = 14.sp,
+                            )
+                        },
+                        textStyle = TextStyle(
+                            fontFamily = Roboto,
+                            fontWeight = FontWeight.Medium,
                             fontSize = 14.sp,
                             lineHeight = 14.sp,
-                        )
-                    },
-                    placeholder = {
-                        Text(
-                            text = "Type something...",
-                            fontSize = 14.sp,
-                            lineHeight = 14.sp,
-                        )
-                    },
-                    textStyle = TextStyle(
-                        fontFamily = Roboto,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp,
-                        lineHeight = 14.sp,
-                        letterSpacing = 0.sp,
-                    ),
-                    shape = RoundedCornerShape(40f),
-                    singleLine = (field != SettingAccountField.ADDRESS),
-                    modifier = Modifier
-                        .focusRequester(focusRequester)
-                        .fillMaxWidth()
-                )
+                            letterSpacing = 0.sp,
+                        ),
+                        shape = RoundedCornerShape(40f),
+                        singleLine = (field != SettingAccountField.ADDRESS),
+                        modifier = Modifier
+                            .focusRequester(focusRequester)
+                            .fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = description,
+                        fontSize = 13.sp,
+                        lineHeight = 15.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
 
                 if (field == SettingAccountField.ADDRESS) {
                     Text(
