@@ -116,7 +116,10 @@ fun NoteScreen(
                         .fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    items(notes, key = { note -> note }) { note ->
+                    items(
+                        items = notes,
+                        key = { note -> note.hashCode() }
+                    ) { note ->
                         NoteItem(
                             note = note.toString(),
                             onClick = { /* onNoteClick(note) */ }

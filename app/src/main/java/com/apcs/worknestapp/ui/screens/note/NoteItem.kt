@@ -19,8 +19,7 @@ import androidx.compose.ui.unit.sp
 fun NoteItem(
     note: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
-
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier

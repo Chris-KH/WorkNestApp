@@ -43,9 +43,9 @@ fun DropdownMenuActions(
             },
             trailingIcon = {
                 Icon(
-                    painter = painterResource(R.drawable.fill_seen),
+                    painter = painterResource(R.drawable.fill_board),
                     contentDescription = "Create a board",
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             },
             onClick = onCreateBoard,
@@ -62,9 +62,9 @@ fun DropdownMenuActions(
             },
             trailingIcon = {
                 Icon(
-                    painter = painterResource(R.drawable.fill_seen),
+                    painter = painterResource(R.drawable.fill_card),
                     contentDescription = "Create a board",
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             },
             onClick = onCreateCard,
