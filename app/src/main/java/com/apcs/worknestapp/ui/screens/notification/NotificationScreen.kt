@@ -71,6 +71,8 @@ fun NotificationScreen(
                         Icon(
                             painter = painterResource(R.drawable.symbol_three_dot),
                             contentDescription = null,
+                            tint = if (showModalBottom) MaterialTheme.colorScheme.outline
+                            else MaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .size(24.dp)
                                 .rotate(-90f)

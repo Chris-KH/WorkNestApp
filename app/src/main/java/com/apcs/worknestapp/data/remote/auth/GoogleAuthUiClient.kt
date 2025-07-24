@@ -1,6 +1,5 @@
 package com.apcs.worknestapp.data.remote.auth
 
-import com.apcs.worknestapp.R
 import android.content.Context
 import android.util.Log
 import androidx.core.content.ContextCompat.getString
@@ -9,6 +8,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import com.apcs.worknestapp.R
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -16,7 +16,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class GoogleAuthUiClient @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) {
     private val credentialManager = CredentialManager.create(context)
     private val WEB_CLIENT_ID = getString(context, R.string.default_web_client_id)
@@ -62,7 +62,7 @@ class GoogleAuthUiClient @Inject constructor(
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch(e: Exception) {
             Log.e("GoogleAuthClient", "Google sign in failed", e)
             null
         }

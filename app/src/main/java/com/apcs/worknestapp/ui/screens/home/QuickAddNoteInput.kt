@@ -114,7 +114,7 @@ fun QuickAddNoteInput(
                 ),
                 placeholder = {
                     Text(
-                        text = "Add note",
+                        text = "Add card",
                         fontSize = 14.sp,
                         lineHeight = 14.sp,
                         fontWeight = FontWeight.Medium,

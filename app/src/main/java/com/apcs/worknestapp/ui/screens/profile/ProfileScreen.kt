@@ -65,6 +65,7 @@ fun ProfileScreen(
                         Icon(
                             painter = painterResource(R.drawable.outline_gear),
                             contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
