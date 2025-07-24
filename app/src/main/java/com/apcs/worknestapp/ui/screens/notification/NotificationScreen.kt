@@ -53,7 +53,7 @@ fun NotificationScreen(
     fun refreshNotifications() {
         isRefreshing = true
         coroutineScope.launch {
-            delay(5000)
+            notificationViewModel.refreshNotifications()
             isRefreshing = false
         }
     }

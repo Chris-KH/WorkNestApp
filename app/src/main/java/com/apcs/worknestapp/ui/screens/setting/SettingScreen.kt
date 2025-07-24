@@ -107,12 +107,6 @@ fun SettingScreen(
                         searchValue = ""
                     },
                     interactionSource = searchInteractionSource,
-                    textStyle = TextStyle(
-                        fontSize = 14.sp,
-                        lineHeight = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Normal,
-                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = horizontalPadding)

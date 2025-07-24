@@ -3,6 +3,7 @@ package com.apcs.worknestapp.ui.screens.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -36,13 +38,13 @@ fun QuickAddNoteInput(
     onValueChange: (String) -> Unit,
     onCancel: () -> Unit,
     onAdd: () -> Unit,
-    isFocused: Boolean,
     interactionSource: MutableInteractionSource,
+    modifier: Modifier = Modifier,
 ) {
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+        modifier = modifier,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -55,9 +57,9 @@ fun QuickAddNoteInput(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Quick add",
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 lineHeight = 16.sp,
-                fontWeight = FontWeight.Normal,
+                fontWeight = FontWeight.Medium,
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -75,8 +77,7 @@ fun QuickAddNoteInput(
                 )
                 .padding(horizontal = 24.dp)
                 .padding(
-                    top = 24.dp,
-                    bottom = if (isFocused) 12.dp else 24.dp
+                    top = 24.dp, bottom = if (isFocused) 12.dp else 24.dp
                 ),
         ) {
             Row(
@@ -155,8 +156,7 @@ fun QuickAddNoteInput(
                         Text(text = "Cancel")
                     }
                     TextButton(
-                        onClick = onAdd,
-                        enabled = value.isNotBlank()
+                        onClick = onAdd, enabled = value.isNotBlank()
                     ) {
                         Text(text = "Add")
                     }

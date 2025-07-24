@@ -1,47 +1,44 @@
 package com.apcs.worknestapp.ui.screens.note
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -60,9 +57,6 @@ fun NoteScreen(
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
-    val interactionSource = remember { MutableInteractionSource() }
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    val imePadding = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
 
     var notes by remember { mutableStateOf(emptyList<String>()) }
     var noteText by remember { mutableStateOf("") }
@@ -71,14 +65,64 @@ fun NoteScreen(
     Scaffold(
         topBar = {
             TopBarNoteScreen(
-                navController = navController,
-                menuExpanded = showMenu,
-                onMenuClick = {
-                    showMenu = !showMenu
-                },
-                onDismissMenu = {
-                    showMenu = false
-                },
+                actions = {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.symbol_three_dot),
+                            contentDescription = "More options",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(-90f)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        shadowElevation = 32.dp,
+                        shape = RoundedCornerShape(25f),
+                        modifier = Modifier.widthIn(min = 160.dp),
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = "Edit",
+                                    fontSize = 14.sp,
+                                    lineHeight = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            },
+                            onClick = {}, //  onEditClick() },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit",
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = "Delete all",
+                                    fontSize = 14.sp,
+                                    lineHeight = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            },
+                            onClick = {},// onDeleteAllClick,
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete All",
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
+                        )
+                        // ... more items ...
+                    }
+                }
             )
         },
         bottomBar = {
@@ -89,6 +133,10 @@ fun NoteScreen(
         },
         modifier = modifier,
     ) { innerPadding ->
+        val interactionSource = remember { MutableInteractionSource() }
+        val isFocused by interactionSource.collectIsFocusedAsState()
+        val imePadding = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+
         Column(
             modifier = Modifier
                 .padding(
@@ -121,7 +169,7 @@ fun NoteScreen(
                         key = { note -> note.hashCode() }
                     ) { note ->
                         NoteItem(
-                            note = note.toString(),
+                            note = note,
                             onClick = { /* onNoteClick(note) */ }
                         )
                     }

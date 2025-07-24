@@ -46,7 +46,6 @@ fun SearchInput(
     onValueChange: (String) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
-    textStyle: TextStyle = TextStyle.Default,
     interactionSource: MutableInteractionSource? = null,
 ) {
     val isFocused by interactionSource?.collectIsFocusedAsState()
@@ -58,7 +57,6 @@ fun SearchInput(
 
     val animationDuration = 200
 
-
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -68,7 +66,13 @@ fun SearchInput(
             onValueChange = { onValueChange(it) },
             interactionSource = interactionSource,
             singleLine = true,
-            textStyle = textStyle,
+            textStyle = TextStyle(
+                fontFamily = Roboto,
+                fontSize = 14.sp,
+                lineHeight = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             modifier = Modifier
                 .weight(1f)
@@ -105,7 +109,7 @@ fun SearchInput(
                             text = "Search",
                             fontSize = 14.sp,
                             lineHeight = 14.sp,
-                            fontWeight = FontWeight.Normal,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
