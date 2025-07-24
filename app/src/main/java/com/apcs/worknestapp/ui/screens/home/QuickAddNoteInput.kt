@@ -60,7 +60,7 @@ fun QuickAddNoteInput(
                 fontWeight = FontWeight.Normal,
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -73,7 +73,11 @@ fun QuickAddNoteInput(
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     shape = RoundedCornerShape(50f),
                 )
-                .padding(24.dp),
+                .padding(horizontal = 24.dp)
+                .padding(
+                    top = 24.dp,
+                    bottom = if (isFocused) 12.dp else 24.dp
+                ),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
