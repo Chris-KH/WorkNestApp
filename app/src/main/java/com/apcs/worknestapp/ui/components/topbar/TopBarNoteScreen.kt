@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -23,6 +25,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 
@@ -56,17 +59,47 @@ fun TopBarNoteScreen(
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
-                        onDismissRequest = onDismissMenu
+                        onDismissRequest = onDismissMenu,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        shadowElevation = 32.dp,
+                        shape = RoundedCornerShape(25f),
+                        modifier = Modifier.widthIn(min = 160.dp),
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Edit") },
+                            text = {
+                                Text(
+                                    text = "Edit",
+                                    fontSize = 14.sp,
+                                    lineHeight = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            },
                             onClick = {}, //  onEditClick() },
-                            leadingIcon = { Icon(Icons.Default.Edit, "Edit") }
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit",
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
                         )
                         DropdownMenuItem(
-                            text = { Text("Delete All") },
+                            text = {
+                                Text(
+                                    text = "Delete all",
+                                    fontSize = 14.sp,
+                                    lineHeight = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            },
                             onClick = {},// onDeleteAllClick,
-                            leadingIcon = { Icon(Icons.Default.Delete, "Delete All") }
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete All",
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
                         )
                         // ... more items ...
                     }

@@ -13,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -63,11 +62,18 @@ fun NotificationScreen(
         topBar = {
             TopBarNotificationScreen(
                 actions = {
-                    IconButton(
-                        onClick = {
-                            showModalBottom = true
-                        }
-                    ) {
+                    IconButton(onClick = {
+                        //TODO Mark all read
+                    }) {
+                        Icon(
+                            painter = painterResource(R.drawable.outline_checkmark),
+                            contentDescription = null,
+                            tint = if (showModalBottom) MaterialTheme.colorScheme.outline
+                            else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                    IconButton(onClick = { showModalBottom = true }) {
                         Icon(
                             painter = painterResource(R.drawable.symbol_three_dot),
                             contentDescription = null,
@@ -90,10 +96,9 @@ fun NotificationScreen(
         modifier = modifier,
     ) { innerPadding ->
         if (showModalBottom) {
-            ModalBottomSheet(
-                onDismissRequest = { showModalBottom = false },
-                containerColor = MaterialTheme.colorScheme.surface
-            ) {}
+            NotificationModalBottom(
+                onDismissRequest = { showModalBottom = false }
+            )
         }
 
         if (notifications.value.isEmpty()) {

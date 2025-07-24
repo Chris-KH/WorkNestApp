@@ -16,6 +16,7 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = Color(0xFFFFFFFF), //OK
     surface = Color(0xFF1C1E20), //OK
     surfaceContainer = Color(0xFF1E1F25), //OK
+    surfaceContainerLow = Color(0xFF121416), //OK
     surfaceContainerLowest = Color(0xFF060A0F), //OK
     surfaceContainerHigh = Color(0xFF292A2E), //OK
     surfaceContainerHighest = Color(0xFF33343A), //OK
