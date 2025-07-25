@@ -30,11 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.notification.NotificationViewModel
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.TopBarNotificationScreen
 import com.apcs.worknestapp.ui.screens.Screen
-import com.apcs.worknestapp.viewmodels.NotificationViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,10 +44,11 @@ fun NotificationScreen(
     modifier: Modifier = Modifier,
     notificationViewModel: NotificationViewModel = hiltViewModel(),
 ) {
+    val notifications = notificationViewModel.notifications.collectAsState()
+
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     var showModalBottom by remember { mutableStateOf(false) }
-    val notifications = notificationViewModel.notifications.collectAsState()
 
     fun refreshNotifications() {
         isRefreshing = true

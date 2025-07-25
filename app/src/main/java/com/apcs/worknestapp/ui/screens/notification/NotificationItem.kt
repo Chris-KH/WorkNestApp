@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apcs.worknestapp.models.Notification
+import com.apcs.worknestapp.data.remote.notification.Notification
 
 @Composable
 fun NotificationItem(

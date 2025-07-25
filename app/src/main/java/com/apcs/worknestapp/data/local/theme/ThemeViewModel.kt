@@ -1,9 +1,7 @@
-package com.apcs.worknestapp.viewmodels
+package com.apcs.worknestapp.data.local.theme
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apcs.worknestapp.data.local.ThemeDataStore
-import com.apcs.worknestapp.data.local.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +13,7 @@ import javax.inject.Inject
 class ThemeViewModel @Inject constructor(
     private val themeStore: ThemeDataStore,
 ) : ViewModel() {
-    private val _theme = MutableStateFlow<ThemeMode>(ThemeMode.SYSTEM)
+    private val _theme = MutableStateFlow(ThemeMode.SYSTEM)
     val theme: StateFlow<ThemeMode> = _theme
 
     init {

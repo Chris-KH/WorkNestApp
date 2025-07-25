@@ -1,10 +1,14 @@
 package com.apcs.worknestapp.di
 
 import android.content.Context
-import com.apcs.worknestapp.data.local.ThemeDataStore
+import com.apcs.worknestapp.data.local.theme.ThemeDataStore
 import com.apcs.worknestapp.data.remote.auth.AuthRepository
 import com.apcs.worknestapp.data.remote.auth.AuthRepositoryImpl
 import com.apcs.worknestapp.data.remote.auth.UserSessionManager
+import com.apcs.worknestapp.data.remote.note.NoteRepository
+import com.apcs.worknestapp.data.remote.note.NoteRepositoryImpl
+import com.apcs.worknestapp.data.remote.notification.NotificationRepository
+import com.apcs.worknestapp.data.remote.notification.NotificationRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,4 +34,12 @@ object AppModule {
     fun provideThemeDataStore(
         @ApplicationContext context: Context,
     ): ThemeDataStore = ThemeDataStore(context)
+
+    @Provides
+    @Singleton
+    fun provideNotificationRepository(): NotificationRepository = NotificationRepositoryImpl()
+
+    @Provides
+    @Singleton
+    fun provideNoteRepository(): NoteRepository = NoteRepositoryImpl()
 }

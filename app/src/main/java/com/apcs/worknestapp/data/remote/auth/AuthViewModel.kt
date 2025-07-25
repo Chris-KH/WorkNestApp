@@ -3,7 +3,6 @@ package com.apcs.worknestapp.data.remote.auth
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,22 +15,11 @@ class AuthViewModel @Inject constructor(
     private val googleAuthUiClient: GoogleAuthUiClient,
     private val sessionManager: UserSessionManager,
 ) : ViewModel() {
-    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
     val profile = repository.profile
     val user = repository.user
 
     private val _isCheckingAuth = MutableStateFlow(true)
     val isCheckingAuth: StateFlow<Boolean> = _isCheckingAuth
-
-//    init {
-//        firebaseAuth.addAuthStateListener { auth ->
-//            if (auth.currentUser == null) {
-//                viewModelScope.launch {
-//                    signOut()
-//                }
-//            }
-//        }
-//    }
 
     fun checkAuth() {
         viewModelScope.launch {
@@ -86,7 +74,7 @@ class AuthViewModel @Inject constructor(
         return try {
             if (idToken == null) throw Exception("ID token null")
 
-            repository.loginWithGoogle(idToken);
+            repository.loginWithGoogle(idToken)
             true
         } catch(e: Exception) {
             Log.e("AuthViewModel", "Google login failed", e)

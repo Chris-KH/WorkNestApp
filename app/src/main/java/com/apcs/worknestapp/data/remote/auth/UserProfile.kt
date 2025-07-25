@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.models
+package com.apcs.worknestapp.data.remote.auth
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId

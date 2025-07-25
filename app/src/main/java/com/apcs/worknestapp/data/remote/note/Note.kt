@@ -1,13 +1,13 @@
-package com.apcs.worknestapp.models
+package com.apcs.worknestapp.data.remote.note
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.ServerTimestamp
 
-data class Notification(
+data class Note(
     @DocumentId val docId: String? = null,
-    val title: String? = null,
-    val message: String? = null,
-    val isRead: Boolean? = null,
+    val name: String? = null,
+    val description: String? = null,
+    val isArchived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 )

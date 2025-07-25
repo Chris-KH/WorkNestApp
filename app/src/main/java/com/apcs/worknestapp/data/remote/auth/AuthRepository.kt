@@ -1,6 +1,6 @@
 package com.apcs.worknestapp.data.remote.auth
 
-import com.apcs.worknestapp.models.UserProfile
+import com.apcs.worknestapp.data.remote.auth.UserProfile
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.StateFlow
 

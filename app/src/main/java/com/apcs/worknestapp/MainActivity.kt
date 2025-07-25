@@ -13,13 +13,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.apcs.worknestapp.data.local.ThemeMode
+import com.apcs.worknestapp.data.local.theme.ThemeMode
 import com.apcs.worknestapp.data.remote.auth.AuthViewModel
-import com.apcs.worknestapp.state.ApplySystemBarTheme
+import com.apcs.worknestapp.ui.components.ApplySystemBarTheme
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.WorkNestAppTheme
-import com.apcs.worknestapp.viewmodels.ThemeViewModel
+import com.apcs.worknestapp.data.local.theme.ThemeViewModel
 import com.cloudinary.android.MediaManager
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
