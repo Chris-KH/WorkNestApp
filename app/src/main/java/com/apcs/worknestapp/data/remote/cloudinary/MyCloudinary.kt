@@ -1,17 +1,10 @@
-package com.apcs.worknestapp.domain.logic
+package com.apcs.worknestapp.data.remote.cloudinary
 
 import android.content.Context
-import android.net.Uri
-import com.cloudinary.Transformation
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
-import com.cloudinary.android.preprocess.BitmapDecoder
-import com.cloudinary.android.preprocess.BitmapEncoder
-import com.cloudinary.android.preprocess.Crop
-import com.cloudinary.android.preprocess.ImagePreprocessChain
 import java.io.File
-import java.io.FileOutputStream
 
 object MyCloudinary {
     private const val PRESET = "my_unsigned_upload"

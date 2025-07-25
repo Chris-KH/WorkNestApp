@@ -110,9 +110,7 @@ fun NotificationScreen(
         } else {
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
-                onRefresh = {
-                    refreshNotifications()
-                },
+                onRefresh = { refreshNotifications() },
                 modifier = modifier
                     .padding(innerPadding)
                     .fillMaxSize()

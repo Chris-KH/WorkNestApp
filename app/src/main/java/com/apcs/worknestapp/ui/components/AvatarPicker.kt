@@ -49,7 +49,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
-import com.apcs.worknestapp.domain.logic.MyCloudinary.uploadAvatarToCloudinary
+import com.apcs.worknestapp.data.remote.cloudinary.MyCloudinary.uploadAvatarToCloudinary
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.utils.FileUtils.copyUriToTempFile
 import com.apcs.worknestapp.utils.FileUtils.createImageFileUri
