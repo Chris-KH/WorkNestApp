@@ -81,4 +81,8 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
             list.map { it.copy(isRead = true) }
         }
     }
+
+    override fun clearCache() {
+        _notifications.value = emptyList()
+    }
 }

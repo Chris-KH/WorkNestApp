@@ -87,6 +87,7 @@ fun SettingScreen(
                     onDismissRequest = { showConfirmDialog = false },
                     onConfirm = {
                         coroutineScope.launch {
+                            showConfirmDialog = false
                             authViewModel.signOut()
                         }
                     },

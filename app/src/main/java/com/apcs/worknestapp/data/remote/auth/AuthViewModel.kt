@@ -12,8 +12,6 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val repository: AuthRepository,
-    private val googleAuthUiClient: GoogleAuthUiClient,
-    private val sessionManager: UserSessionManager,
 ) : ViewModel() {
     val profile = repository.profile
     val user = repository.user
@@ -162,8 +160,7 @@ class AuthViewModel @Inject constructor(
 
     suspend fun signOut(): Boolean {
         return try {
-            googleAuthUiClient.clearCredential()
-            sessionManager.signOutAndClearAll()
+            repository.signOut()
             true
         } catch(e: Exception) {
             Log.e("AuthViewModel", "Logout failed", e)

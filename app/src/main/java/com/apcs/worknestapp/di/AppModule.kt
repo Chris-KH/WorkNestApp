@@ -4,6 +4,7 @@ import android.content.Context
 import com.apcs.worknestapp.data.local.theme.ThemeDataStore
 import com.apcs.worknestapp.data.remote.auth.AuthRepository
 import com.apcs.worknestapp.data.remote.auth.AuthRepositoryImpl
+import com.apcs.worknestapp.data.remote.auth.GoogleAuthUiClient
 import com.apcs.worknestapp.data.remote.auth.UserSessionManager
 import com.apcs.worknestapp.data.remote.note.NoteRepository
 import com.apcs.worknestapp.data.remote.note.NoteRepositoryImpl
@@ -21,13 +22,16 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
-    fun provideAuthRepository(): AuthRepository = AuthRepositoryImpl()
+    fun provideAuthRepository(
+        googleAuthUiClient: GoogleAuthUiClient,
+        sessionManager: UserSessionManager,
+    ): AuthRepository = AuthRepositoryImpl(googleAuthUiClient, sessionManager)
 
     @Provides
     @Singleton
     fun provideUserSessionManager(
-        authRepository: AuthRepository,
-    ): UserSessionManager = UserSessionManager(authRepository)
+        notificationRepo: NotificationRepository,
+    ): UserSessionManager = UserSessionManager(notificationRepo)
 
     @Provides
     @Singleton

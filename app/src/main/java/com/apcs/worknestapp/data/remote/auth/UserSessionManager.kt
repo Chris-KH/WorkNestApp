@@ -1,11 +1,12 @@
 package com.apcs.worknestapp.data.remote.auth
 
+import com.apcs.worknestapp.data.remote.notification.NotificationRepository
 import javax.inject.Inject
 
 class UserSessionManager @Inject constructor(
-    private val authRepository: AuthRepository,
+    private val notificationRepo: NotificationRepository,
 ) {
-    suspend fun signOutAndClearAll() {
-        authRepository.signOut()
+    fun signOutAndClearAll() {
+        notificationRepo.clearCache()
     }
 }

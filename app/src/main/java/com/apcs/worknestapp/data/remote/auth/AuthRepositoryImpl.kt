@@ -13,7 +13,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class AuthRepositoryImpl @Inject constructor() : AuthRepository {
+class AuthRepositoryImpl @Inject constructor(
+    private val googleAuthUiClient: GoogleAuthUiClient,
+    private val sessionManager: UserSessionManager,
+) : AuthRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
@@ -193,6 +196,8 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
     }
 
     override suspend fun signOut() {
+        googleAuthUiClient.clearCredential()
+        sessionManager.signOutAndClearAll()
         auth.signOut()
         _profile.value = null
         _user.value = null
