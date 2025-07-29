@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.apcs.worknestapp.ui.components.NavItem
 import com.apcs.worknestapp.ui.screens.Screen
 
 @Composable
@@ -39,6 +38,15 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
                 currentScreen = currentScreen,
             ) {
                 navController.navigate(Screen.Note.route) {
+                    popUpTo(Screen.Home.route) { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
+            NavItem(
+                screen = Screen.Contact,
+                currentScreen = currentScreen,
+            ) {
+                navController.navigate(Screen.Contact.route) {
                     popUpTo(Screen.Home.route) { inclusive = false }
                     launchSingleTop = true
                 }

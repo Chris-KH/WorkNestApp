@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
-import com.apcs.worknestapp.ui.components.topbar.TopBarNoteScreen
+import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,7 +64,8 @@ fun NoteScreen(
 
     Scaffold(
         topBar = {
-            TopBarNoteScreen(
+            MainTopBar(
+                currentScreen = Screen.Note,
                 actions = {
                     IconButton(onClick = { showMenu = true }) {
                         Icon(

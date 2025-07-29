@@ -32,7 +32,7 @@ import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.notification.NotificationViewModel
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
-import com.apcs.worknestapp.ui.components.topbar.TopBarNotificationScreen
+import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
 
@@ -60,7 +60,8 @@ fun NotificationScreen(
 
     Scaffold(
         topBar = {
-            TopBarNotificationScreen(
+            MainTopBar(
+                currentScreen = Screen.Notification,
                 actions = {
                     IconButton(onClick = {
                         //TODO Mark all read

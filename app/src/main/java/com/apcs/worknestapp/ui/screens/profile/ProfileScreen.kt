@@ -35,7 +35,7 @@ import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
-import com.apcs.worknestapp.ui.components.topbar.TopBarProfileScreen
+import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
 
@@ -57,7 +57,8 @@ fun ProfileScreen(
 
     Scaffold(
         topBar = {
-            TopBarProfileScreen(
+            MainTopBar(
+                currentScreen = Screen.Profile,
                 actions = {
                     IconButton(onClick = {
                         navController.navigate(Screen.Setting.route)
@@ -69,7 +70,7 @@ fun ProfileScreen(
                             modifier = Modifier.size(24.dp)
                         )
                     }
-                }
+                },
             )
         },
         bottomBar = {

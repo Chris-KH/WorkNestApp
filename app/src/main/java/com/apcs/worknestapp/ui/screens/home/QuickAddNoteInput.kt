@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun QuickAddNoteInput(
@@ -59,7 +60,8 @@ fun QuickAddNoteInput(
                 text = "Quick add",
                 fontSize = 14.sp,
                 lineHeight = 16.sp,
-                fontWeight = FontWeight.Medium,
+                fontFamily = Roboto,
+                fontWeight = FontWeight.Normal,
             )
         }
         Spacer(modifier = Modifier.height(12.dp))

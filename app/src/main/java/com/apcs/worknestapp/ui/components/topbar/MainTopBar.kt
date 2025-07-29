@@ -13,17 +13,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.apcs.worknestapp.ui.screens.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarProfileScreen(
-    actions: @Composable RowScope.() -> Unit = {},
+fun MainTopBar(
+    currentScreen: Screen,
+    actions: @Composable (RowScope.() -> Unit) = {},
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         TopAppBar(
             title = {
+                val title = when(currentScreen) {
+                    Screen.Home -> "WorkNest"
+                    else -> currentScreen.title
+                }
+
                 Text(
-                    text = "My Profile",
+                    text = title,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                 )
@@ -36,7 +43,7 @@ fun TopBarProfileScreen(
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                 actionIconContentColor = MaterialTheme.colorScheme.onSurface,
             ),
-            modifier = Modifier,
+            modifier = Modifier
         )
 
         HorizontalDivider(

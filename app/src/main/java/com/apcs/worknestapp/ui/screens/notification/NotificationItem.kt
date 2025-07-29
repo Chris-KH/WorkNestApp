@@ -37,7 +37,7 @@ fun NotificationItem(
             )
             .padding(
                 horizontal = 12.dp,
-                vertical = 12.dp
+                vertical = 8.dp
             ),
     ) {
         Row(
