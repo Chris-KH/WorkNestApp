@@ -144,13 +144,38 @@ fun NotificationScreen(
             ) {
                 LazyColumn(
                     contentPadding = PaddingValues(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     itemsIndexed(
                         items = notifications.value,
                         key = { _, item -> item.docId.hashCode() }
                     ) { idx, item ->
-                        NotificationItem(notification = item)
+                        NotificationItem(
+                            notification = item,
+                            onDelete = {
+                                coroutineScope.launch {
+                                    if (it == null) {
+                                        snackbarHost.showSnackbar(
+                                            message = "Delete notification failed",
+                                            withDismissAction = true,
+                                        )
+                                    } else {
+                                        val isSuccess = notificationViewModel.deleteNotification(it)
+                                        if (isSuccess) {
+                                            snackbarHost.showSnackbar(
+                                                message = "Notification successfully deleted",
+                                                withDismissAction = true,
+                                            )
+                                        } else {
+                                            snackbarHost.showSnackbar(
+                                                message = "Delete notification failed",
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                        )
                         if (idx + 1 < notifications.value.size) Spacer(Modifier.height(8.dp))
                     }
                 }

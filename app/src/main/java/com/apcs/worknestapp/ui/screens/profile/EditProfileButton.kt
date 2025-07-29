@@ -25,7 +25,7 @@ fun EditProfileButton(
     Button(
         onClick = onClick,
         contentPadding = PaddingValues(vertical = 0.dp),
-        shape = RoundedCornerShape(30f),
+        shape = RoundedCornerShape(50f),
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(

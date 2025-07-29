@@ -319,7 +319,7 @@ fun AvatarPicker(
                 contentDescription = "Avatar place holder",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(108.dp)
+                    .size(96.dp)
                     .border(
                         width = 1.dp,
                         shape = CircleShape,
@@ -339,7 +339,7 @@ fun AvatarPicker(
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.Medium,
                 modifier = Modifier
-                    .size(108.dp)
+                    .size(96.dp)
                     .border(
                         width = 1.dp,
                         shape = CircleShape,
@@ -355,7 +355,8 @@ fun AvatarPicker(
         Text(
             text = "Edit avatar",
             fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            lineHeight = 14.sp,
+            fontWeight = FontWeight.Normal,
             fontFamily = Roboto,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(vertical = 8.dp)

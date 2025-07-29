@@ -10,7 +10,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     private val auth = FirebaseAuth.getInstance()
     private val store = FirebaseFirestore.getInstance()
 
-    private val _notes = MutableStateFlow(emptyList<Note>())
+    private val _notes = MutableStateFlow<List<Note>>(emptyList())
     override val notes: StateFlow<List<Note>> = _notes
 
     override fun clearCache() {

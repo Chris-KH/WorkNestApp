@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.theme.Inter
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,9 +42,10 @@ fun AvatarBottomSheet(
         ) {
             Text(
                 text = "Choose avatar",
-                fontSize = 18.sp,
+                fontSize = 16.sp,
+                lineHeight = 16.sp,
                 fontWeight = FontWeight.Medium,
-                fontFamily = Inter,
+                fontFamily = Roboto,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .padding(bottom = 8.dp)
@@ -54,9 +56,10 @@ fun AvatarBottomSheet(
                 headlineContent = {
                     Text(
                         text = "Choose from library",
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
+                        lineHeight = 14.sp,
+                        fontFamily = Roboto,
                         fontWeight = FontWeight.Normal,
-                        fontFamily = Inter,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 },
@@ -82,9 +85,10 @@ fun AvatarBottomSheet(
                 headlineContent = {
                     Text(
                         text = "Take photo",
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
+                        lineHeight = 14.sp,
+                        fontFamily = Roboto,
                         fontWeight = FontWeight.Normal,
-                        fontFamily = Inter,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 },
