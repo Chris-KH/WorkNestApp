@@ -17,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.notification.NotificationViewModel
+import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
@@ -47,6 +49,7 @@ fun NotificationScreen(
     val notifications = notificationViewModel.notifications.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
+    var isFirstLaunch by remember { mutableStateOf(true) }
     var isRefreshing by remember { mutableStateOf(false) }
     var showModalBottom by remember { mutableStateOf(false) }
 
@@ -56,6 +59,11 @@ fun NotificationScreen(
             notificationViewModel.refreshNotifications()
             isRefreshing = false
         }
+    }
+
+    LaunchedEffect(Unit) {
+        notificationViewModel.refreshNotifications()
+        isFirstLaunch = false
     }
 
     Scaffold(
@@ -116,7 +124,11 @@ fun NotificationScreen(
             )
         }
 
-        if (notifications.value.isEmpty()) {
+        if (isFirstLaunch) {
+            LoadingScreen(
+                modifier = Modifier.padding(innerPadding),
+            )
+        } else if (notifications.value.isEmpty()) {
             EmptyNotification(
                 isRefreshing = isRefreshing,
                 onRefresh = { refreshNotifications() },

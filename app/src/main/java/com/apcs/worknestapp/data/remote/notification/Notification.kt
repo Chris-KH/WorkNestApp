@@ -8,6 +8,6 @@ data class Notification(
     @DocumentId val docId: String? = null,
     val title: String? = null,
     val message: String? = null,
-    val isRead: Boolean? = null,
+    val read: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 )

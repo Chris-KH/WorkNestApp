@@ -58,7 +58,7 @@ fun NotificationItem(
                 }
             ),
     ) {
-        if (notification.isRead == null || !notification.isRead) {
+        if (notification.read == null || !notification.read) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -137,9 +137,7 @@ fun NotificationItem(
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = null,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .rotate(90f)
+                    modifier = Modifier.rotate(90f)
                 )
             }
         }

@@ -1,10 +1,8 @@
 package com.apcs.worknestapp.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -12,20 +10,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 
 @Composable
-fun LoadingScreen() {
-    Row(
-        modifier = Modifier
+fun LoadingScreen(
+    modifier: Modifier = Modifier,
+    isCircular: Boolean = false,
+    containerColor: Color = MaterialTheme.colorScheme.background,
+) {
+    Box(
+        modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+            .background(containerColor),
+        contentAlignment = Alignment.Center,
     ) {
-        LinearProgressIndicator(
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = Color.LightGray,
-        )
+        if (isCircular) {
+            LinearProgressIndicator(
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.outlineVariant,
+            )
+        } else {
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
+
     }
 }
