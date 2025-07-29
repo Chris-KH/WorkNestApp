@@ -64,7 +64,20 @@ fun NotificationScreen(
                 currentScreen = Screen.Notification,
                 actions = {
                     IconButton(onClick = {
-                        //TODO Mark all read
+                        coroutineScope.launch {
+                            val isSuccess = notificationViewModel.markAllRead()
+                            if (isSuccess) {
+                                snackbarHost.showSnackbar(
+                                    message = "Mark all read successful",
+                                    withDismissAction = true,
+                                )
+                            } else {
+                                snackbarHost.showSnackbar(
+                                    message = "Something went wrong. Mark all read failed",
+                                    withDismissAction = true,
+                                )
+                            }
+                        }
                     }) {
                         Icon(
                             painter = painterResource(R.drawable.outline_checkmark),

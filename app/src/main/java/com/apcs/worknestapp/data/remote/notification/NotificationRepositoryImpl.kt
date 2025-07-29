@@ -3,6 +3,7 @@ package com.apcs.worknestapp.data.remote.notification
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,9 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
             Notification(
                 docId = idx.toString(),
                 title = "Notify",
-                message = "Hello bro",
+                message = "Hello bro asd asd asd wq dqw d as das d qw edqw q fgakdfjna " +
+                        "jashjd jklash aklsjhdjka shdjakshkjd ashdkjh kjahsdj oqwjo wka " +
+                        "hakj hdakjskjash dajkskaska a a a jakshd kjashdjka s",
                 isRead = Random.Default.nextBoolean(),
                 createdAt = Timestamp.now()
             )
@@ -30,8 +33,12 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
     override suspend fun refreshNotifications() {
         val authUser = auth.currentUser ?: throw Exception("No user logged in")
 
-        val notificationsRef =
-            firestore.collection("users").document(authUser.uid).collection("notifications")
+        val notificationsRef = firestore
+            .collection("users")
+            .document(authUser.uid)
+            .collection("notifications")
+//            .orderBy("createdAt", Query.Direction.DESCENDING)
+//            .limit(20)
 
         val snapshot = notificationsRef.get().await()
 

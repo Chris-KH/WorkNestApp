@@ -6,16 +6,36 @@ import java.util.Date
 import java.util.Locale
 
 object DateFormater {
-    fun format(date: Date, locale: Locale = Locale.getDefault()): String {
-        val formatter = SimpleDateFormat("dd MMMM, yyyy", locale)
+    fun format(
+        date: Date,
+        formatString: String = "dd MMMM, yyyy",
+        locale: Locale = Locale.getDefault(),
+    ): String {
+        val formatter = SimpleDateFormat(formatString, locale)
         return formatter.format(date)
     }
 
-    fun format(timestamp: Long, locale: Locale = Locale.getDefault()): String {
-        return format(Date(timestamp), locale)
+    fun format(
+        timestamp: Long,
+        formatString: String = "dd MMMM, yyyy",
+        locale: Locale = Locale.getDefault(),
+    ): String {
+        return format(
+            date = Date(timestamp),
+            formatString = formatString,
+            locale = locale,
+        )
     }
 
-    fun format(timestamp: Timestamp, locale: Locale = Locale.getDefault()): String {
-        return format(timestamp.toDate(), locale)
+    fun format(
+        timestamp: Timestamp,
+        formatString: String = "dd MMMM, yyyy",
+        locale: Locale = Locale.getDefault(),
+    ): String {
+        return format(
+            timestamp.toDate(),
+            formatString = formatString,
+            locale = locale,
+        )
     }
 }
