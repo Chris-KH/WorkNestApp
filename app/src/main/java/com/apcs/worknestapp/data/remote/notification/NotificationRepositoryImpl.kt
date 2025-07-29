@@ -35,7 +35,17 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
 
         val snapshot = notificationsRef.get().await()
 
-        delay(5000)
+        delay(3000)
+
+        _notifications.value = List(size = 50) { idx ->
+            Notification(
+                docId = idx.toString(),
+                title = "Notify",
+                message = "Hello bro",
+                isRead = Random.Default.nextBoolean(),
+                createdAt = Timestamp.now()
+            )
+        }
     }
 
     override suspend fun deleteNotification(docId: String) {

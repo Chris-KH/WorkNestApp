@@ -12,4 +12,8 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
 
     private val _notes = MutableStateFlow(emptyList<Note>())
     override val notes: StateFlow<List<Note>> = _notes
+
+    override fun clearCache() {
+        _notes.value = emptyList()
+    }
 }

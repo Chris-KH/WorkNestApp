@@ -30,8 +30,12 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserSessionManager(
+        noteRepo: NoteRepository,
         notificationRepo: NotificationRepository,
-    ): UserSessionManager = UserSessionManager(notificationRepo)
+    ): UserSessionManager = UserSessionManager(
+        noteRepo = noteRepo,
+        notificationRepo = notificationRepo,
+    )
 
     @Provides
     @Singleton

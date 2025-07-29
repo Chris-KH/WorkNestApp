@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,11 +27,13 @@ fun MainTopBar(
             title = {
                 val title = when(currentScreen) {
                     Screen.Home -> "WorkNest"
+                    Screen.Profile -> "My Profile"
                     else -> currentScreen.title
                 }
 
                 Text(
                     text = title,
+                    fontFamily = Roboto,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                 )

@@ -4,4 +4,6 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface NoteRepository {
     val notes: StateFlow<List<Note>>
+
+    fun clearCache()
 }

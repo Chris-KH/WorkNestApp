@@ -94,6 +94,7 @@ fun NotificationScreen(
                 navController = navController,
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier,
     ) { innerPadding ->
         if (showModalBottom) {
