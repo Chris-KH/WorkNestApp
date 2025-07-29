@@ -70,7 +70,7 @@ fun NotificationItem(
             ModalBottomSheet(
                 onDismissRequest = { showModal = false },
                 contentColor = MaterialTheme.colorScheme.onSurface,
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -80,12 +80,18 @@ fun NotificationItem(
                             showModal = false
                         })
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 12.dp)
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.fill_delete),
                         contentDescription = "Delete notification",
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                shape = CircleShape,
+                            )
+                            .padding(10.dp),
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
