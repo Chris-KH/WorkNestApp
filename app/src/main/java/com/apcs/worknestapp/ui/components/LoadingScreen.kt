@@ -24,12 +24,12 @@ fun LoadingScreen(
         contentAlignment = Alignment.Center,
     ) {
         if (isCircular) {
-            LinearProgressIndicator(
+            CircularProgressIndicator(
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.outlineVariant,
             )
         } else {
-            CircularProgressIndicator(
+            LinearProgressIndicator(
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.outlineVariant,
             )
