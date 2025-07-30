@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun DropdownMenuActions(
@@ -27,7 +28,7 @@ fun DropdownMenuActions(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = 32.dp,
         shape = RoundedCornerShape(25f),
         modifier = Modifier.widthIn(min = 200.dp),
@@ -38,12 +39,13 @@ fun DropdownMenuActions(
                     text = "Create a board",
                     fontSize = 14.sp,
                     lineHeight = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontFamily = Roboto,
+                    fontWeight = FontWeight.Normal,
                 )
             },
             trailingIcon = {
                 Icon(
-                    painter = painterResource(R.drawable.fill_board),
+                    painter = painterResource(R.drawable.outline_board),
                     contentDescription = "Create a board",
                     modifier = Modifier.size(24.dp),
                 )
@@ -57,12 +59,13 @@ fun DropdownMenuActions(
                     text = "Create a card",
                     fontSize = 14.sp,
                     lineHeight = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontFamily = Roboto,
+                    fontWeight = FontWeight.Normal,
                 )
             },
             trailingIcon = {
                 Icon(
-                    painter = painterResource(R.drawable.fill_card),
+                    painter = painterResource(R.drawable.outline_card),
                     contentDescription = "Create a board",
                     modifier = Modifier.size(24.dp),
                 )

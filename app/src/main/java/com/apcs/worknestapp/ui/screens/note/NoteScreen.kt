@@ -14,13 +14,9 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,6 +44,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,25 +77,26 @@ fun NoteScreen(
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false },
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
                         shadowElevation = 32.dp,
                         shape = RoundedCornerShape(25f),
-                        modifier = Modifier.widthIn(min = 160.dp),
+                        modifier = Modifier,
                     ) {
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = "Edit",
+                                    text = "Change background",
                                     fontSize = 14.sp,
                                     lineHeight = 14.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontFamily = Roboto,
+                                    fontWeight = FontWeight.Normal,
                                 )
                             },
                             onClick = {}, //  onEditClick() },
                             trailingIcon = {
                                 Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit",
+                                    painter = painterResource(R.drawable.outline_palette),
+                                    contentDescription = "Change background",
                                     modifier = Modifier.size(24.dp),
                                 )
                             }
@@ -109,14 +107,15 @@ fun NoteScreen(
                                     text = "Delete all",
                                     fontSize = 14.sp,
                                     lineHeight = 14.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontFamily = Roboto,
+                                    fontWeight = FontWeight.Normal,
                                 )
                             },
                             onClick = {},// onDeleteAllClick,
                             trailingIcon = {
                                 Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete All",
+                                    painter = painterResource(R.drawable.outline_trash),
+                                    contentDescription = "Delete all",
                                     modifier = Modifier.size(24.dp),
                                 )
                             }

@@ -8,6 +8,6 @@ data class Note(
     @DocumentId val docId: String? = null,
     val name: String? = null,
     val description: String? = null,
-    val isArchived: Boolean? = null,
+    val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 )
