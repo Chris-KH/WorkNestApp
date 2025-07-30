@@ -20,8 +20,8 @@ class AuthViewModel @Inject constructor(
     val isCheckingAuth: StateFlow<Boolean> = _isCheckingAuth
 
     fun checkAuth() {
+        _isCheckingAuth.value = true
         viewModelScope.launch {
-            _isCheckingAuth.value = true
             try {
                 repository.checkAuth()
                 Log.d("AuthViewModel", "Profile: ${repository.profile.value}")

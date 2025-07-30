@@ -35,11 +35,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         FirebaseApp.initializeApp(this)
 
-        val config = hashMapOf(
-            "cloud_name" to "dgniomynr",
-            "secure" to true
+        MediaManager.init(
+            this, hashMapOf(
+                "cloud_name" to "dgniomynr",
+                "secure" to true
+            )
         )
-        MediaManager.init(this, config)
 
         super.onCreate(savedInstanceState)
         installSplashScreen()
