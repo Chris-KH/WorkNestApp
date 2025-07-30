@@ -48,6 +48,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     var currentSubScreen by remember { mutableStateOf(HomeSubScreen.MAIN) }
+    var showModalBottom by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -132,7 +133,7 @@ fun HomeScreen(
                                     contentColor = MaterialTheme.colorScheme.primary,
                                     disabledContentColor = Color.Unspecified,
                                 ),
-                                onClick = {},
+                                onClick = { showModalBottom = true },
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.symbol_three_dot),
@@ -172,6 +173,8 @@ fun HomeScreen(
 
                 HomeSubScreen.WORKSPACE -> HomeWorkspaceScreen(
                     modifier = Modifier.padding(innerPadding),
+                    showModalBottom = showModalBottom,
+                    onHideModal = { showModalBottom = false }
                 )
             }
         }
