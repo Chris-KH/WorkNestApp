@@ -19,7 +19,7 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
     private var listenerRegistration: ListenerRegistration? = null
 
     override suspend fun refreshNotifications() {
-        val authUser = auth.currentUser ?: throw Exception("No user logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         listenerRegistration?.remove() //Remove old listener
 
@@ -31,7 +31,6 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
 //          .limit(20)
 
         val snapshot = notificationsRef.get().await()
-
         val notificationList = snapshot.documents.mapNotNull {
             it.toObject(Notification::class.java)
         }
@@ -53,7 +52,7 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
     }
 
     override suspend fun deleteNotification(docId: String) {
-        val authUser = auth.currentUser ?: throw Exception("No user logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         firestore.collection("users")
             .document(authUser.uid)
@@ -68,7 +67,7 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
     }
 
     override suspend fun markRead(docId: String) {
-        val authUser = auth.currentUser ?: throw Exception("No user logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val notificationRef = firestore
             .collection("users")
@@ -84,7 +83,7 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
     }
 
     override suspend fun markAllRead() {
-        val authUser = auth.currentUser ?: throw Exception("No user logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val notificationsRef = firestore
             .collection("users")

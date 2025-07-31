@@ -29,7 +29,7 @@ fun ContactScreen(
     Scaffold(
         topBar = {
             MainTopBar(
-                currentScreen = Screen.Contact,
+                title = Screen.Contact.title,
                 actions = {
                     IconButton(onClick = {}) {
                         Icon(

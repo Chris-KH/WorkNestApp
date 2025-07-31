@@ -58,7 +58,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             MainTopBar(
-                currentScreen = Screen.Profile,
+                title = "My Profile",
                 actions = {
                     IconButton(onClick = {
                         navController.navigate(Screen.Setting.route)

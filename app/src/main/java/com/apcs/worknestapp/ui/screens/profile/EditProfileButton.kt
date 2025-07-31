@@ -31,7 +31,7 @@ fun EditProfileButton(
         Icon(
             painterResource(R.drawable.fill_edit_pen),
             contentDescription = "Edit profile",
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(

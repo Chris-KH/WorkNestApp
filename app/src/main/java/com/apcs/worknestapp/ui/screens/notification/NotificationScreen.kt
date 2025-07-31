@@ -70,7 +70,7 @@ fun NotificationScreen(
     Scaffold(
         topBar = {
             MainTopBar(
-                currentScreen = Screen.Notification,
+                title = Screen.Notification.title,
                 actions = {
                     IconButton(
                         enabled = notifications.value.isNotEmpty() && !showModalBottom,

@@ -1,7 +1,9 @@
 package com.apcs.worknestapp.ui.screens.note
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,12 +18,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -33,12 +37,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
@@ -54,6 +60,7 @@ fun NoteScreen(
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
+    var selectMode by remember { mutableStateOf(false) }
 
     var notes by remember { mutableStateOf(emptyList<String>()) }
     var noteText by remember { mutableStateOf("") }
@@ -62,65 +69,98 @@ fun NoteScreen(
     Scaffold(
         topBar = {
             MainTopBar(
-                currentScreen = Screen.Note,
+                title = if (selectMode) "Select notes" else Screen.Note.title,
                 actions = {
-                    IconButton(onClick = { showMenu = true }) {
+                    if (notes.isNotEmpty()) {
+                        IconButton(
+                            onClick = { selectMode = !selectMode },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = if (selectMode) MaterialTheme.colorScheme.surface
+                                else MaterialTheme.colorScheme.primary,
+                                disabledContentColor = Color.Unspecified,
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.outline_select),
+                                contentDescription = "Select mode",
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .zIndex(10f)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        color = if (selectMode) MaterialTheme.colorScheme.primary
+                                        else Color.Unspecified,
+                                        shape = CircleShape,
+                                    )
+                                    .size(36.dp)
+                                    .zIndex(1f)
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = { showMenu = true },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            disabledContentColor = Color.Unspecified,
+                        )
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.symbol_three_dot),
                             contentDescription = "More options",
-                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .size(24.dp)
                                 .rotate(-90f)
                         )
-                    }
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false },
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        shadowElevation = 32.dp,
-                        shape = RoundedCornerShape(25f),
-                        modifier = Modifier,
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = "Change background",
-                                    fontSize = 14.sp,
-                                    lineHeight = 14.sp,
-                                    fontFamily = Roboto,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                            },
-                            onClick = {}, //  onEditClick() },
-                            trailingIcon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.outline_palette),
-                                    contentDescription = "Change background",
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = "Delete all",
-                                    fontSize = 14.sp,
-                                    lineHeight = 14.sp,
-                                    fontFamily = Roboto,
-                                    fontWeight = FontWeight.Normal,
-                                )
-                            },
-                            onClick = {},// onDeleteAllClick,
-                            trailingIcon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.outline_trash),
-                                    contentDescription = "Delete all",
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            }
-                        )
-                        // ... more items ...
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false },
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            shadowElevation = 32.dp,
+                            shape = RoundedCornerShape(25f),
+                            modifier = Modifier,
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "Change background",
+                                        fontSize = 14.sp,
+                                        lineHeight = 14.sp,
+                                        fontFamily = Roboto,
+                                        fontWeight = FontWeight.Normal,
+                                    )
+                                },
+                                onClick = {}, //  onEditClick() },
+                                trailingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_palette),
+                                        contentDescription = "Change background",
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "Delete all",
+                                        fontSize = 14.sp,
+                                        lineHeight = 14.sp,
+                                        fontFamily = Roboto,
+                                        fontWeight = FontWeight.Normal,
+                                    )
+                                },
+                                onClick = {},// onDeleteAllClick,
+                                trailingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_trash),
+                                        contentDescription = "Delete all",
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
+                            )
+                            // ... more items ...
+                        }
                     }
                 }
             )

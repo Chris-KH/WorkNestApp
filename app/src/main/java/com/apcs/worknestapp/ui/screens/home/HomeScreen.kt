@@ -55,7 +55,7 @@ fun HomeScreen(
             when(currentSubScreen) {
                 HomeSubScreen.MAIN ->
                     MainTopBar(
-                        currentScreen = Screen.Home,
+                        title = "WorkNest",
                         actions = {
                             var menuExpanded by remember { mutableStateOf(false) }
 
