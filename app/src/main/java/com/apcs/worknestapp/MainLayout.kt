@@ -33,6 +33,7 @@ import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileScreen
 import com.apcs.worknestapp.ui.screens.edit_profile_detail.EditProfileDetailScreen
 import com.apcs.worknestapp.ui.screens.home.HomeScreen
+import com.apcs.worknestapp.ui.screens.inner_note.NoteDetailScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
 import com.apcs.worknestapp.ui.screens.note.NoteScreen
 import com.apcs.worknestapp.ui.screens.notification.NotificationScreen
@@ -298,6 +299,34 @@ fun MainLayout(startDestination: String) {
                     snackbarHost = snackbarHost,
                     modifier = Modifier.padding(innerPadding),
                 )
+            }
+
+            composable(
+                route = Screen.NoteDetail.route, // Make sure Screen.NoteDetail.route is "note_detail/{noteId}"
+                arguments = listOf(navArgument("noteId") {
+                    type = NavType.StringType
+                    // nullable = false // Default, means ID must be passed
+                })
+                // You can also add custom enter/exit transitions for this specific route if desired
+                // enterTransition = { ... },
+                // exitTransition = { ... },
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getString("noteId")
+                if (noteId != null) {
+                    NoteDetailScreen(
+                        navController = navController,
+                        snackbarHost = snackbarHost,
+                        noteId = noteId // Pass snackbarHost if NoteDetailScreen needs it
+                        // modifier = Modifier.padding(innerPadding) // If NoteDetailScreen should respect Scaffold padding
+                    )
+                } else {
+                    // Fallback if noteId is somehow null (shouldn't happen if not nullable)
+                    FallbackScreen(
+                        message = "Cannot open this note. Note ID is missing.",
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
             }
         }
     }
