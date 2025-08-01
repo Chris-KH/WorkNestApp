@@ -54,15 +54,21 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
     override suspend fun deleteNotification(docId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        firestore.collection("users")
-            .document(authUser.uid)
-            .collection("notifications")
-            .document(docId)
-            .delete()
-            .await()
+        try {
+            firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notifications")
+                .document(docId)
+                .delete()
+                .await()
 
-        _notifications.update { list ->
-            list.filterNot { it.docId == docId }
+            _notifications.update { list ->
+                list.filterNot { it.docId == docId }
+            }
+        } catch(e: Exception) {
+            _notifications.update { list ->
+                list.filterNot { it.docId == docId }
+            }
         }
     }
 

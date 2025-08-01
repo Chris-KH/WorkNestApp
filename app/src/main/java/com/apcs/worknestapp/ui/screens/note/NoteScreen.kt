@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -119,7 +120,7 @@ fun NoteScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer,
                             shadowElevation = 32.dp,
                             shape = RoundedCornerShape(25f),
-                            modifier = Modifier,
+                            modifier = Modifier.widthIn(min = 200.dp),
                         ) {
                             DropdownMenuItem(
                                 text = {

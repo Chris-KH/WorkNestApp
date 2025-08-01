@@ -42,12 +42,10 @@ fun AddNoteInput(
             .fillMaxWidth()
             .background(
                 color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(
-                    topStartPercent = 20,
-                    topEndPercent = 20,
-                )
+                shape = RoundedCornerShape(topStartPercent = 25, topEndPercent = 25)
             )
-            .padding(16.dp),
+            .padding(horizontal = 16.dp)
+            .padding(top = if (isFocused) 8.dp else 16.dp, bottom = 16.dp),
     ) {
         if (isFocused) {
             Row(
@@ -55,17 +53,8 @@ fun AddNoteInput(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                TextButton(
-                    onClick = onCancel,
-                ) {
-                    Text(text = "Cancel")
-                }
-                TextButton(
-                    onClick = onAdd,
-                    enabled = value.isNotBlank()
-                ) {
-                    Text(text = "Add")
-                }
+                TextButton(onClick = onCancel) { Text(text = "Cancel") }
+                TextButton(onClick = onAdd, enabled = value.isNotBlank()) { Text(text = "Add") }
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -88,9 +77,7 @@ fun AddNoteInput(
                 )
             },
             trailingIcon = {
-                IconButton(
-                    onClick = {},
-                ) {
+                IconButton(onClick = {}) {
                     Icon(
                         painter = painterResource(R.drawable.outline_link),
                         contentDescription = null,

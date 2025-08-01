@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -77,7 +79,7 @@ fun QuickAddNoteInput(
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     shape = RoundedCornerShape(50f),
                 )
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 20.dp)
                 .padding(
                     top = 24.dp, bottom = if (isFocused) 12.dp else 24.dp
                 ),
@@ -98,13 +100,14 @@ fun QuickAddNoteInput(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Note",
-                        fontSize = 16.sp,
-                        lineHeight = 16.sp,
+                        fontSize = 15.sp,
+                        lineHeight = 15.sp,
                         fontWeight = FontWeight.Medium,
                     )
                 }
+
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
                 value = value,
                 onValueChange = { onValueChange(it) },
@@ -120,7 +123,7 @@ fun QuickAddNoteInput(
                         text = "Add card",
                         fontSize = 14.sp,
                         lineHeight = 14.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.Normal,
                     )
                 },
                 trailingIcon = {
@@ -134,7 +137,7 @@ fun QuickAddNoteInput(
                         )
                     }
                 },
-                maxLines = 4,
+                maxLines = 3,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -146,7 +149,6 @@ fun QuickAddNoteInput(
                 modifier = Modifier.fillMaxWidth(),
             )
             if (isFocused) {
-                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,

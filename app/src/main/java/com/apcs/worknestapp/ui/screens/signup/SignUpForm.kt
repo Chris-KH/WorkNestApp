@@ -1,7 +1,6 @@
 package com.apcs.worknestapp.ui.screens.signup
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -194,23 +193,22 @@ fun SignUpForm(
             modifier = Modifier.fillMaxWidth()
         )
 
-
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = {
-                if (!validData()) return@Button
+                if (validData()) {
+                    coroutineScope.launch {
+                        onSubmit()
+                        val message = authViewModel.signUpWithEmailPassword(
+                            email = email,
+                            password = password,
+                            name = name
+                        )
+                        resetField()
 
-                coroutineScope.launch {
-                    onSubmit()
-                    val message = authViewModel.signUpWithEmailPassword(
-                        email = email,
-                        password = password,
-                        name = name
-                    )
-                    resetField()
-
-                    if (message == null) onSuccess();
-                    else onFailure(message)
+                        if (message == null) onSuccess()
+                        else onFailure(message)
+                    }
                 }
             },
             colors = ButtonDefaults.buttonColors(

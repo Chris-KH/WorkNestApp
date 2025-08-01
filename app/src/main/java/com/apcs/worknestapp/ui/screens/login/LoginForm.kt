@@ -1,15 +1,11 @@
 package com.apcs.worknestapp.ui.screens.login
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,7 +25,6 @@ import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.ui.components.inputfield.EmailInput
 import com.apcs.worknestapp.ui.components.inputfield.PasswordInput
-import com.apcs.worknestapp.ui.theme.Poppins
 import kotlinx.coroutines.launch
 
 @Composable
@@ -64,19 +59,19 @@ fun LoginForm(
             },
             enabled = enabled,
         )
-
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = {
-                if (email.isBlank() || password.isBlank()) return@Button
-                coroutineScope.launch {
-                    onSubmit()
-                    val isSuccess = authViewModel.login(email.trim(), password.trim())
-                    email = ""
-                    password = ""
+                if (email.isBlank() || password.isBlank()) {
+                    coroutineScope.launch {
+                        onSubmit()
+                        val isSuccess = authViewModel.login(email.trim(), password.trim())
+                        email = ""
+                        password = ""
 
-                    if (isSuccess) onSuccess();
-                    else onFailure()
+                        if (isSuccess) onSuccess()
+                        else onFailure()
+                    }
                 }
             },
             colors = ButtonDefaults.buttonColors(

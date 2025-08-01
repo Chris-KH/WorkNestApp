@@ -5,11 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,7 +53,7 @@ fun SignUpScreen(
 
     var isSigningUp by remember { mutableStateOf(false) }
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -64,23 +61,21 @@ fun SignUpScreen(
                 indication = null,
                 interactionSource = interactionSource
             ) { focusManager.clearFocus() },
-        contentAlignment = Alignment.TopCenter
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
             painter = painterResource(R.drawable.signup_decor),
             contentDescription = null,
-            modifier = Modifier.fillMaxHeight(0.35f)
+            modifier = Modifier.weight(1f)
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.65f)
                 .verticalScroll(scrollState)
                 .imePadding()
-                .padding(horizontal = 24.dp)
-                .align(alignment = Alignment.BottomCenter),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Bottom
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -99,30 +94,28 @@ fun SignUpScreen(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SignUpForm(
-                enabled = !isSigningUp,
-                onSubmit = { isSigningUp = true },
-                onSuccess = {
-                    isSigningUp = false
-                    focusManager.clearFocus()
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
+                Spacer(modifier = Modifier.height(16.dp))
+                SignUpForm(
+                    enabled = !isSigningUp,
+                    onSubmit = { isSigningUp = true },
+                    onSuccess = {
+                        isSigningUp = false
+                        focusManager.clearFocus()
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onFailure = { it ->
+                        isSigningUp = false
+                        focusManager.clearFocus()
+                        snackbarHost.showSnackbar(
+                            message = "Fail: $it",
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Short
+                        )
                     }
-                },
-                onFailure = { it ->
-                    isSigningUp = false
-                    focusManager.clearFocus()
-                    snackbarHost.showSnackbar(
-                        message = "Fail: $it",
-                        withDismissAction = true,
-                        duration = SnackbarDuration.Short
-                    )
-                }
-            )
+                )
+            }
 
             TextButton(
                 onClick = {
@@ -145,8 +138,6 @@ fun SignUpScreen(
                     fontWeight = FontWeight.SemiBold,
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

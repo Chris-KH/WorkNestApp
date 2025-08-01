@@ -5,10 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,7 +41,6 @@ import com.apcs.worknestapp.ui.components.SignInWithGoogleButton
 import com.apcs.worknestapp.ui.components.TextDivider
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Poppins
-import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun LoginScreen(
@@ -58,7 +55,7 @@ fun LoginScreen(
 
     var isLogging by remember { mutableStateOf(false) }
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -66,23 +63,21 @@ fun LoginScreen(
                 indication = null,
                 interactionSource = interactionSource
             ) { focusManager.clearFocus() },
-        contentAlignment = Alignment.TopCenter
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
             painter = painterResource(R.drawable.login_decor),
             contentDescription = null,
-            modifier = Modifier.fillMaxHeight(0.4f)
+            modifier = Modifier.weight(1f)
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.60f)
                 .verticalScroll(scrollState)
                 .imePadding()
-                .padding(horizontal = 24.dp)
-                .align(alignment = Alignment.BottomCenter),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Bottom,
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -101,78 +96,79 @@ fun LoginScreen(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                LoginForm(
+                    enabled = !isLogging,
+                    onSubmit = { isLogging = true },
+                    onSuccess = {
+                        isLogging = false
+                        focusManager.clearFocus()
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onFailure = {
+                        isLogging = false
+                        focusManager.clearFocus()
+                        snackbarHost.showSnackbar(
+                            message = "Fail: Login failed",
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LoginForm(
-                enabled = !isLogging,
-                onSubmit = { isLogging = true },
-                onSuccess = {
-                    isLogging = false
-                    focusManager.clearFocus()
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-                onFailure = {
-                    isLogging = false
-                    focusManager.clearFocus()
-                    snackbarHost.showSnackbar(
-                        message = "Fail: Login failed",
-                        withDismissAction = true,
-                        duration = SnackbarDuration.Short
-                    )
-                }
-            )
-
             TextDivider(
-                text = "Or",
+                text = "OR",
                 thickness = 2.dp,
                 modifier = Modifier.padding(vertical = 12.dp)
             )
 
-            SignInWithGoogleButton(
-                enabled = !isLogging,
-                onSubmit = { isLogging = true },
-                onSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(0) {
-                            inclusive = true
-                        }
-                    }
-                },
-                onFailure = {
-                    snackbarHost.showSnackbar(
-                        message = "Fail: Login with google failed.",
-                        withDismissAction = true,
-                    )
-                },
-            )
-
-            TextButton(
-                enabled = !isLogging,
-                onClick = {
-                    navController.popBackStack()
-                    navController.navigate(Screen.SignUp.route)
-                },
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(
-                            style = SpanStyle(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        ) { append("Don't have any account? ") }
-                        append("Sign Up")
+                SignInWithGoogleButton(
+                    enabled = !isLogging,
+                    onSubmit = { isLogging = true },
+                    onSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) {
+                                inclusive = true
+                            }
+                        }
                     },
-                    fontSize = with(density) { 16.dp.toSp() },
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
+                    onFailure = {
+                        snackbarHost.showSnackbar(
+                            message = "Fail: Login with google failed.",
+                            withDismissAction = true,
+                        )
+                    },
                 )
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                TextButton(
+                    enabled = !isLogging,
+                    onClick = {
+                        navController.popBackStack()
+                        navController.navigate(Screen.SignUp.route)
+                    },
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            ) { append("Don't have any account? ") }
+                            append("Sign Up")
+                        },
+                        fontSize = with(density) { 16.dp.toSp() },
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
         }
     }
 }

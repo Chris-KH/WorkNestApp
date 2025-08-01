@@ -6,7 +6,10 @@ interface NoteRepository {
     val notes: StateFlow<List<Note>>
 
     suspend fun refreshNotes()
+    suspend fun addNote(note: Note)
     suspend fun deleteNote(docId: String)
+    suspend fun updateNoteComplete(docId: String, newState: Boolean)
+    suspend fun updateNoteArchive(docId: String, newState: Boolean)
     fun removeListener()
     fun clearCache()
 }
