@@ -9,5 +9,6 @@ interface NotificationRepository {
     suspend fun deleteNotification(docId: String)
     suspend fun markRead(docId: String)
     suspend fun markAllRead()
+    fun removeListener()
     fun clearCache()
 }

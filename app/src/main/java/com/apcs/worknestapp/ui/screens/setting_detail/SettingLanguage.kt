@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,14 +29,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.local.language.LanguageMode
+import com.apcs.worknestapp.data.local.language.LanguageViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingLanguage(
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
+    languageViewModel: LanguageViewModel = hiltViewModel(),
 ) {
+    val languageState = languageViewModel.language.collectAsState()
+    val languageMode = languageState.value
+
     val coroutineScope = rememberCoroutineScope()
 
     fun notSupportNotify() {
@@ -60,26 +68,37 @@ fun SettingLanguage(
             LanguageOption(
                 flag = R.drawable.flag_us,
                 language = "English, US",
-                isSelected = true,
-                onClick = {}
+                isSelected = languageMode == LanguageMode.EN_US,
+                onClick = {
+                    languageViewModel.saveLanguage(LanguageMode.EN_US)
+                }
             )
             LanguageOption(
                 flag = R.drawable.flag_uk,
                 language = "English, UK",
-                isSelected = false,
-                onClick = { notSupportNotify() },
+                isSelected = languageMode == LanguageMode.EN_UK,
+                onClick = {
+                    languageViewModel.saveLanguage(LanguageMode.EN_UK)
+                    notSupportNotify()
+                },
             )
             LanguageOption(
                 flag = R.drawable.flag_vietnam,
                 language = "Vietnamese",
-                isSelected = false,
-                onClick = { notSupportNotify() },
+                isSelected = languageMode == LanguageMode.VN,
+                onClick = {
+                    languageViewModel.saveLanguage(LanguageMode.VN)
+                    notSupportNotify()
+                },
             )
             LanguageOption(
                 flag = R.drawable.flag_china,
                 language = "Chinese",
-                isSelected = false,
-                onClick = { notSupportNotify() },
+                isSelected = languageMode == LanguageMode.CN,
+                onClick = {
+                    languageViewModel.saveLanguage(LanguageMode.CN)
+                    notSupportNotify()
+                },
             )
         }
     }

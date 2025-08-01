@@ -11,6 +11,16 @@ class NotificationViewModel @Inject constructor(
 ) : ViewModel() {
     val notifications = notificationRepo.notifications
 
+    override fun onCleared() {
+        super.onCleared()
+        notificationRepo.removeListener()
+    }
+
+    suspend fun refreshNotificationsIfEmpty() {
+        if (notifications.value.isEmpty())
+            notificationRepo.refreshNotifications()
+    }
+
     suspend fun refreshNotifications() {
         notificationRepo.refreshNotifications()
     }

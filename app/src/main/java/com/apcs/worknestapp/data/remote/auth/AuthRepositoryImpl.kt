@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val googleAuthUiClient: GoogleAuthUiClient,
-    private val sessionManager: UserSessionManager,
+    private val sessionManager: SessionManager,
 ) : AuthRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()

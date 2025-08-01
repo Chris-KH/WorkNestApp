@@ -1,11 +1,12 @@
 package com.apcs.worknestapp.di
 
 import android.content.Context
+import com.apcs.worknestapp.data.local.language.LanguageDataStore
 import com.apcs.worknestapp.data.local.theme.ThemeDataStore
 import com.apcs.worknestapp.data.remote.auth.AuthRepository
 import com.apcs.worknestapp.data.remote.auth.AuthRepositoryImpl
 import com.apcs.worknestapp.data.remote.auth.GoogleAuthUiClient
-import com.apcs.worknestapp.data.remote.auth.UserSessionManager
+import com.apcs.worknestapp.data.remote.auth.SessionManager
 import com.apcs.worknestapp.data.remote.note.NoteRepository
 import com.apcs.worknestapp.data.remote.note.NoteRepositoryImpl
 import com.apcs.worknestapp.data.remote.notification.NotificationRepository
@@ -24,7 +25,7 @@ object AppModule {
     @Singleton
     fun provideAuthRepository(
         googleAuthUiClient: GoogleAuthUiClient,
-        sessionManager: UserSessionManager,
+        sessionManager: SessionManager,
     ): AuthRepository = AuthRepositoryImpl(googleAuthUiClient, sessionManager)
 
     @Provides
@@ -32,7 +33,7 @@ object AppModule {
     fun provideUserSessionManager(
         noteRepo: NoteRepository,
         notificationRepo: NotificationRepository,
-    ): UserSessionManager = UserSessionManager(
+    ): SessionManager = SessionManager(
         noteRepo = noteRepo,
         notificationRepo = notificationRepo,
     )
@@ -42,6 +43,12 @@ object AppModule {
     fun provideThemeDataStore(
         @ApplicationContext context: Context,
     ): ThemeDataStore = ThemeDataStore(context)
+
+    @Provides
+    @Singleton
+    fun provideLanguageDataStore(
+        @ApplicationContext context: Context,
+    ): LanguageDataStore = LanguageDataStore(context)
 
     @Provides
     @Singleton

@@ -46,8 +46,8 @@ import com.apcs.worknestapp.domain.logic.DateFormater
 @Composable
 fun NotificationItem(
     notification: Notification,
+    onClick: (String) -> Unit,
     onDelete: (String?) -> Unit,
-    onClick: (String) -> Unit = {},
 ) {
     var showModal by remember { mutableStateOf(false) }
 

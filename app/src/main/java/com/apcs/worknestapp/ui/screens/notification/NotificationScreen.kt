@@ -3,7 +3,6 @@ package com.apcs.worknestapp.ui.screens.notification
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -12,7 +11,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -65,14 +63,14 @@ fun NotificationScreen(
     }
 
     LaunchedEffect(Unit) {
-        notificationViewModel.refreshNotifications()
+        notificationViewModel.refreshNotificationsIfEmpty()
         isFirstLaunch = false
     }
 
     Scaffold(
         topBar = {
             MainTopBar(
-                currentScreen = Screen.Notification,
+                title = Screen.Notification.title,
                 actions = {
                     IconButton(
                         enabled = notifications.value.isNotEmpty() && !showModalBottom,
@@ -165,6 +163,11 @@ fun NotificationScreen(
                     ) { idx, item ->
                         NotificationItem(
                             notification = item,
+                            onClick = {
+                                coroutineScope.launch {
+                                    notificationViewModel.markRead(it)
+                                }
+                            },
                             onDelete = {
                                 coroutineScope.launch {
                                     if (it == null) {

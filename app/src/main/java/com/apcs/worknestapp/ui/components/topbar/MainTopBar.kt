@@ -19,18 +19,12 @@ import com.apcs.worknestapp.ui.theme.Roboto
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainTopBar(
-    currentScreen: Screen,
+    title: String,
     actions: @Composable (RowScope.() -> Unit) = {},
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         TopAppBar(
             title = {
-                val title = when(currentScreen) {
-                    Screen.Home -> "WorkNest"
-                    Screen.Profile -> "My Profile"
-                    else -> currentScreen.title
-                }
-
                 Text(
                     text = title,
                     fontFamily = Roboto,

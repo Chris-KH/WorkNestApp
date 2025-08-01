@@ -13,9 +13,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -31,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -70,7 +71,7 @@ fun SearchInput(
                 fontFamily = Roboto,
                 fontSize = 14.sp,
                 lineHeight = 14.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onSurface
             ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -79,13 +80,13 @@ fun SearchInput(
                 .border(
                     width = 1.dp,
                     color = borderColor,
-                    shape = RoundedCornerShape(100),
+                    shape = RoundedCornerShape(30),
                 )
                 .background(
                     color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(100),
+                    shape = RoundedCornerShape(30),
                 )
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         ) { innerTextField ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -109,11 +110,12 @@ fun SearchInput(
                             text = "Search",
                             fontSize = 14.sp,
                             lineHeight = 14.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.Normal,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
                 if (!value.isEmpty()) {
                     Icon(
                         painter = painterResource(R.drawable.fill_close),
@@ -149,12 +151,11 @@ fun SearchInput(
                 Text(
                     text = "Cancel",
                     fontSize = 16.sp,
+                    lineHeight = 16.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = Roboto,
                 )
             }
         }
     }
-
-
 }
