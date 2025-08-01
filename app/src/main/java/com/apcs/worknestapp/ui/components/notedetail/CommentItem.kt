@@ -27,7 +27,10 @@ data class Comment(
 
 
 @Composable
-fun CommentItem(comment: Comment, modifier: Modifier = Modifier) {
+fun CommentItem(
+    comment: Comment,
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -47,10 +50,10 @@ fun CommentItem(comment: Comment, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = comment.text, style = MaterialTheme.typography.bodyMedium)
 
-//            if (comment.replies.isNotEmpty()) {
-//                // ... (reply logic remains the same) ...
-//                // TODO:
-//            }
+            if (comment.replies.isNotEmpty()) {
+                // ... (reply logic remains the same) ...
+                // TODO:
+            }
         }
     }
 }
