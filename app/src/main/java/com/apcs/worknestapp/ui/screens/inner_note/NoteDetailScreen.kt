@@ -22,16 +22,13 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
@@ -48,6 +45,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -67,21 +65,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import coil3.compose.rememberAsyncImagePainter
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
-import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
-import com.apcs.worknestapp.ui.components.topbar.MainTopBar
-import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.google.android.gms.fido.fido2.api.common.Attachment
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -97,15 +93,16 @@ import java.util.UUID
 data class Task(
     val id: String = UUID.randomUUID().toString(),
     var text: String,
-    var isCompleted: Boolean
+    var isCompleted: Boolean,
 )
 
 data class WorklistItem(
     val id: String = UUID.randomUUID().toString(),
     var name: String,
     var tasks: List<Task>,
-    var isCollapsed: Boolean = false // For collapse/expand functionality
+    var isCollapsed: Boolean = false, // For collapse/expand functionality
 )
+
 data class Attachment(val id: String, val name: String, val type: String)
 enum class AttachmentOption {
     UPLOAD_FILE,
@@ -114,7 +111,6 @@ enum class AttachmentOption {
     TAKE_PHOTO
     // Add other options as needed
 }
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -169,73 +165,45 @@ fun NoteDetailScreen(
 
     Scaffold(
         topBar = {
-            MainTopBar(
-                currentScreen = Screen.Note,
+            CustomTopBar(
+                field = "",
+                navigationIcon = {
+                    IconButton(
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            disabledContentColor = Color.Unspecified,
+                        ),
+                        onClick = { navController.popBackStack() },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.symbol_angle_arrow),
+                            contentDescription = "back",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(90f)
+                        )
+                    }
+                },
                 actions = {
-                    IconButton(onClick = { showSubMenu = true }) {
+                    IconButton(
+                        onClick = {},
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            disabledContentColor = Color.Unspecified,
+                        )
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.symbol_three_dot),
                             contentDescription = "More options",
-                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .size(24.dp)
                                 .rotate(-90f)
                         )
                     }
-                    DropdownMenu(
-                        expanded = showSubMenu,
-                        onDismissRequest = { showSubMenu = false },
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        shadowElevation = 32.dp,
-                        shape = RoundedCornerShape(25f),
-                        modifier = Modifier.widthIn(min = 160.dp),
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = "Edit",
-                                    fontSize = 14.sp,
-                                    lineHeight = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            },
-                            onClick = {}, //  onEditClick() },
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit",
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = "Delete all",
-                                    fontSize = 14.sp,
-                                    lineHeight = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            },
-                            onClick = {},// onDeleteAllClick,
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete All",
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            }
-                        )
-                    }
-                }
+                },
             )
         },
-        bottomBar = {
-            MainBottomBar(
-                currentScreen = Screen.Note,
-                navController = navController,
-            )
-        },
+        bottomBar = {},
         modifier = modifier,
     )
     { innerPadding ->
@@ -488,26 +456,45 @@ fun NoteDetailScreen(
                                     onOptionSelected = { selectedOption ->
                                         showAttachmentMenu = false
                                         // --- Placeholder  --- /////////////////////////////////////////////////
-                                        when (selectedOption) {
+                                        when(selectedOption) {
                                             AttachmentOption.UPLOAD_FILE -> {
                                                 println("Option Selected: Upload File")
                                                 // Later: filePickerLauncher.launch("*/*")
                                                 // For now: Add a dummy item
                                                 attachmentsList =
-                                                    (attachmentsList + Attachment(UUID.randomUUID().toString(), "Placeholder File", "File")) as List<Attachment>
+                                                    (attachmentsList + Attachment(
+                                                        UUID.randomUUID().toString(),
+                                                        "Placeholder File",
+                                                        "File"
+                                                    )) as List<Attachment>
                                             }
+
                                             AttachmentOption.ADD_LINK -> {
                                                 println("Option Selected: Add Link")
                                                 attachmentsList =
-                                                    (attachmentsList + Attachment(UUID.randomUUID().toString(), "Placeholder Link", "Link")) as List<Attachment>
+                                                    (attachmentsList + Attachment(
+                                                        UUID.randomUUID().toString(),
+                                                        "Placeholder Link",
+                                                        "Link"
+                                                    )) as List<Attachment>
                                             }
+
                                             AttachmentOption.ADD_IMAGE_FROM_GALLERY -> {
                                                 println("Option Selected: Add Image from Gallery")
-                                                attachmentsList = attachmentsList + Attachment(UUID.randomUUID().toString(), "Placeholder Gallery Image", "Image") as List<Attachment>
+                                                attachmentsList = attachmentsList + Attachment(
+                                                    UUID.randomUUID().toString(),
+                                                    "Placeholder Gallery Image",
+                                                    "Image"
+                                                ) as List<Attachment>
                                             }
+
                                             AttachmentOption.TAKE_PHOTO -> {
                                                 println("Option Selected: Take Photo")
-                                                attachmentsList = attachmentsList + Attachment(UUID.randomUUID().toString(), "Placeholder Camera Photo", "Image") as List<Attachment>
+                                                attachmentsList = attachmentsList + Attachment(
+                                                    UUID.randomUUID().toString(),
+                                                    "Placeholder Camera Photo",
+                                                    "Image"
+                                                ) as List<Attachment>
                                             }
                                         }
                                         // --- End Placeholder ---////////////////////////////////////////////////////
@@ -556,7 +543,8 @@ fun NoteDetailScreen(
                             Text("Worklist", style = MaterialTheme.typography.titleMedium)
                             IconButton(onClick = {
                                 // Add a new empty WorklistItem
-                                val newWorklistItem = WorklistItem(name = "New List", tasks = emptyList())
+                                val newWorklistItem =
+                                    WorklistItem(name = "New List", tasks = emptyList())
                                 workList = workList + newWorklistItem
                             }) {
                                 Icon(Icons.Filled.Add, contentDescription = "Add new task list")
@@ -588,63 +576,63 @@ fun NoteDetailScreen(
                 }
             }
 
-                    item {
-                        Text(
-                            text = "Comments",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(
-                                start = 16.dp,
-                                top = 16.dp,
-                                end = 16.dp,
-                                bottom = 8.dp
-                            )
-                        )
-                    }
+            item {
+                Text(
+                    text = "Comments",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(
+                        start = 16.dp,
+                        top = 16.dp,
+                        end = 16.dp,
+                        bottom = 8.dp
+                    )
+                )
+            }
 
-                    if (commentList.isEmpty()) {
-                        item {
-                            Text(
-                                text = "No comments yet. Be the first to comment!",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                    } else {
-                        items(commentList.size) { index ->
-                            val comment = commentList[index]
-                            CommentItem(comment = comment) // Assuming CommentItem is defined as before
-                        }
-                    }
+            if (commentList.isEmpty()) {
+                item {
+                    Text(
+                        text = "No comments yet. Be the first to comment!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                items(commentList.size) { index ->
+                    val comment = commentList[index]
+                    CommentItem(comment = comment) // Assuming CommentItem is defined as before
+                }
+            }
 
-                    item {
-                        CommentInputSection(
-                            commentText = commentText,
-                            onCommentTextChange = { commentText = it },
-                            onPostComment = {
-                                userProfile?.let { profile ->
-                                    if (commentText.isNotBlank()) {
-                                        val newComment = Comment(
-                                            id = UUID.randomUUID().toString(),
-                                            text = commentText,
-                                            author = User(
-                                                name = profile.name ?: "Anonymous",
-                                                avatarUrl = profile.avatar ?: ""
-                                            ),
-                                            timestamp = Date()
-                                        )
-                                        commentList = commentList + newComment
-                                        commentText = ""
-                                        focusManager.clearFocus()
-                                    }
-                                } ?: run {
-                                    // Handle case where userProfile is null (e.g., show a message or disable commenting)
-                                    // You might want to show a snackbar:
-                                    // coroutineScope.launch { snackbarHost.showSnackbar("You need to be logged in to comment.") }
-                                }
-                            },
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
+            item {
+                CommentInputSection(
+                    commentText = commentText,
+                    onCommentTextChange = { commentText = it },
+                    onPostComment = {
+                        userProfile?.let { profile ->
+                            if (commentText.isNotBlank()) {
+                                val newComment = Comment(
+                                    id = UUID.randomUUID().toString(),
+                                    text = commentText,
+                                    author = User(
+                                        name = profile.name ?: "Anonymous",
+                                        avatarUrl = profile.avatar ?: ""
+                                    ),
+                                    timestamp = Date()
+                                )
+                                commentList = commentList + newComment
+                                commentText = ""
+                                focusManager.clearFocus()
+                            }
+                        } ?: run {
+                            // Handle case where userProfile is null (e.g., show a message or disable commenting)
+                            // You might want to show a snackbar:
+                            // coroutineScope.launch { snackbarHost.showSnackbar("You need to be logged in to comment.") }
+                        }
+                    },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
         }
     }
 }
@@ -664,12 +652,13 @@ data class Comment(
     val text: String,
     val author: User, // Changed from 'user' to 'author' for clarity
     val timestamp: Date,
-    val replies: List<Comment> = emptyList()
+    val replies: List<Comment> = emptyList(),
 )
+
 @Composable
 fun CommentAuthorHeader(
     author: User,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -697,6 +686,7 @@ fun CommentAuthorHeader(
         }
     }
 }
+
 @Composable
 fun CommentItem(comment: Comment, modifier: Modifier = Modifier) {
     Card(
@@ -710,7 +700,10 @@ fun CommentItem(comment: Comment, modifier: Modifier = Modifier) {
 
             Spacer(modifier = Modifier.height(4.dp)) // Adjusted spacer
             Text(
-                text = SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()).format(comment.timestamp),                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = SimpleDateFormat(
+                    "MMM d, yyyy h:mm a",
+                    Locale.getDefault()
+                ).format(comment.timestamp), color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 48.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -723,12 +716,13 @@ fun CommentItem(comment: Comment, modifier: Modifier = Modifier) {
         }
     }
 }
+
 @Composable
 fun CommentInputSection(
     commentText: String,
     onCommentTextChange: (String) -> Unit,
     onPostComment: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
@@ -762,7 +756,7 @@ fun TimePickerDialog(
     onConfirm: (hour: Int, minute: Int) -> Unit,
     initialHour: Int = Calendar.getInstance().get(Calendar.HOUR_OF_DAY),
     initialMinute: Int = Calendar.getInstance().get(Calendar.MINUTE),
-    is24Hour: Boolean = true
+    is24Hour: Boolean = true,
 ) {
     val timePickerState = rememberTimePickerState(
         initialHour = initialHour,
@@ -796,7 +790,7 @@ fun TimePickerDialog(
 fun AttachmentOptionsDropdownMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
-    onOptionSelected: (AttachmentOption) -> Unit
+    onOptionSelected: (AttachmentOption) -> Unit,
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -805,26 +799,26 @@ fun AttachmentOptionsDropdownMenu(
         DropdownMenuItem(
             text = { Text("Upload File") },
             onClick = { //onOptionSelected(AttachmentOption.UPLOAD_FILE)
-                 },
+            },
             //leadingIcon = { Icon(Icons.Filled.AttachFile, contentDescription = "Upload File") }
         )
         DropdownMenuItem(
             text = { Text("Add Link") },
             onClick = { },
-                //onOptionSelected(AttachmentOption.ADD_LINK)
+            //onOptionSelected(AttachmentOption.ADD_LINK)
             //leadingIcon = { Icon(Icons.Filled.Link, contentDescription = "Add Link") }
         )
         HorizontalDivider() // Optional: to group image options
         DropdownMenuItem(
             text = { Text("Image from Gallery") },
             onClick = { //onOptionSelected(AttachmentOption.ADD_IMAGE_FROM_GALLERY)
-                      },
+            },
             //leadingIcon = { Icon(Icons.Filled.Image, contentDescription = "Image from Gallery") }
         )
         DropdownMenuItem(
             text = { Text("Take Photo") },
             onClick = { //onOptionSelected(AttachmentOption.TAKE_PHOTO)
-                      },
+            },
             ///leadingIcon = { Icon(Icons.Filled.CameraAlt, contentDescription = "Take Photo") }
         )
 
@@ -832,12 +826,11 @@ fun AttachmentOptionsDropdownMenu(
 }
 
 
-
 @Composable
 fun WorklistItemUI(
     worklistItem: WorklistItem,
     onWorklistItemChange: (WorklistItem) -> Unit,
-    onDeleteWorklistItem: () -> Unit // Callback to delete this worklist item
+    onDeleteWorklistItem: () -> Unit, // Callback to delete this worklist item
 ) {
     var internalWorklistItemName by remember(worklistItem.name) { mutableStateOf(worklistItem.name) }
 
@@ -907,7 +900,7 @@ fun WorklistItemUI(
 fun TaskItemUI(
     task: Task,
     onTaskChange: (Task) -> Unit,
-    onDeleteTask: () -> Unit
+    onDeleteTask: () -> Unit,
 ) {
     var internalTaskText by remember(task.text) { mutableStateOf(task.text) }
 
@@ -926,12 +919,12 @@ fun TaskItemUI(
             value = internalTaskText,
             onValueChange = { internalTaskText = it },
             modifier = Modifier.weight(1f),
-            label = {Text("Task")},
+            label = { Text("Task") },
             singleLine = true, // Or remove if tasks can be multi-line
             trailingIcon = {
                 IconButton(onClick = {
                     onTaskChange(task.copy(text = internalTaskText))
-                }, enabled = internalTaskText != task.text ) { // Enable only if changed
+                }, enabled = internalTaskText != task.text) { // Enable only if changed
                     Icon(Icons.Filled.Check, contentDescription = "Save task text")
                 }
             }

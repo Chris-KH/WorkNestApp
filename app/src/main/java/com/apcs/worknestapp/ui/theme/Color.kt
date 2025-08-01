@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 
 
 val ColorScheme.success: Color
-    get() = Color(0xFF2E7D32)
+    get() = Color(0xFF1EC222)
 
 val ColorScheme.onSuccess: Color
     get() = Color(0xFFDFFFE2)

@@ -16,13 +16,22 @@ class NotificationViewModel @Inject constructor(
         notificationRepo.removeListener()
     }
 
-    suspend fun refreshNotificationsIfEmpty() {
-        if (notifications.value.isEmpty())
-            notificationRepo.refreshNotifications()
+    suspend fun refreshNotificationsIfEmpty(): Boolean {
+        if (notifications.value.isEmpty()) {
+            return refreshNotifications()
+        }
+
+        return true
     }
 
-    suspend fun refreshNotifications() {
-        notificationRepo.refreshNotifications()
+    suspend fun refreshNotifications(): Boolean {
+        return try {
+            notificationRepo.refreshNotifications()
+            true
+        } catch(e: Exception) {
+            Log.e("NotificationViewModel", "Refresh notifications failed", e)
+            false
+        }
     }
 
     suspend fun deleteNotification(docId: String): Boolean {

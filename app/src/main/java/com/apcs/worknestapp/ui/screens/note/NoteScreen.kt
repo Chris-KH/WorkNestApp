@@ -32,9 +32,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -46,12 +49,16 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.data.remote.note.NoteViewModel
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,24 +66,37 @@ fun NoteScreen(
     navController: NavHostController,
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
+    noteViewModel: NoteViewModel = hiltViewModel(),
 ) {
     val focusManager = LocalFocusManager.current
-    var selectMode by remember { mutableStateOf(false) }
-
-    var notes by remember { mutableStateOf(emptyList<String>()) }
-    var noteText by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+    var isInSelectMode by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+
+    val notes = noteViewModel.notes.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    var noteName by remember { mutableStateOf("") }
+
+
+    LaunchedEffect(Unit) {
+        if (notes.value.isEmpty()) {
+            isRefreshing = true
+            noteViewModel.refreshNotesIfEmpty()
+            isRefreshing = false
+        }
+    }
 
     Scaffold(
         topBar = {
             MainTopBar(
-                title = if (selectMode) "Select notes" else Screen.Note.title,
+                title = if (isInSelectMode) "Select notes" else Screen.Note.title,
                 actions = {
-                    if (notes.isNotEmpty()) {
+                    if (notes.value.isNotEmpty()) {
                         IconButton(
-                            onClick = { selectMode = !selectMode },
+                            onClick = { isInSelectMode = !isInSelectMode },
                             colors = IconButtonDefaults.iconButtonColors(
-                                contentColor = if (selectMode) MaterialTheme.colorScheme.surface
+                                contentColor = if (isInSelectMode) MaterialTheme.colorScheme.surface
                                 else MaterialTheme.colorScheme.primary,
                                 disabledContentColor = Color.Unspecified,
                             )
@@ -91,7 +111,7 @@ fun NoteScreen(
                             Box(
                                 modifier = Modifier
                                     .background(
-                                        color = if (selectMode) MaterialTheme.colorScheme.primary
+                                        color = if (isInSelectMode) MaterialTheme.colorScheme.primary
                                         else Color.Unspecified,
                                         shape = CircleShape,
                                     )
@@ -192,7 +212,7 @@ fun NoteScreen(
                 .imePadding()
                 .fillMaxSize(),
         ) {
-            if (notes.isEmpty()) {
+            if (notes.value.isEmpty()) {
                 EmptyNote(
                     modifier = Modifier
                         .weight(1f)
@@ -202,18 +222,22 @@ fun NoteScreen(
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest
+                        ),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     items(
-                        items = notes,
-                        key = { note -> note.hashCode() }
+                        items = notes.value,
+                        key = { note -> note.docId.hashCode() }
                     ) { note ->
                         NoteItem(
                             note = note,
-                            onClick = { /* onNoteClick(note) */
-                                navController.navigate(Screen.NoteDetail.route)
-                                //pseudo code. the note item doesn't do anything.
+                            onClick = {
+                                navController.navigate(
+                                    Screen.NoteDetail.route.replace("{noteId}", note.docId ?: "")
+                                )
                             }
                         )
                     }
@@ -221,13 +245,18 @@ fun NoteScreen(
             }
 
             AddNoteInput(
-                value = noteText,
-                onValueChange = { noteText = it },
+                value = noteName,
+                onValueChange = { noteName = it },
                 onCancel = { focusManager.clearFocus() },
                 onAdd = {
-                    if (noteText.isNotBlank()) {
-                        notes = notes + noteText
-                        noteText = ""
+                    if (noteName.isNotBlank()) {
+                        coroutineScope.launch {
+                            noteViewModel.addNote(
+                                Note(
+                                    name = noteName,
+                                )
+                            )
+                        }
                     }
                 },
                 isFocused = isFocused,
