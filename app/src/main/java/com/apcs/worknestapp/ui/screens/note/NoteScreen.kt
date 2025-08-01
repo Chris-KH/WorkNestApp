@@ -171,7 +171,10 @@ fun NoteScreen(
                     ) { note ->
                         NoteItem(
                             note = note,
-                            onClick = { /* onNoteClick(note) */ }
+                            onClick = { /* onNoteClick(note) */
+                                navController.navigate(Screen.NoteDetail.route)
+                                //pseudo code. the note item doesn't do anything.
+                            }
                         )
                     }
                 }
