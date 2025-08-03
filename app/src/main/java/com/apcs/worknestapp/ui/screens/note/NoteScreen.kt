@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -77,8 +80,7 @@ fun NoteScreen(
     var isRefreshing by remember { mutableStateOf(false) }
 
     var noteName by remember { mutableStateOf("") }
-
-
+    
     LaunchedEffect(Unit) {
         if (notes.value.isEmpty()) {
             isRefreshing = true
@@ -212,34 +214,55 @@ fun NoteScreen(
                 .imePadding()
                 .fillMaxSize(),
         ) {
-            if (notes.value.isEmpty()) {
-                EmptyNote(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerHighest
-                        ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    items(
-                        items = notes.value,
-                        key = { note -> note.docId.hashCode() }
-                    ) { note ->
-                        NoteItem(
-                            note = note,
-                            onClick = {
-                                navController.navigate(
-                                    Screen.NoteDetail.route.replace("{noteId}", note.docId ?: "")
-                                )
-                            }
-                        )
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = {
+                    coroutineScope.launch {
+                        isRefreshing = true
+                        val isSuccess = noteViewModel.refreshNotes()
+                        isRefreshing = false
+
+                        if (!isSuccess) {
+                            snackbarHost.showSnackbar(
+                                message = "Refresh notes failed. Something not work",
+                                withDismissAction = true,
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                if (notes.value.isEmpty()) {
+                    EmptyNote(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+                    ) {
+                        items(
+                            items = notes.value,
+                            key = { note -> note.docId.hashCode() }
+                        ) { note ->
+                            NoteItem(
+                                note = note,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.NoteDetail.route.replace(
+                                            "{noteId}",
+                                            note.docId ?: ""
+                                        )
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }

@@ -52,6 +52,19 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         }
     }
 
+    override suspend fun getNote(docId: String): Note {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val noteDoc = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(docId)
+            .get()
+            .await()
+
+        return noteDoc.toObject(Note::class.java) ?: throw Exception("Invalid note format")
+    }
+
     override suspend fun deleteNote(docId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
@@ -66,7 +79,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             _notes.update { list ->
                 list.filterNot { it.docId == docId }
             }
-        } catch(e: Exception) {
+        } catch(_: Exception) {
             _notes.update { list ->
                 list.filterNot { it.docId == docId }
             }

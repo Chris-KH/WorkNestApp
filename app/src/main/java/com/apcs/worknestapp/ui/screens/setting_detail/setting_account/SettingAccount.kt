@@ -155,7 +155,6 @@ fun SettingAccountItem(
             text = label,
             fontSize = 14.sp,
             lineHeight = 14.sp,
-            modifier = Modifier.width(64.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(

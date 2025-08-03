@@ -125,7 +125,7 @@ fun HomeMainScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Your Workspace Boards",
+                        text = "Workspace Boards",
                         fontSize = 14.sp,
                         lineHeight = 14.sp,
                         fontFamily = Roboto,
@@ -156,7 +156,7 @@ fun HomeMainScreen(
                 }
                 HorizontalDivider()
             }
-            
+
             items(count = 50) {
                 Row(
                     modifier = Modifier

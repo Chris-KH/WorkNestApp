@@ -38,4 +38,23 @@ class NoteViewModel @Inject constructor(
             false
         }
     }
+
+    suspend fun deleteNote(docId: String): Boolean {
+        return try {
+            noteRepo.deleteNote(docId)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Add a note failed", e)
+            false
+        }
+    }
+
+    suspend fun getNote(docId: String): Note? {
+        return try {
+            noteRepo.getNote(docId)
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Get note $docId failed", e)
+            null
+        }
+    }
 }

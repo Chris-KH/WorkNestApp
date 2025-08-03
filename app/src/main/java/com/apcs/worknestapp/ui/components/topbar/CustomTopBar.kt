@@ -25,6 +25,7 @@ fun CustomTopBar(
     colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
     navigationIcon: @Composable (() -> Unit) = {},
     actions: @Composable (RowScope.() -> Unit) = {},
+    showDivider: Boolean = true,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         CenterAlignedTopAppBar(
@@ -48,10 +49,12 @@ fun CustomTopBar(
             modifier = Modifier
         )
 
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = (0.5).dp,
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                thickness = (0.5).dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
     }
 }

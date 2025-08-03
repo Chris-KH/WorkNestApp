@@ -9,6 +9,8 @@ data class Note(
     val name: String? = null,
     val cover: String? = null,
     val description: String? = null,
+    val startDate: Timestamp? = null,
+    val endDate: Timestamp? = null,
     val completed: Boolean? = null,
     val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,

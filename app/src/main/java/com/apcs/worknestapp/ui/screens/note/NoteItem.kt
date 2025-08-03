@@ -62,7 +62,7 @@ fun NoteItem(
         Text(
             text = note.name ?: "",
             fontSize = 14.sp,
-            lineHeight = 14.sp,
+            lineHeight = 16.sp,
             fontWeight = FontWeight.Normal,
             modifier = Modifier.weight(1f)
         )
