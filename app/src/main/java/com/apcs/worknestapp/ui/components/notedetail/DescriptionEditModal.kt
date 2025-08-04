@@ -75,7 +75,7 @@ fun DescriptionEditModal(
             textStyle = TextStyle(
                 fontSize = 15.sp,
                 lineHeight = 16.sp,
-                letterSpacing = (0.5).sp,
+                letterSpacing = (0.25).sp,
                 fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onSurface
             ),

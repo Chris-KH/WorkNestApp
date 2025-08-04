@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.data.remote.note
 
 import com.apcs.worknestapp.utils.ColorUtils
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -143,7 +144,6 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
 
     override suspend fun updateNoteArchive(docId: String, newState: Boolean) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
-
         val noteRef = firestore.collection("users")
             .document(authUser.uid)
             .collection("notes")
@@ -162,6 +162,32 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                 list.map { if (it.docId == docId) it.copy(archived = previousState) else it }
             }
             throw e
+        }
+    }
+
+    override suspend fun updateNoteStartDate(docId: String, dateTime: Timestamp?) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(docId)
+
+        noteRef.update("startDate", dateTime).await()
+        _notes.update { list ->
+            list.map { if (it.docId == docId) it.copy(startDate = dateTime) else it }
+        }
+    }
+
+    override suspend fun updateNoteEndDate(docId: String, dateTime: Timestamp?) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(docId)
+
+        noteRef.update("endDate", dateTime).await()
+        _notes.update { list ->
+            list.map { if (it.docId == docId) it.copy(endDate = dateTime) else it }
         }
     }
 

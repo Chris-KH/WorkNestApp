@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.data.remote.note
 
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.StateFlow
 
 interface NoteRepository {
@@ -13,6 +14,8 @@ interface NoteRepository {
     suspend fun updateNoteDescription(docId: String, description: String)
     suspend fun updateNoteComplete(docId: String, newState: Boolean)
     suspend fun updateNoteArchive(docId: String, newState: Boolean)
+    suspend fun updateNoteStartDate(docId: String, dateTime: Timestamp?)
+    suspend fun updateNoteEndDate(docId: String, dateTime: Timestamp?)
     fun removeListener()
     fun clearCache()
 }

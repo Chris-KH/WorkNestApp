@@ -33,7 +33,7 @@ fun NoteModalBottomTopBar(
             .fillMaxWidth()
             .wrapContentHeight()
             .background(containerColor)
-            .padding(vertical = 8.dp)
+            .padding(vertical = 6.dp)
     ) {
         IconButton(
             onClick = onClose,

@@ -75,6 +75,7 @@ import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
 import com.apcs.worknestapp.ui.components.notedetail.CoverPickerModal
+import com.apcs.worknestapp.ui.components.notedetail.DateTimePickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DescriptionEditModal
 import com.apcs.worknestapp.ui.components.notedetail.WorklistItem
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
@@ -112,6 +113,7 @@ fun NoteDetailScreen(
     var noteCover by remember { mutableStateOf<Int?>(null) }
     val noteCoverColor = if (noteCover != null) ColorUtils.safeParse(noteCover!!) else null
     var noteCompleted by remember { mutableStateOf(false) }
+    var noteArchived by remember { mutableStateOf(false) }
     var noteDescription by remember { mutableStateOf("") }
     var noteStartDate by remember { mutableStateOf<Timestamp?>(null) }
     var noteEndDate by remember { mutableStateOf<Timestamp?>(null) }
@@ -132,7 +134,7 @@ fun NoteDetailScreen(
     val lazyListState = rememberLazyListState()
     val surfaceColor = MaterialTheme.colorScheme.surface
     val surfaceColorOverlay = surfaceColor.copy(alpha = 0.05f)
-    var topBarBackground by remember { mutableStateOf(Color.Transparent) }
+    var topBarBackground by remember { mutableStateOf(surfaceColorOverlay) }
 
     LaunchedEffect(Unit) {
         isFirstLoading = true
@@ -149,6 +151,7 @@ fun NoteDetailScreen(
             noteCover = note.cover
             noteCover?.let { topBarBackground = surfaceColorOverlay }
             noteCompleted = note.completed ?: false
+            noteArchived = note.archived ?: false
             noteDescription = note.description ?: ""
             noteStartDate = note.startDate
             noteEndDate = note.endDate
@@ -160,7 +163,6 @@ fun NoteDetailScreen(
     LaunchedEffect(lazyListState) {
         snapshotFlow { lazyListState.firstVisibleItemIndex }.collect {
             topBarBackground = if (it != 0) surfaceColor
-            else if (noteCover == null) Color.Transparent
             else surfaceColorOverlay
         }
     }
@@ -263,8 +265,58 @@ fun NoteDetailScreen(
                         )
                     }
 
-                    NoteModalBottomType.START_DATE -> {}
-                    NoteModalBottomType.END_DATE -> {}
+                    NoteModalBottomType.START_DATE -> {
+                        DateTimePickerModal(
+                            title = "Start Date",
+                            currentDate = noteStartDate,
+                            onSave = {
+                                coroutineScope.launch {
+                                    val isSuccess = noteViewModel.updateNoteStartDate(
+                                        docId = noteId,
+                                        dateTime = it
+                                    )
+
+                                    if (isSuccess) noteStartDate = it
+                                    else {
+                                        snackbarHost.showSnackbar(
+                                            message = "Update note start date failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                    modalBottomType = null
+                                }
+                            },
+                            onDismissRequest = { modalBottomType = null },
+                            modifier = Modifier,
+                        )
+                    }
+
+                    NoteModalBottomType.END_DATE -> {
+                        DateTimePickerModal(
+                            title = "Due Date",
+                            currentDate = noteEndDate,
+                            onSave = {
+                                coroutineScope.launch {
+                                    val isSuccess = noteViewModel.updateNoteEndDate(
+                                        docId = noteId,
+                                        dateTime = it
+                                    )
+
+                                    if (isSuccess) noteEndDate = it
+                                    else {
+                                        snackbarHost.showSnackbar(
+                                            message = "Update note end date failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                    modalBottomType = null
+                                }
+                            },
+                            onDismissRequest = { modalBottomType = null },
+                            modifier = Modifier,
+                        )
+                    }
+
                     null -> null
                 }
                 CommentInputSection(
@@ -290,11 +342,11 @@ fun NoteDetailScreen(
                     val spacerWidth = 12.dp
                     val fontFamily = Roboto
                     val smallLabelTextStyle = TextStyle(
-                        fontSize = 14.sp, lineHeight = 14.sp, letterSpacing = 0.sp,
+                        fontSize = 14.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
                         fontFamily = fontFamily, fontWeight = FontWeight.Normal,
                     )
                     val mediumLabelTextStyle = TextStyle(
-                        fontSize = 15.sp, lineHeight = 15.sp, letterSpacing = 0.sp,
+                        fontSize = 15.sp, lineHeight = 18.sp, letterSpacing = 0.sp,
                         fontFamily = fontFamily, fontWeight = FontWeight.Normal,
                     )
                     val verticalPadding = 20.dp
@@ -460,7 +512,9 @@ fun NoteDetailScreen(
                         ) {
                             Row(
                                 modifier = Modifier
-                                    .clickable(onClick = {})
+                                    .clickable(onClick = {
+                                        modalBottomType = NoteModalBottomType.START_DATE
+                                    })
                                     .fillMaxWidth()
                                     .padding(
                                         horizontal = horizontalPadding, vertical = verticalPadding
@@ -490,7 +544,9 @@ fun NoteDetailScreen(
                             )
                             Row(
                                 modifier = Modifier
-                                    .clickable(onClick = {})
+                                    .clickable(onClick = {
+                                        modalBottomType = NoteModalBottomType.END_DATE
+                                    })
                                     .fillMaxWidth()
                                     .padding(
                                         horizontal = horizontalPadding, vertical = verticalPadding
@@ -717,91 +773,9 @@ fun NoteDetailScreen(
                     else itemsIndexed(items = commentList) { index, comment ->
                         CommentItem(comment = comment)
                     }
-                    item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(160.dp)) }
+                    item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(240.dp)) }
                 }
             }
         }
     }
 }
-
-/*
-    item {
-        if (showStartDatePickerDialog) {
-            val datePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = startDate ?: System.currentTimeMillis(),
-                initialDisplayMode = DisplayMode.Picker // Or DisplayMode.Input
-            )
-            DatePickerDialog(
-                onDismissRequest = { showStartDatePickerDialog = false },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            startDate = datePickerState.selectedDateMillis
-                            showStartDatePickerDialog = false
-                        }
-                    ) { Text("OK") }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showStartDatePickerDialog = false
-                    }) { Text("Cancel") }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
-        }
-        if (showStartTimePickerDialog) {
-            TimePickerDialog(
-                onDismissRequest = { showStartTimePickerDialog = false },
-                onConfirm = { hour, minute ->
-                    startHour = hour
-                    startMinute = minute
-                    showStartTimePickerDialog = false
-                },
-                initialHour = startHour ?: Calendar.getInstance()
-                    .get(Calendar.HOUR_OF_DAY),
-                initialMinute = startMinute ?: Calendar.getInstance()
-                    .get(Calendar.MINUTE)
-            )
-        }
-        if (showEndDatePickerDialog) {
-            val datePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = endDate ?: startDate
-                ?: System.currentTimeMillis(),
-                initialDisplayMode = DisplayMode.Picker
-            )
-            DatePickerDialog(
-                onDismissRequest = { showEndDatePickerDialog = false },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            endDate = datePickerState.selectedDateMillis
-                            showEndDatePickerDialog = false
-                        }
-                    ) { Text("OK") }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showEndDatePickerDialog = false
-                    }) { Text("Cancel") }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
-        }
-        if (showEndTimePickerDialog) {
-            TimePickerDialog(
-                onDismissRequest = { showEndTimePickerDialog = false },
-                onConfirm = { hour, minute ->
-                    endHour = hour
-                    endMinute = minute
-                    showEndTimePickerDialog = false
-                },
-                initialHour = endHour ?: Calendar.getInstance()
-                    .get(Calendar.HOUR_OF_DAY),
-                initialMinute = endMinute ?: Calendar.getInstance().get(Calendar.MINUTE)
-            )
-        }
-
-    }
-*/

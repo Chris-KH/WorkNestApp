@@ -2,6 +2,7 @@ package com.apcs.worknestapp.data.remote.note
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -94,6 +95,26 @@ class NoteViewModel @Inject constructor(
             true
         } catch(e: Exception) {
             Log.e("NoteViewModel", "Update note archive failed", e)
+            false
+        }
+    }
+
+    suspend fun updateNoteStartDate(docId: String, dateTime: Timestamp?): Boolean {
+        return try {
+            noteRepo.updateNoteStartDate(docId, dateTime)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Update note start date failed", e)
+            false
+        }
+    }
+
+    suspend fun updateNoteEndDate(docId: String, dateTime: Timestamp?): Boolean {
+        return try {
+            noteRepo.updateNoteEndDate(docId, dateTime)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Update note end date failed", e)
             false
         }
     }
