@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -25,16 +26,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun CustomTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier,
     textStyle: TextStyle = TextStyle(
         fontFamily = Roboto,
@@ -56,9 +59,6 @@ fun CustomTextField(
     border: BorderStroke? = null,
     shape: Shape = RectangleShape,
 ) {
-    val isFocused by interactionSource?.collectIsFocusedAsState()
-        ?: remember { mutableStateOf(false) }
-
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -101,7 +101,7 @@ fun CustomTextField(
                     contentAlignment = Alignment.CenterStart
                 ) {
                     innerTextField()
-                    if (value.isEmpty() && placeholder != null) placeholder()
+                    if (value.text.isEmpty() && placeholder != null) placeholder()
                 }
                 if (trailingIcon != null) {
                     Spacer(modifier = Modifier.width(8.dp))
@@ -111,4 +111,56 @@ fun CustomTextField(
         }
 
     }
+}
+
+@Composable
+fun CustomTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = TextStyle(
+        fontFamily = Roboto,
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontWeight = FontWeight.Medium,
+    ),
+    placeholder: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
+    singleLine: Boolean = false,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+    minLines: Int = 1,
+    cursorBrush: Brush = SolidColor(MaterialTheme.colorScheme.primary),
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    border: BorderStroke? = null,
+    shape: Shape = RectangleShape,
+) {
+    var tfValue by remember(value) {
+        mutableStateOf(TextFieldValue(value, selection = TextRange(value.length)))
+    }
+
+    CustomTextField(
+        value = tfValue,
+        onValueChange = {
+            tfValue = it
+            onValueChange(it.text)
+        },
+        modifier = modifier,
+        textStyle = textStyle,
+        placeholder = placeholder,
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        interactionSource = interactionSource,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        minLines = minLines,
+        cursorBrush = cursorBrush,
+        containerColor = containerColor,
+        contentPadding = contentPadding,
+        border = border,
+        shape = shape
+    )
 }

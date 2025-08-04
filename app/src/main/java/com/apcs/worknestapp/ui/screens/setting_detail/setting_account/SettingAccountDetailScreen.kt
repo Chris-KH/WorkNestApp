@@ -35,8 +35,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,7 +76,14 @@ fun SettingAccountDetailScreen(
             SettingAccountField.ADDRESS -> mutableStateOf(profile.value?.address ?: "")
         }
     }
-    var value by remember { mutableStateOf(initialValue) }
+    var value by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = initialValue,
+                selection = TextRange(initialValue.length)
+            )
+        )
+    }
 
     val description = when(field) {
         SettingAccountField.NAME,
@@ -110,7 +119,7 @@ fun SettingAccountDetailScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (value == initialValue) {
+                            if (value.text == initialValue) {
                                 focusRequester.freeFocus()
                                 navController.popBackStack()
                             } else showAlert = true
@@ -134,15 +143,15 @@ fun SettingAccountDetailScreen(
                                 coroutineScope.launch {
                                     val isSuccess = when(field) {
                                         SettingAccountField.NAME,
-                                            -> authViewModel.updateUserName(value)
+                                            -> authViewModel.updateUserName(value.text)
 
                                         SettingAccountField.EMAIL -> false
 
                                         SettingAccountField.PHONE,
-                                            -> authViewModel.updateUserPhone(value)
+                                            -> authViewModel.updateUserPhone(value.text)
 
                                         SettingAccountField.ADDRESS,
-                                            -> authViewModel.updateUserAddress(value)
+                                            -> authViewModel.updateUserAddress(value.text)
                                     }
                                     isSubmitting = false
                                     if (isSuccess) {
@@ -156,7 +165,7 @@ fun SettingAccountDetailScreen(
                                     }
                                 }
                             },
-                            enabled = (value != initialValue),
+                            enabled = (value.text != initialValue),
                         ) {
                             Text(
                                 text = "Done",
@@ -209,7 +218,7 @@ fun SettingAccountDetailScreen(
                         onValueChange = {
                             if (field == SettingAccountField.EMAIL) return@OutlinedTextField
                             value = if (field == SettingAccountField.ADDRESS) {
-                                it.substring(0, min(150, it.length))
+                                it.copy(text = it.text.substring(0, min(150, it.text.length)))
                             } else it
                         },
                         enabled = !isSubmitting,
@@ -252,7 +261,7 @@ fun SettingAccountDetailScreen(
 
                 if (field == SettingAccountField.ADDRESS) {
                     Text(
-                        text = "${value.length} / 150",
+                        text = "${value.text.length} / 150",
                         fontSize = 12.sp,
                         lineHeight = 12.sp,
                         fontWeight = FontWeight.Medium,

@@ -10,6 +10,7 @@ interface NoteRepository {
     suspend fun addNote(note: Note)
     suspend fun deleteNote(docId: String)
     suspend fun updateNoteCover(docId: String, color: Int?)
+    suspend fun updateNoteDescription(docId: String, description: String)
     suspend fun updateNoteComplete(docId: String, newState: Boolean)
     suspend fun updateNoteArchive(docId: String, newState: Boolean)
     fun removeListener()

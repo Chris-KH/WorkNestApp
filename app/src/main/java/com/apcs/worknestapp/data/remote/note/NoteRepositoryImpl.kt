@@ -104,6 +104,20 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         }
     }
 
+    override suspend fun updateNoteDescription(docId: String, description: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(docId)
+
+        noteRef.update("description", description).await()
+        _notes.update { list ->
+            list.map { if (it.docId == docId) it.copy(description = description) else it }
+        }
+
+    }
+
     override suspend fun updateNoteComplete(docId: String, newState: Boolean) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
         val noteRef = firestore.collection("users")

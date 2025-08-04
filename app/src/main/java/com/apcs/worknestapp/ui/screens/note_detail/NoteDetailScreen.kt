@@ -75,6 +75,7 @@ import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
 import com.apcs.worknestapp.ui.components.notedetail.CoverPickerModal
+import com.apcs.worknestapp.ui.components.notedetail.DescriptionEditModal
 import com.apcs.worknestapp.ui.components.notedetail.WorklistItem
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
@@ -239,7 +240,29 @@ fun NoteDetailScreen(
                         )
                     }
 
-                    NoteModalBottomType.DESCRIPTION -> {}
+                    NoteModalBottomType.DESCRIPTION -> {
+                        DescriptionEditModal(
+                            currentDescription = noteDescription,
+                            onSave = {
+                                coroutineScope.launch {
+                                    val isSuccess = noteViewModel.updateNoteDescription(
+                                        docId = noteId,
+                                        description = it
+                                    )
+                                    if (isSuccess) noteDescription = it
+                                    else {
+                                        snackbarHost.showSnackbar(
+                                            message = "Update note description failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                    modalBottomType = null
+                                }
+                            },
+                            onDismissRequest = { modalBottomType = null }
+                        )
+                    }
+
                     NoteModalBottomType.START_DATE -> {}
                     NoteModalBottomType.END_DATE -> {}
                     null -> null
@@ -298,7 +321,7 @@ fun NoteDetailScreen(
                                     if (noteCoverColor == null) return@let temp
                                     return@let temp.background(noteCoverColor)
                                 }
-                                .padding(horizontal = horizontalPadding, vertical = 4.dp)
+                                .padding(horizontal = horizontalPadding, vertical = 8.dp)
                         ) {
                             val shape = RoundedCornerShape(15f)
                             Row(
@@ -312,7 +335,7 @@ fun NoteDetailScreen(
                                         shape = shape
                                     )
                                     .border(
-                                        width = (0.75).dp,
+                                        width = 1.dp,
                                         color = MaterialTheme.colorScheme.outlineVariant,
                                         shape = shape,
                                     )
@@ -404,7 +427,9 @@ fun NoteDetailScreen(
                         Row(
                             verticalAlignment = Alignment.Top,
                             modifier = Modifier
-                                .clickable(onClick = {})
+                                .clickable(onClick = {
+                                    modalBottomType = NoteModalBottomType.DESCRIPTION
+                                })
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                 .padding(

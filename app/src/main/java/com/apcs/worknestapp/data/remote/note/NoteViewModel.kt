@@ -68,6 +68,16 @@ class NoteViewModel @Inject constructor(
         }
     }
 
+    suspend fun updateNoteDescription(docId: String, description: String): Boolean {
+        return try {
+            noteRepo.updateNoteDescription(docId, description)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Update note description failed", e)
+            false
+        }
+    }
+
     suspend fun updateNoteComplete(docId: String, newState: Boolean): Boolean {
         return try {
             noteRepo.updateNoteComplete(docId, newState)
