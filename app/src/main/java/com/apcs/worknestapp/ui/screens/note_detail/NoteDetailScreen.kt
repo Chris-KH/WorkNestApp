@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,7 +61,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
 import com.apcs.worknestapp.domain.logic.DateFormater
@@ -73,14 +72,12 @@ import com.apcs.worknestapp.ui.components.notedetail.AttachmentOptionsDropdownMe
 import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
-import com.apcs.worknestapp.ui.components.notedetail.User
 import com.apcs.worknestapp.ui.components.notedetail.WorklistItem
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 import com.apcs.worknestapp.utils.ColorUtils
 import com.google.firebase.Timestamp
-import java.util.Date
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,8 +91,6 @@ fun NoteDetailScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
-    val authViewModel = LocalAuthViewModel.current
-    val userProfile by authViewModel.profile.collectAsState()
     var isFirstLoading by remember { mutableStateOf(true) }
 
     //NoteState
@@ -212,28 +207,11 @@ fun NoteDetailScreen(
                 CommentInputSection(
                     commentText = commentText,
                     onCommentTextChange = { commentText = it },
-                    onPostComment = {
-                        userProfile?.let { profile ->
-                            if (commentText.isNotBlank()) {
-                                val newComment = Comment(
-                                    id = UUID.randomUUID().toString(),
-                                    text = commentText,
-                                    author = User(
-                                        name = profile.name ?: "Anonymous",
-                                        avatarUrl = profile.avatar ?: ""
-                                    ),
-                                    timestamp = Date()
-                                )
-                                commentList = commentList + newComment
-                                commentText = ""
-                                focusManager.clearFocus()
-                            }
-                        } ?: run { }
-                    },
+                    onPostComment = { },
                     modifier = Modifier
                         .align(alignment = Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
                         .padding(bottom = innerPadding.calculateBottomPadding())
                         .zIndex(10f)
                 )
@@ -260,6 +238,7 @@ fun NoteDetailScreen(
                     val horizontalPadding = 12.dp
                     val leadingIconSize = with(density) { 16.sp.toDp() + 2.dp }
 
+                    //SpacerCover
                     item {
                         if (noteCoverColor != null) {
                             Box(
@@ -271,6 +250,7 @@ fun NoteDetailScreen(
                         } else Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding()))
                     }
 
+                    //Cover
                     item {
                         Box(
                             contentAlignment = Alignment.BottomStart,
@@ -315,6 +295,7 @@ fun NoteDetailScreen(
                         }
                     }
 
+                    //Name
                     item {
                         Row(
                             verticalAlignment = Alignment.Top,
@@ -368,6 +349,7 @@ fun NoteDetailScreen(
                         }
                     }
 
+                    //Description
                     item {
                         Row(
                             verticalAlignment = Alignment.Top,
@@ -393,12 +375,13 @@ fun NoteDetailScreen(
                                 else MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
+                    //DateTime
                     item {
                         Column(
                             modifier = Modifier
+                                .padding(vertical = 8.dp)
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                         ) {
@@ -467,6 +450,7 @@ fun NoteDetailScreen(
                         }
                     }
 
+                    //CheckLists
                     item {
                         Row(
                             modifier = Modifier
@@ -532,6 +516,7 @@ fun NoteDetailScreen(
                                                 }*/
                     }
 
+                    //Attachment
                     item {
                         Row(
                             modifier = Modifier
@@ -583,7 +568,7 @@ fun NoteDetailScreen(
                                                         UUID.randomUUID().toString(),
                                                         "Placeholder File",
                                                         "File"
-                                                    )) as List<Attachment>
+                                                    ))
                                             }
 
                                             AttachmentOption.ADD_LINK -> {
@@ -593,7 +578,7 @@ fun NoteDetailScreen(
                                                         UUID.randomUUID().toString(),
                                                         "Placeholder Link",
                                                         "Link"
-                                                    )) as List<Attachment>
+                                                    ))
                                             }
 
                                             AttachmentOption.ADD_IMAGE_FROM_GALLERY -> {
@@ -602,7 +587,7 @@ fun NoteDetailScreen(
                                                     UUID.randomUUID().toString(),
                                                     "Placeholder Gallery Image",
                                                     "Image"
-                                                ) as List<Attachment>
+                                                )
                                             }
 
                                             AttachmentOption.TAKE_PHOTO -> {
@@ -611,10 +596,9 @@ fun NoteDetailScreen(
                                                     UUID.randomUUID().toString(),
                                                     "Placeholder Camera Photo",
                                                     "Image"
-                                                ) as List<Attachment>
+                                                )
                                             }
                                         }
-                                        // --- End Placeholder ---////////////////////////////////////////////////////
                                     }
                                 )
                             }
@@ -628,6 +612,7 @@ fun NoteDetailScreen(
                                                 }*/
                     }
 
+                    //CommentLabel
                     item {
                         Row(
                             modifier = Modifier
@@ -665,8 +650,7 @@ fun NoteDetailScreen(
                             }
                         }
                     } else {
-                        items(commentList.size) { index ->
-                            val comment = commentList[index]
+                        itemsIndexed(items = commentList) { index, comment ->
                             CommentItem(comment = comment)
                         }
                     }
