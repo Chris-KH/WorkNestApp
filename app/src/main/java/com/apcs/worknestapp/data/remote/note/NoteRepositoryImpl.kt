@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.data.remote.note
 
+import com.apcs.worknestapp.utils.ColorUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -86,23 +87,41 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         }
     }
 
+    override suspend fun updateNoteCover(docId: String, color: Int?) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(docId)
+
+        if (color != null && ColorUtils.safeParse(color) == null) {
+            throw Exception("Invalid color format")
+        } else {
+            noteRef.update("cover", color).await()
+            _notes.update { list ->
+                list.map { if (it.docId == docId) it.copy(cover = color) else it }
+            }
+        }
+    }
+
     override suspend fun updateNoteComplete(docId: String, newState: Boolean) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(docId)
+
+        val previousState =
+            _notes.value.find { it.docId == docId }?.completed ?: throw Exception("Note not found")
 
         try {
-            val noteRef = firestore.collection("users")
-                .document(authUser.uid)
-                .collection("notes")
-                .document(docId)
-
-            noteRef.update("completed", newState).await()
-
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(completed = newState) else it }
             }
+            noteRef.update("completed", newState).await()
         } catch(e: Exception) {
             _notes.update { list ->
-                list.filterNot { it.docId == docId }
+                list.map { if (it.docId == docId) it.copy(completed = previousState) else it }
             }
             throw e
         }
@@ -111,20 +130,22 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     override suspend fun updateNoteArchive(docId: String, newState: Boolean) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(docId)
+
+        val previousState =
+            _notes.value.find { it.docId == docId }?.archived ?: throw Exception("Note not found")
+
         try {
-            val noteRef = firestore.collection("users")
-                .document(authUser.uid)
-                .collection("notes")
-                .document(docId)
-
-            noteRef.update("archived", newState).await()
-
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(archived = newState) else it }
             }
+            noteRef.update("archived", newState).await()
         } catch(e: Exception) {
             _notes.update { list ->
-                list.filterNot { it.docId == docId }
+                list.map { if (it.docId == docId) it.copy(archived = previousState) else it }
             }
             throw e
         }

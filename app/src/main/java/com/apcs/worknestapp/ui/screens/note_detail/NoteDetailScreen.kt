@@ -42,6 +42,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -49,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -72,13 +74,22 @@ import com.apcs.worknestapp.ui.components.notedetail.AttachmentOptionsDropdownMe
 import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
+import com.apcs.worknestapp.ui.components.notedetail.CoverPickerModal
 import com.apcs.worknestapp.ui.components.notedetail.WorklistItem
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 import com.apcs.worknestapp.utils.ColorUtils
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.launch
 import java.util.UUID
+
+enum class NoteModalBottomType {
+    COVER,
+    DESCRIPTION,
+    START_DATE,
+    END_DATE,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,13 +100,15 @@ fun NoteDetailScreen(
     modifier: Modifier = Modifier,
     noteViewModel: NoteViewModel = hiltViewModel(),
 ) {
-    val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
+    val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
     var isFirstLoading by remember { mutableStateOf(true) }
+    var modalBottomType by remember { mutableStateOf<NoteModalBottomType?>(null) }
 
     //NoteState
     var noteName by remember { mutableStateOf("") }
-    var noteCover by remember { mutableStateOf<String?>(null) }
+    var noteCover by remember { mutableStateOf<Int?>(null) }
     val noteCoverColor = if (noteCover != null) ColorUtils.safeParse(noteCover!!) else null
     var noteCompleted by remember { mutableStateOf(false) }
     var noteDescription by remember { mutableStateOf("") }
@@ -110,11 +123,6 @@ fun NoteDetailScreen(
 
     var commentText by remember { mutableStateOf("") }
     var commentList by remember { mutableStateOf(emptyList<Comment>()) }
-
-    var showStartDatePickerDialog by remember { mutableStateOf(false) }
-    var showStartTimePickerDialog by remember { mutableStateOf(false) }
-    var showEndDatePickerDialog by remember { mutableStateOf(false) }
-    var showEndTimePickerDialog by remember { mutableStateOf(false) }
 
     var showAttachmentMenu by remember { mutableStateOf(false) }
     var attachmentsList by remember { mutableStateOf(emptyList<Attachment>()) }
@@ -135,15 +143,16 @@ fun NoteDetailScreen(
                 withDismissAction = true,
             )
             navController.popBackStack()
+        } else {
+            noteName = note.name ?: ""
+            noteCover = note.cover
+            noteCover?.let { topBarBackground = surfaceColorOverlay }
+            noteCompleted = note.completed ?: false
+            noteDescription = note.description ?: ""
+            noteStartDate = note.startDate
+            noteEndDate = note.endDate
         }
 
-        noteName = note?.name ?: ""
-        noteCover = note?.cover
-        noteCover?.let { topBarBackground = surfaceColorOverlay }
-        noteCompleted = note?.completed ?: false
-        noteDescription = note?.description ?: ""
-        noteStartDate = note?.startDate
-        noteEndDate = note?.endDate
         isFirstLoading = false
     }
 
@@ -204,6 +213,37 @@ fun NoteDetailScreen(
                     .imePadding()
                     .fillMaxSize()
             ) {
+                when(modalBottomType) {
+                    NoteModalBottomType.COVER -> {
+                        CoverPickerModal(
+                            currentColor = noteCover?.let { ColorUtils.safeParse(it) },
+                            onSave = {
+                                coroutineScope.launch {
+                                    val newCoverColor = it?.toArgb()
+
+                                    val isSuccess = noteViewModel.updateNoteCover(
+                                        docId = noteId,
+                                        color = newCoverColor
+                                    )
+                                    if (isSuccess) noteCover = newCoverColor
+                                    else {
+                                        snackbarHost.showSnackbar(
+                                            message = "Change cover failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                    modalBottomType = null
+                                }
+                            },
+                            onDismissRequest = { modalBottomType = null },
+                        )
+                    }
+
+                    NoteModalBottomType.DESCRIPTION -> {}
+                    NoteModalBottomType.START_DATE -> {}
+                    NoteModalBottomType.END_DATE -> {}
+                    null -> null
+                }
                 CommentInputSection(
                     commentText = commentText,
                     onCommentTextChange = { commentText = it },
@@ -238,8 +278,7 @@ fun NoteDetailScreen(
                     val horizontalPadding = 12.dp
                     val leadingIconSize = with(density) { 16.sp.toDp() + 2.dp }
 
-                    //SpacerCover
-                    item {
+                    item(key = "SpacerCover") {
                         if (noteCoverColor != null) {
                             Box(
                                 modifier = Modifier
@@ -249,9 +288,7 @@ fun NoteDetailScreen(
                             )
                         } else Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding()))
                     }
-
-                    //Cover
-                    item {
+                    item(key = "Cover") {
                         Box(
                             contentAlignment = Alignment.BottomStart,
                             modifier = Modifier
@@ -266,7 +303,9 @@ fun NoteDetailScreen(
                             val shape = RoundedCornerShape(15f)
                             Row(
                                 modifier = Modifier
-                                    .clickable(onClick = {})
+                                    .clickable(onClick = {
+                                        modalBottomType = NoteModalBottomType.COVER
+                                    })
                                     .clip(shape)
                                     .background(
                                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -277,7 +316,7 @@ fun NoteDetailScreen(
                                         color = MaterialTheme.colorScheme.outlineVariant,
                                         shape = shape,
                                     )
-                                    .padding(vertical = 10.dp, horizontal = 16.dp),
+                                    .padding(vertical = 8.dp, horizontal = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(
@@ -285,7 +324,7 @@ fun NoteDetailScreen(
                                     contentDescription = "Cover",
                                     modifier = Modifier.size(leadingIconSize),
                                 )
-                                Spacer(modifier = Modifier.width(spacerWidth))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "Cover",
                                     fontSize = 16.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
@@ -294,9 +333,7 @@ fun NoteDetailScreen(
                             }
                         }
                     }
-
-                    //Name
-                    item {
+                    item(key = "Name") {
                         Row(
                             verticalAlignment = Alignment.Top,
                             modifier = Modifier
@@ -315,13 +352,28 @@ fun NoteDetailScreen(
                                 modifier = Modifier
                                     .size(with(density) { fontSize.toDp() + 2.dp })
                                     .clip(CircleShape)
-                                    .clickable(onClick = { noteCompleted = !noteCompleted })
+                                    .clickable(onClick = {
+                                        coroutineScope.launch {
+                                            noteCompleted = !noteCompleted
+                                            val isSuccess = noteViewModel.updateNoteComplete(
+                                                docId = noteId,
+                                                newState = noteCompleted,
+                                            )
+                                            if (!isSuccess) {
+                                                noteCompleted = !noteCompleted
+                                                snackbarHost.showSnackbar(
+                                                    message = "Mark note completed failed",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        }
+                                    })
                                     .let {
                                         if (noteCompleted) return@let it.background(MaterialTheme.colorScheme.onSurface)
                                         return@let it
                                     }
                             )
-                            Spacer(modifier = Modifier.width(spacerWidth))
+                            Spacer(modifier = Modifier.width(8.dp))
                             CustomTextField(
                                 value = noteName,
                                 onValueChange = { noteName = it },
@@ -348,9 +400,7 @@ fun NoteDetailScreen(
                             )
                         }
                     }
-
-                    //Description
-                    item {
+                    item(key = "Description") {
                         Row(
                             verticalAlignment = Alignment.Top,
                             modifier = Modifier
@@ -376,9 +426,7 @@ fun NoteDetailScreen(
                             )
                         }
                     }
-
-                    //DateTime
-                    item {
+                    item(key = "DateTime") {
                         Column(
                             modifier = Modifier
                                 .padding(vertical = 8.dp)
@@ -449,9 +497,7 @@ fun NoteDetailScreen(
                             }
                         }
                     }
-
-                    //CheckLists
-                    item {
+                    item(key = "CheckLists") {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -515,9 +561,7 @@ fun NoteDetailScreen(
                                                     }
                                                 }*/
                     }
-
-                    //Attachment
-                    item {
+                    item(key = "Attachments") {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -611,9 +655,7 @@ fun NoteDetailScreen(
                                                     }
                                                 }*/
                     }
-
-                    //CommentLabel
-                    item {
+                    item(key = "CommentLabel") {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -632,30 +674,25 @@ fun NoteDetailScreen(
                             Text(text = "Comments", style = smallLabelTextStyle)
                         }
                     }
-
-                    if (commentList.isEmpty()) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                    .padding(vertical = 24.dp, horizontal = 32.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = "There are no comments on this note",
-                                    style = mediumLabelTextStyle,
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
-                        }
-                    } else {
-                        itemsIndexed(items = commentList) { index, comment ->
-                            CommentItem(comment = comment)
+                    if (commentList.isEmpty()) item(key = "EmptyComment") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                .padding(vertical = 24.dp, horizontal = 32.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "There are no comments on this note",
+                                style = mediumLabelTextStyle,
+                                textAlign = TextAlign.Center,
+                            )
                         }
                     }
-
-                    item { Spacer(modifier = Modifier.height(160.dp)) }
+                    else itemsIndexed(items = commentList) { index, comment ->
+                        CommentItem(comment = comment)
+                    }
+                    item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(160.dp)) }
                 }
             }
         }
@@ -663,83 +700,83 @@ fun NoteDetailScreen(
 }
 
 /*
-                item {
-                    if (showStartDatePickerDialog) {
-                        val datePickerState = rememberDatePickerState(
-                            initialSelectedDateMillis = startDate ?: System.currentTimeMillis(),
-                            initialDisplayMode = DisplayMode.Picker // Or DisplayMode.Input
-                        )
-                        DatePickerDialog(
-                            onDismissRequest = { showStartDatePickerDialog = false },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        startDate = datePickerState.selectedDateMillis
-                                        showStartDatePickerDialog = false
-                                    }
-                                ) { Text("OK") }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = {
-                                    showStartDatePickerDialog = false
-                                }) { Text("Cancel") }
-                            }
-                        ) {
-                            DatePicker(state = datePickerState)
+    item {
+        if (showStartDatePickerDialog) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = startDate ?: System.currentTimeMillis(),
+                initialDisplayMode = DisplayMode.Picker // Or DisplayMode.Input
+            )
+            DatePickerDialog(
+                onDismissRequest = { showStartDatePickerDialog = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            startDate = datePickerState.selectedDateMillis
+                            showStartDatePickerDialog = false
                         }
-                    }
-                    if (showStartTimePickerDialog) {
-                        TimePickerDialog(
-                            onDismissRequest = { showStartTimePickerDialog = false },
-                            onConfirm = { hour, minute ->
-                                startHour = hour
-                                startMinute = minute
-                                showStartTimePickerDialog = false
-                            },
-                            initialHour = startHour ?: Calendar.getInstance()
-                                .get(Calendar.HOUR_OF_DAY),
-                            initialMinute = startMinute ?: Calendar.getInstance()
-                                .get(Calendar.MINUTE)
-                        )
-                    }
-                    if (showEndDatePickerDialog) {
-                        val datePickerState = rememberDatePickerState(
-                            initialSelectedDateMillis = endDate ?: startDate
-                            ?: System.currentTimeMillis(),
-                            initialDisplayMode = DisplayMode.Picker
-                        )
-                        DatePickerDialog(
-                            onDismissRequest = { showEndDatePickerDialog = false },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        endDate = datePickerState.selectedDateMillis
-                                        showEndDatePickerDialog = false
-                                    }
-                                ) { Text("OK") }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = {
-                                    showEndDatePickerDialog = false
-                                }) { Text("Cancel") }
-                            }
-                        ) {
-                            DatePicker(state = datePickerState)
-                        }
-                    }
-                    if (showEndTimePickerDialog) {
-                        TimePickerDialog(
-                            onDismissRequest = { showEndTimePickerDialog = false },
-                            onConfirm = { hour, minute ->
-                                endHour = hour
-                                endMinute = minute
-                                showEndTimePickerDialog = false
-                            },
-                            initialHour = endHour ?: Calendar.getInstance()
-                                .get(Calendar.HOUR_OF_DAY),
-                            initialMinute = endMinute ?: Calendar.getInstance().get(Calendar.MINUTE)
-                        )
-                    }
-
+                    ) { Text("OK") }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showStartDatePickerDialog = false
+                    }) { Text("Cancel") }
                 }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
+        if (showStartTimePickerDialog) {
+            TimePickerDialog(
+                onDismissRequest = { showStartTimePickerDialog = false },
+                onConfirm = { hour, minute ->
+                    startHour = hour
+                    startMinute = minute
+                    showStartTimePickerDialog = false
+                },
+                initialHour = startHour ?: Calendar.getInstance()
+                    .get(Calendar.HOUR_OF_DAY),
+                initialMinute = startMinute ?: Calendar.getInstance()
+                    .get(Calendar.MINUTE)
+            )
+        }
+        if (showEndDatePickerDialog) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = endDate ?: startDate
+                ?: System.currentTimeMillis(),
+                initialDisplayMode = DisplayMode.Picker
+            )
+            DatePickerDialog(
+                onDismissRequest = { showEndDatePickerDialog = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            endDate = datePickerState.selectedDateMillis
+                            showEndDatePickerDialog = false
+                        }
+                    ) { Text("OK") }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showEndDatePickerDialog = false
+                    }) { Text("Cancel") }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
+        if (showEndTimePickerDialog) {
+            TimePickerDialog(
+                onDismissRequest = { showEndTimePickerDialog = false },
+                onConfirm = { hour, minute ->
+                    endHour = hour
+                    endMinute = minute
+                    showEndTimePickerDialog = false
+                },
+                initialHour = endHour ?: Calendar.getInstance()
+                    .get(Calendar.HOUR_OF_DAY),
+                initialMinute = endMinute ?: Calendar.getInstance().get(Calendar.MINUTE)
+            )
+        }
+
+    }
 */

@@ -27,12 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.util.UUID
 
-
 data class WorklistItem(
     val id: String = UUID.randomUUID().toString(),
     var name: String,
     var tasks: List<Task>,
-    var isCollapsed: Boolean = false // For collapse/expand functionality
     //TODO: Mock class
 )
 
@@ -40,9 +38,10 @@ data class WorklistItem(
 fun WorklistItemUI(
     worklistItem: WorklistItem,
     onWorklistItemChange: (WorklistItem) -> Unit,
-    onDeleteWorklistItem: () -> Unit // Callback to delete this worklist item
+    onDeleteWorklistItem: () -> Unit, // Callback to delete this worklist item
 ) {
     var internalWorklistItemName by remember(worklistItem.name) { mutableStateOf(worklistItem.name) }
+    var isCollapsed by remember { mutableStateOf(false) }
 
     Column {
         Row(
@@ -62,12 +61,10 @@ fun WorklistItemUI(
                     }
                 }
             )
-            IconButton(onClick = {
-                onWorklistItemChange(worklistItem.copy(isCollapsed = !worklistItem.isCollapsed))
-            }) {
+            IconButton(onClick = { isCollapsed = !isCollapsed }) {
                 Icon(
-                    if (worklistItem.isCollapsed) Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
-                    contentDescription = if (worklistItem.isCollapsed) "Expand" else "Collapse"
+                    if (isCollapsed) Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
+                    contentDescription = if (isCollapsed) "Expand" else "Collapse"
                 )
             }
             IconButton(onClick = onDeleteWorklistItem) { // Delete button for the whole list
@@ -75,7 +72,7 @@ fun WorklistItemUI(
             }
         }
 
-        if (!worklistItem.isCollapsed) {
+        if (!isCollapsed) {
             Spacer(modifier = Modifier.height(8.dp))
             worklistItem.tasks.forEachIndexed { taskIndex, task ->
                 TaskItemUI(

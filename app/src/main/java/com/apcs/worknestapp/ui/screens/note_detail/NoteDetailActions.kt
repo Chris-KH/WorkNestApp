@@ -25,12 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
 
-
 @Composable
-fun NoteDetailScreenTopBarActions(
+fun NoteDetailActions(
     onEditClick: () -> Unit,
     onDeleteAllClick: () -> Unit,
-    modifier: Modifier = Modifier // Standard practice to accept a modifier
+    modifier: Modifier = Modifier, // Standard practice to accept a modifier
 ) {
     var showSubMenu by remember { mutableStateOf(false) }
     IconButton(onClick = { showSubMenu = true }, modifier = modifier) {

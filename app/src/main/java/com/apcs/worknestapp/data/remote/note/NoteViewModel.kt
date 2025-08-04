@@ -57,4 +57,34 @@ class NoteViewModel @Inject constructor(
             null
         }
     }
+
+    suspend fun updateNoteCover(docId: String, color: Int?): Boolean {
+        return try {
+            noteRepo.updateNoteCover(docId, color)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Update note cover failed", e)
+            false
+        }
+    }
+
+    suspend fun updateNoteComplete(docId: String, newState: Boolean): Boolean {
+        return try {
+            noteRepo.updateNoteComplete(docId, newState)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Update note complete failed", e)
+            false
+        }
+    }
+
+    suspend fun updateNoteArchive(docId: String, newState: Boolean): Boolean {
+        return try {
+            noteRepo.updateNoteArchive(docId, newState)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Update note archive failed", e)
+            false
+        }
+    }
 }

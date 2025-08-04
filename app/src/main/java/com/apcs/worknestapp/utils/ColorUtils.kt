@@ -4,9 +4,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.toColorInt
 
 object ColorUtils {
-    fun safeParse(hex: String): Color? {
+    fun safeParse(hex: Int): Color? {
         return try {
-            Color(hex.toColorInt())
+            Color(hex)
         } catch(e: IllegalArgumentException) {
             null
         }

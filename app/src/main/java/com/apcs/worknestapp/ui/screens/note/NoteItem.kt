@@ -52,9 +52,7 @@ fun NoteItem(
                 .size(20.dp)
                 .clip(CircleShape)
                 .let {
-                    if (note.completed == true) {
-                        return@let it.background(MaterialTheme.colorScheme.onSurface)
-                    }
+                    if (note.completed == true) return@let it.background(MaterialTheme.colorScheme.onSurface)
                     return@let it
                 }
         )

@@ -7,7 +7,7 @@ import com.google.firebase.firestore.ServerTimestamp
 data class Note(
     @DocumentId val docId: String? = null,
     val name: String? = null,
-    val cover: String? = null,
+    val cover: Int? = null,
     val description: String? = null,
     val startDate: Timestamp? = null,
     val endDate: Timestamp? = null,
