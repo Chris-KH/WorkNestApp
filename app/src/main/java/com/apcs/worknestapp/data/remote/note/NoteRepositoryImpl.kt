@@ -126,8 +126,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             .collection("notes")
             .document(docId)
 
-        val previousState =
-            _notes.value.find { it.docId == docId }?.completed ?: throw Exception("Note not found")
+        val updateNote =
+            _notes.value.find { it.docId == docId } ?: throw Exception("Note not found")
+        val previousState = updateNote.completed
 
         try {
             _notes.update { list ->
@@ -149,8 +150,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             .collection("notes")
             .document(docId)
 
-        val previousState =
-            _notes.value.find { it.docId == docId }?.archived ?: throw Exception("Note not found")
+        val updateNote =
+            _notes.value.find { it.docId == docId } ?: throw Exception("Note not found")
+        val previousState = updateNote.archived
 
         try {
             _notes.update { list ->

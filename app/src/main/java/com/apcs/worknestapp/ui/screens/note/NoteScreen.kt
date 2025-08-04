@@ -6,19 +6,20 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,13 +75,14 @@ fun NoteScreen(
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isInSelectMode by remember { mutableStateOf(false) }
-    var showMenu by remember { mutableStateOf(false) }
+    var showActionMenu by remember { mutableStateOf(false) }
+    var shouldShowNoteItemDialog by remember { mutableStateOf<Note?>(null) }
 
     val notes = noteViewModel.notes.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
 
     var noteName by remember { mutableStateOf("") }
-    
+
     LaunchedEffect(Unit) {
         if (notes.value.isEmpty()) {
             isRefreshing = true
@@ -123,7 +125,7 @@ fun NoteScreen(
                         }
                     }
                     IconButton(
-                        onClick = { showMenu = true },
+                        onClick = { showActionMenu = true },
                         colors = IconButtonDefaults.iconButtonColors(
                             contentColor = MaterialTheme.colorScheme.primary,
                             disabledContentColor = Color.Unspecified,
@@ -137,8 +139,8 @@ fun NoteScreen(
                                 .rotate(-90f)
                         )
                         DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false },
+                            expanded = showActionMenu,
+                            onDismissRequest = { showActionMenu = false },
                             containerColor = MaterialTheme.colorScheme.surfaceContainer,
                             shadowElevation = 32.dp,
                             shape = RoundedCornerShape(25f),
@@ -214,6 +216,12 @@ fun NoteScreen(
                 .imePadding()
                 .fillMaxSize(),
         ) {
+            shouldShowNoteItemDialog?.let {
+                NoteItemDialog(
+                    onDismissRequest = { shouldShowNoteItemDialog = null },
+                )
+            }
+
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = {
@@ -240,17 +248,13 @@ fun NoteScreen(
                     )
                 } else {
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh
-                            ),
+                        modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
                     ) {
-                        items(
+                        itemsIndexed(
                             items = notes.value,
-                            key = { note -> note.docId.hashCode() }
-                        ) { note ->
+                            key = { _, note -> note.docId.hashCode() }
+                        ) { idx, note ->
                             NoteItem(
                                 note = note,
                                 onClick = {
@@ -260,8 +264,32 @@ fun NoteScreen(
                                             note.docId ?: ""
                                         )
                                     )
-                                }
+                                },
+                                onCompleteClick = {
+                                    coroutineScope.launch {
+                                        if (note.docId != null) {
+                                            val currentState = note.completed ?: false
+                                            val isSuccess = noteViewModel.updateNoteComplete(
+                                                docId = note.docId,
+                                                newState = !currentState,
+                                            )
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Mark note completed failed",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        } else {
+                                            snackbarHost.showSnackbar(
+                                                message = "Note not founded",
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
+                                },
+                                onLongClick = { shouldShowNoteItemDialog = note }
                             )
+                            Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
                 }
@@ -270,18 +298,23 @@ fun NoteScreen(
             AddNoteInput(
                 value = noteName,
                 onValueChange = { noteName = it },
-                onCancel = { focusManager.clearFocus() },
                 onAdd = {
                     if (noteName.isNotBlank()) {
                         coroutineScope.launch {
                             noteViewModel.addNote(
                                 Note(
                                     name = noteName,
+                                    description = "",
+                                    cover = null,
+                                    completed = false,
+                                    archived = false,
                                 )
                             )
+                            noteName = ""
                         }
                     }
                 },
+                onCancel = { focusManager.clearFocus() },
                 isFocused = isFocused,
                 interactionSource = interactionSource,
             )

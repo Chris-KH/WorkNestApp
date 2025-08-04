@@ -78,6 +78,7 @@ import com.apcs.worknestapp.ui.components.notedetail.CoverPickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DateTimePickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DescriptionEditModal
 import com.apcs.worknestapp.ui.components.notedetail.WorklistItem
+import com.apcs.worknestapp.ui.components.notedetail.WorklistItemUI
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
@@ -618,29 +619,26 @@ fun NoteDetailScreen(
                                 )
                             }
                         }
-                        /*                        if (workList.isNotEmpty()) {
-                                                    workList.forEachIndexed { listIndex, worklistItem ->
-                                                        WorklistItemUI(
-                                                            worklistItem = worklistItem,
-                                                            onWorklistItemChange = { updatedItem ->
-                                                                val newList = workList.toMutableList()
-                                                                newList[listIndex] = updatedItem
-                                                                workList = newList
-                                                            },
-                                                            onDeleteWorklistItem = {
-                                                                workList =
-                                                                    workList.filterNot { it.id == worklistItem.id }
-                                                            }
-                                                        )
-                                                        if (listIndex < workList.size - 1) {
-                                                            HorizontalDivider(
-                                                                modifier = Modifier.padding(vertical = 8.dp),
-                                                                thickness = 4.dp,
-                                                                color = MaterialTheme.colorScheme.surfaceVariant
-                                                            )
-                                                        }
-                                                    }
-                                                }*/
+                    }
+                    itemsIndexed(items = workList, key = { _, item -> item.id }) { idx, item ->
+                        WorklistItemUI(
+                            worklistItem = item,
+                            onWorklistItemChange = { updatedItem ->
+                                val newList = workList.toMutableList()
+                                newList[idx] = updatedItem
+                                workList = newList
+                            },
+                            onDeleteWorklistItem = {
+                                workList = workList.filterNot { it.id == item.id }
+                            }
+                        )
+                        if (idx + 1 < workList.size) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                thickness = 4.dp,
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        }
                     }
                     item(key = "Attachments") {
                         Row(
