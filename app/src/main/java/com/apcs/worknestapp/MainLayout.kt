@@ -54,6 +54,10 @@ fun MainLayout(startDestination: String) {
 
     val transitionDuration = 500
 
+    LaunchedEffect(Unit) {
+        navController.enableOnBackPressed(true)
+    }
+
     LaunchedEffect(isNetworkConnected) {
         if (!isNetworkConnected) {
             snackbarHost.showSnackbar(
