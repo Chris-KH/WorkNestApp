@@ -19,7 +19,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
-fun DropdownMenuActions(
+fun HomeDropdownActions(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     onCreateBoard: () -> Unit,

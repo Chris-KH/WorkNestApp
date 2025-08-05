@@ -33,8 +33,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,9 +70,26 @@ fun EditProfileDetailScreen(
 
     var initialValue by remember {
         when(field) {
-            EditProfileField.NAME -> mutableStateOf(profile.value?.name ?: "")
-            EditProfileField.PRONOUNS -> mutableStateOf(profile.value?.pronouns ?: "")
-            EditProfileField.BIO -> mutableStateOf(profile.value?.bio ?: "")
+            EditProfileField.NAME -> mutableStateOf(
+                TextFieldValue(
+                    text = profile.value?.name ?: "",
+                    selection = TextRange((profile.value?.name ?: "").length)
+                )
+            )
+
+            EditProfileField.PRONOUNS -> mutableStateOf(
+                TextFieldValue(
+                    text = profile.value?.pronouns ?: "",
+                    selection = TextRange((profile.value?.pronouns ?: "").length)
+                )
+            )
+
+            EditProfileField.BIO -> mutableStateOf(
+                TextFieldValue(
+                    text = profile.value?.bio ?: "",
+                    selection = TextRange((profile.value?.bio ?: "").length)
+                )
+            )
         }
     }
     var value by remember { mutableStateOf(initialValue) }
@@ -92,7 +111,7 @@ fun EditProfileDetailScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (value == initialValue) {
+                            if (value.text == initialValue.text) {
                                 focusRequester.freeFocus()
                                 navController.popBackStack()
                             } else showAlert = true
@@ -116,13 +135,13 @@ fun EditProfileDetailScreen(
                                 coroutineScope.launch {
                                     val isSuccess = when(field) {
                                         EditProfileField.NAME,
-                                            -> authViewModel.updateUserName(value)
+                                            -> authViewModel.updateUserName(value.text)
 
                                         EditProfileField.PRONOUNS,
-                                            -> authViewModel.updateUserPronouns(value)
+                                            -> authViewModel.updateUserPronouns(value.text)
 
                                         EditProfileField.BIO,
-                                            -> authViewModel.updateUserBio(value)
+                                            -> authViewModel.updateUserBio(value.text)
                                     }
                                     isSubmitting = false
                                     if (isSuccess) {
@@ -136,7 +155,7 @@ fun EditProfileDetailScreen(
                                     }
                                 }
                             },
-                            enabled = (value != initialValue),
+                            enabled = (value.text != initialValue.text),
                         ) {
                             Text(
                                 text = "Done",
@@ -185,7 +204,7 @@ fun EditProfileDetailScreen(
                     value = value,
                     onValueChange = {
                         value = if (field == EditProfileField.BIO) {
-                            it.substring(0, min(150, it.length))
+                            it.copy(text = it.text.substring(0, min(150, it.text.length)))
                         } else it
                     },
                     enabled = !isSubmitting,
@@ -219,7 +238,7 @@ fun EditProfileDetailScreen(
 
                 if (field == EditProfileField.BIO) {
                     Text(
-                        text = "${value.length} / 150",
+                        text = "${value.text.length} / 150",
                         fontSize = 12.sp,
                         lineHeight = 12.sp,
                         fontWeight = FontWeight.Medium,

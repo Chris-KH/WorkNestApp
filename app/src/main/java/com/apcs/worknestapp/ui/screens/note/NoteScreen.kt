@@ -22,17 +22,13 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,11 +43,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -62,7 +55,6 @@ import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
-import com.apcs.worknestapp.ui.theme.Roboto
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 
@@ -133,10 +125,10 @@ fun NoteScreen(
                         }
                     }
                     IconButton(
+                        enabled = !showActionMenu,
                         onClick = { showActionMenu = true },
                         colors = IconButtonDefaults.iconButtonColors(
                             contentColor = MaterialTheme.colorScheme.primary,
-                            disabledContentColor = Color.Unspecified,
                         )
                     ) {
                         Icon(
@@ -146,63 +138,49 @@ fun NoteScreen(
                                 .size(24.dp)
                                 .rotate(-90f)
                         )
-                        DropdownMenu(
+                        NoteDropdownActions(
                             expanded = showActionMenu,
                             onDismissRequest = { showActionMenu = false },
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        ) {
-                            val dropdownTextStyle = TextStyle(
-                                fontSize = 14.sp, lineHeight = 14.sp,
-                                fontFamily = Roboto, fontWeight = FontWeight.Normal,
-                            )
-                            val horizontalPadding = 20.dp
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = "Change background",
-                                        style = dropdownTextStyle
-                                    )
-                                },
-                                onClick = {}, //  onEditClick() },
-                                trailingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.outline_palette),
-                                        contentDescription = "Change background",
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                },
-                                contentPadding = PaddingValues(horizontal = horizontalPadding)
-                            )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = "Delete all",
-                                        style = dropdownTextStyle
-                                    )
-                                },
-                                onClick = {
-                                    coroutineScope.launch {
-                                        val isSuccess = noteViewModel.deleteAllNote()
-                                        if (!isSuccess) {
-                                            snackbarHost.showSnackbar(
-                                                message = "Delete all note failed",
-                                                withDismissAction = true,
-                                            )
-                                        }
-                                        showActionMenu = false
+                            onChangeBackground = {},
+                            onSort = {},
+                            onViewArchive = {},
+                            onArchiveCompletedNotes = {
+                                coroutineScope.launch {
+                                    val isSuccess = noteViewModel.archiveCompletedNotes()
+                                    if (!isSuccess) {
+                                        snackbarHost.showSnackbar(
+                                            message = "Archive completed notes failed",
+                                            withDismissAction = true,
+                                        )
                                     }
-                                },
-                                trailingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.outline_trash),
-                                        contentDescription = "Delete all",
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                },
-                                contentPadding = PaddingValues(horizontal = horizontalPadding)
-                            )
-                        }
+                                    showActionMenu = false
+                                }
+                            },
+                            onArchiveAllNotes = {
+                                coroutineScope.launch {
+                                    val isSuccess = noteViewModel.archiveAllNotes()
+                                    if (!isSuccess) {
+                                        snackbarHost.showSnackbar(
+                                            message = "Archive all notes failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                    showActionMenu = false
+                                }
+                            },
+                            onDeleteAllNotes = {
+                                coroutineScope.launch {
+                                    val isSuccess = noteViewModel.deleteAllNotes()
+                                    if (!isSuccess) {
+                                        snackbarHost.showSnackbar(
+                                            message = "Delete all notes failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                    showActionMenu = false
+                                }
+                            }
+                        )
                     }
                 }
             )
@@ -270,12 +248,10 @@ fun NoteScreen(
                             val isSuccess = noteViewModel.refreshNotes()
                             isRefreshing = false
 
-                            if (!isSuccess) {
-                                snackbarHost.showSnackbar(
-                                    message = "Refresh notes failed. Something not work",
-                                    withDismissAction = true,
-                                )
-                            }
+                            if (!isSuccess) snackbarHost.showSnackbar(
+                                message = "Refresh notes failed. Something not work",
+                                withDismissAction = true,
+                            )
                         }
                     },
                     modifier = Modifier.weight(1f)

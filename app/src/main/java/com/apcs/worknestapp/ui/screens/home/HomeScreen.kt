@@ -71,7 +71,7 @@ fun HomeScreen(
                                     contentDescription = null,
                                     modifier = Modifier.size(28.dp)
                                 )
-                                DropdownMenuActions(
+                                HomeDropdownActions(
                                     expanded = menuExpanded,
                                     onDismissRequest = { menuExpanded = false },
                                     onCreateBoard = { menuExpanded = false },
@@ -121,7 +121,7 @@ fun HomeScreen(
                                     contentDescription = null,
                                     modifier = Modifier.size(28.dp)
                                 )
-                                DropdownMenuActions(
+                                HomeDropdownActions(
                                     expanded = menuExpanded,
                                     onDismissRequest = { menuExpanded = false },
                                     onCreateBoard = { menuExpanded = false },

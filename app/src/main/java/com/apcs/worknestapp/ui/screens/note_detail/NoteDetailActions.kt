@@ -41,56 +41,57 @@ fun NoteDetailActions(
                 .size(24.dp)
                 .rotate(-90f)
         )
-    }
-    DropdownMenu(
-        expanded = showSubMenu,
-        onDismissRequest = { showSubMenu = false },
-        containerColor = MaterialTheme.colorScheme.surface,
-        shadowElevation = 32.dp,
-        shape = RoundedCornerShape(25f),
-        modifier = Modifier.widthIn(min = 160.dp),
-    ) {
-        DropdownMenuItem(
-            text = {
-                Text(
-                    text = "Edit",
-                    fontSize = 14.sp,
-                    lineHeight = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-            },
-            onClick = {
-                onEditClick()
-                showSubMenu = false
-            },
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit",
-                    modifier = Modifier.size(24.dp),
-                )
-            }
+        DropdownMenu(
+            expanded = showSubMenu,
+            onDismissRequest = { showSubMenu = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shadowElevation = 32.dp,
+            shape = RoundedCornerShape(25f),
+            modifier = Modifier.widthIn(min = 160.dp),
         )
-        DropdownMenuItem(
-            text = {
-                Text(
-                    text = "Delete all",
-                    fontSize = 14.sp,
-                    lineHeight = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-            },
-            onClick = {
-                onDeleteAllClick()
-                showSubMenu = false
-            },
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete All",
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-        )
+        {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "Edit",
+                        fontSize = 14.sp,
+                        lineHeight = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                },
+                onClick = {
+                    onEditClick()
+                    showSubMenu = false
+                },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            )
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "Delete all",
+                        fontSize = 14.sp,
+                        lineHeight = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                },
+                onClick = {
+                    onDeleteAllClick()
+                    showSubMenu = false
+                },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete All",
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            )
+        }
     }
 }

@@ -96,7 +96,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         }
     }
 
-    override suspend fun deleteAllNote() {
+    override suspend fun deleteAllNotes() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
         val noteRef = firestore.collection("users")
             .document(authUser.uid)
@@ -111,8 +111,66 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             val batch = firestore.batch()
             snapshot.documents.forEach { batch.delete(it.reference) }
             batch.commit().await()
-        } catch(_: Exception) {
+        } catch(e: Exception) {
             _notes.value = previousState
+            throw e
+        }
+    }
+
+    override suspend fun archiveAllNotes() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+
+        val previousState = _notes.value
+
+        try {
+            _notes.update { list ->
+                list.map { it.copy(archived = true) }
+            }
+
+            val snapshot = noteRef
+                .whereNotEqualTo("archived", true)
+                .get()
+                .await()
+            val batch = firestore.batch()
+            snapshot.documents.forEach {
+                batch.update(it.reference, "archived", true)
+            }
+            batch.commit().await()
+        } catch(e: Exception) {
+            _notes.value = previousState
+            throw e
+        }
+    }
+
+    override suspend fun archiveCompletedNotes() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+
+        val previousState = _notes.value
+
+        try {
+            _notes.update { list ->
+                list.map { if (it.completed == true) it.copy(archived = true) else it }
+            }
+
+            val snapshot = noteRef
+                .whereEqualTo("completed", true)
+                .whereNotEqualTo("archived", true)
+                .get()
+                .await()
+            val batch = firestore.batch()
+            snapshot.documents.forEach {
+                batch.update(it.reference, "archived", true)
+            }
+            batch.commit().await()
+        } catch(e: Exception) {
+            _notes.value = previousState
+            throw e
         }
     }
 

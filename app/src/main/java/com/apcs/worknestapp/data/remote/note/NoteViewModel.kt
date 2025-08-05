@@ -50,12 +50,32 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    suspend fun deleteAllNote(): Boolean {
+    suspend fun deleteAllNotes(): Boolean {
         return try {
-            noteRepo.deleteAllNote()
+            noteRepo.deleteAllNotes()
             true
         } catch(e: Exception) {
-            Log.e("NoteViewModel", "Delete all note failed", e)
+            Log.e("NoteViewModel", "Delete all notes failed", e)
+            false
+        }
+    }
+
+    suspend fun archiveAllNotes(): Boolean {
+        return try {
+            noteRepo.archiveAllNotes()
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Archive all notes failed", e)
+            false
+        }
+    }
+
+    suspend fun archiveCompletedNotes(): Boolean {
+        return try {
+            noteRepo.archiveCompletedNotes()
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Archive completed notes failed", e)
             false
         }
     }

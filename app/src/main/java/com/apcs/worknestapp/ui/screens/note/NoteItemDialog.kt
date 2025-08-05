@@ -50,12 +50,13 @@ fun NoteItemDialog(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ),
-            shape = RoundedCornerShape(6.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 val rowPadding = PaddingValues(vertical = 16.dp, horizontal = 20.dp)
-                val leadingIconSpacer = 16.dp
+                val leadingIconSize = 24.dp
+                val leadingIconSpacer = 12.dp
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -64,9 +65,9 @@ fun NoteItemDialog(
                         .padding(rowPadding)
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.outline_archive),
+                        painter = painterResource(R.drawable.outline_store),
                         contentDescription = "Archive note",
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(leadingIconSize)
                     )
                     Spacer(modifier = Modifier.width(leadingIconSpacer))
                     Text(text = "Archive", style = buttonTextStyle)
@@ -83,7 +84,7 @@ fun NoteItemDialog(
                         painter = painterResource(R.drawable.outline_trash),
                         contentDescription = "Delete note",
                         tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(leadingIconSize)
                     )
                     Spacer(modifier = Modifier.width(leadingIconSpacer))
                     Text(
