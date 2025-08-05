@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -69,26 +70,35 @@ fun NoteScreen(
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
 
-    var isFirstLoad by remember { mutableStateOf(true) }
+    var isFirstLoad by rememberSaveable { mutableStateOf(true) }
     var isInSelectMode by remember { mutableStateOf(false) }
     var showActionMenu by remember { mutableStateOf(false) }
     var shouldShowNoteItemDialog by remember { mutableStateOf<Note?>(null) }
 
     val notes = noteViewModel.notes.collectAsState()
+    var notesSortBy by rememberSaveable { mutableStateOf(NoteSortBy.NEWEST) }
     val displayNotes = notes.value
         .filterNot { it.archived == true }
-        .sortedByDescending { it.createdAt }
+        .let { list ->
+            when(notesSortBy) {
+                NoteSortBy.NEWEST -> list.sortedByDescending { it.createdAt }
+                NoteSortBy.OLDEST -> list.sortedBy { it.createdAt }
+                NoteSortBy.ALPHABETICAL -> list.sortedBy { it.name }
+            }
+        }
     var isRefreshing by remember { mutableStateOf(false) }
 
     var noteName by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        if (notes.value.isEmpty()) {
-            isRefreshing = true
-            noteViewModel.refreshNotesIfEmpty()
-            isRefreshing = false
+        if (isFirstLoad) {
+            if (notes.value.isEmpty()) {
+                isRefreshing = true
+                noteViewModel.refreshNotesIfEmpty()
+                isRefreshing = false
+            }
+            isFirstLoad = false
         }
-        isFirstLoad = false
     }
 
     Scaffold(

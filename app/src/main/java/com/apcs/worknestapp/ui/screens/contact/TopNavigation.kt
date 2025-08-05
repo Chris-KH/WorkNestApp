@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +36,7 @@ fun TopNavigation(
 ) {
     val animationDuration = 700
 
-    var temp by remember { mutableStateOf(true) }
+    var temp by rememberSaveable { mutableStateOf(true) }
 
     AnimatedVisibility(
         visible = visible,

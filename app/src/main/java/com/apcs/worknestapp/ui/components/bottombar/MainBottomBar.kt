@@ -8,6 +8,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.ui.screens.Screen
 
@@ -27,48 +28,28 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
             NavItem(
                 screen = Screen.Home,
                 currentScreen = currentScreen,
-            ) {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Home.route) { inclusive = false }
-                    launchSingleTop = true
-                }
-            }
+                navController = navController,
+            )
             NavItem(
                 screen = Screen.Note,
                 currentScreen = currentScreen,
-            ) {
-                navController.navigate(Screen.Note.route) {
-                    popUpTo(Screen.Home.route) { inclusive = false }
-                    launchSingleTop = true
-                }
-            }
+                navController = navController,
+            )
             NavItem(
                 screen = Screen.Contact,
                 currentScreen = currentScreen,
-            ) {
-                navController.navigate(Screen.Contact.route) {
-                    popUpTo(Screen.Home.route) { inclusive = false }
-                    launchSingleTop = true
-                }
-            }
+                navController = navController,
+            )
             NavItem(
                 screen = Screen.Notification,
                 currentScreen = currentScreen,
-            ) {
-                navController.navigate(Screen.Notification.route) {
-                    popUpTo(Screen.Home.route) { inclusive = false }
-                    launchSingleTop = true
-                }
-            }
+                navController = navController,
+            )
             NavItem(
                 screen = Screen.Profile,
                 currentScreen = currentScreen,
-            ) {
-                navController.navigate(Screen.Profile.route) {
-                    popUpTo(Screen.Home.route) { inclusive = false }
-                    launchSingleTop = true
-                }
-            }
+                navController = navController,
+            )
         }
     }
 }

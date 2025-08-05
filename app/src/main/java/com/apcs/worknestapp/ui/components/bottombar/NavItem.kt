@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
@@ -23,7 +25,7 @@ import com.apcs.worknestapp.ui.theme.Roboto
 fun RowScope.NavItem(
     screen: Screen,
     currentScreen: Screen,
-    onClick: () -> Unit,
+    navController: NavHostController,
 ) {
     val selected = currentScreen == screen
     val icon = when(screen) {
@@ -37,7 +39,17 @@ fun RowScope.NavItem(
 
     NavigationBarItem(
         selected = selected,
-        onClick = { if (!selected) onClick() },
+        onClick = {
+            if (!selected) {
+                navController.navigate(screen.route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    restoreState = true
+                    launchSingleTop = true
+                }
+            }
+        },
         icon = {
             Icon(
                 painter = painterResource(icon),

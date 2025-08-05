@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -50,7 +51,7 @@ fun NotificationScreen(
     val notifications = notificationViewModel.notifications.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
-    var isFirstLaunch by remember { mutableStateOf(true) }
+    var isFirstLoad by rememberSaveable { mutableStateOf(true) }
     var isRefreshing by remember { mutableStateOf(false) }
     var showModalBottom by remember { mutableStateOf(false) }
 
@@ -63,8 +64,10 @@ fun NotificationScreen(
     }
 
     LaunchedEffect(Unit) {
-        notificationViewModel.refreshNotificationsIfEmpty()
-        isFirstLaunch = false
+        if (isFirstLoad) {
+            notificationViewModel.refreshNotificationsIfEmpty()
+            isFirstLoad = false
+        }
     }
 
     Scaffold(
@@ -135,7 +138,7 @@ fun NotificationScreen(
             )
         }
 
-        if (isFirstLaunch) {
+        if (isFirstLoad) {
             LoadingScreen(
                 modifier = Modifier.padding(innerPadding),
             )

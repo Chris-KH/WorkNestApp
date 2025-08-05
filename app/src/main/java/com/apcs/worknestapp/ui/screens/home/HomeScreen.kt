@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +49,7 @@ fun HomeScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
-    var currentSubScreen by remember { mutableStateOf(HomeSubScreen.MAIN) }
+    var currentSubScreen by rememberSaveable { mutableStateOf(HomeSubScreen.MAIN) }
     var showModalBottom by remember { mutableStateOf(false) }
 
     Scaffold(

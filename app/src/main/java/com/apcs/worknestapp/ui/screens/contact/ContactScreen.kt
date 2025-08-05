@@ -1,12 +1,6 @@
 package com.apcs.worknestapp.ui.screens.contact
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -73,13 +68,13 @@ fun ContactScreen(
         modifier = modifier,
     ) { innerPadding ->
         val listState = rememberLazyListState()
-        var visible by remember { mutableStateOf(true) }
+        var topNavigationVisible by rememberSaveable { mutableStateOf(true) }
         var previousIndex by remember { mutableIntStateOf(0) }
 
         LaunchedEffect(listState) {
             snapshotFlow { listState.firstVisibleItemIndex }
                 .collect { currentIndex ->
-                    visible = currentIndex < previousIndex || currentIndex == 0
+                    topNavigationVisible = currentIndex < previousIndex || currentIndex == 0
                     previousIndex = currentIndex
                 }
         }
@@ -91,7 +86,7 @@ fun ContactScreen(
                 .padding(innerPadding),
         ) {
             TopNavigation(
-                visible = visible,
+                visible = topNavigationVisible,
             )
 
             LazyColumn(
