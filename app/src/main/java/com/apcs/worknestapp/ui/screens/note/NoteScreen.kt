@@ -17,16 +17,15 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -48,6 +47,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -58,10 +58,12 @@ import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
+import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,11 +76,16 @@ fun NoteScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
+
+    var isFirstLoad by remember { mutableStateOf(true) }
     var isInSelectMode by remember { mutableStateOf(false) }
     var showActionMenu by remember { mutableStateOf(false) }
     var shouldShowNoteItemDialog by remember { mutableStateOf<Note?>(null) }
 
     val notes = noteViewModel.notes.collectAsState()
+    val displayNotes = notes.value
+        .filterNot { it.archived == true }
+        .sortedByDescending { it.createdAt }
     var isRefreshing by remember { mutableStateOf(false) }
 
     var noteName by remember { mutableStateOf("") }
@@ -89,6 +96,7 @@ fun NoteScreen(
             noteViewModel.refreshNotesIfEmpty()
             isRefreshing = false
         }
+        isFirstLoad = false
     }
 
     Scaffold(
@@ -96,7 +104,7 @@ fun NoteScreen(
             MainTopBar(
                 title = if (isInSelectMode) "Select notes" else Screen.Note.title,
                 actions = {
-                    if (notes.value.isNotEmpty()) {
+                    if (displayNotes.isNotEmpty()) {
                         IconButton(
                             onClick = { isInSelectMode = !isInSelectMode },
                             colors = IconButtonDefaults.iconButtonColors(
@@ -142,18 +150,17 @@ fun NoteScreen(
                             expanded = showActionMenu,
                             onDismissRequest = { showActionMenu = false },
                             containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            shadowElevation = 32.dp,
-                            shape = RoundedCornerShape(25f),
-                            modifier = Modifier.widthIn(min = 200.dp),
                         ) {
+                            val dropdownTextStyle = TextStyle(
+                                fontSize = 14.sp, lineHeight = 14.sp,
+                                fontFamily = Roboto, fontWeight = FontWeight.Normal,
+                            )
+                            val horizontalPadding = 20.dp
                             DropdownMenuItem(
                                 text = {
                                     Text(
                                         text = "Change background",
-                                        fontSize = 14.sp,
-                                        lineHeight = 14.sp,
-                                        fontFamily = Roboto,
-                                        fontWeight = FontWeight.Normal,
+                                        style = dropdownTextStyle
                                     )
                                 },
                                 onClick = {}, //  onEditClick() },
@@ -163,28 +170,38 @@ fun NoteScreen(
                                         contentDescription = "Change background",
                                         modifier = Modifier.size(24.dp),
                                     )
-                                }
+                                },
+                                contentPadding = PaddingValues(horizontal = horizontalPadding)
                             )
+                            HorizontalDivider()
                             DropdownMenuItem(
                                 text = {
                                     Text(
                                         text = "Delete all",
-                                        fontSize = 14.sp,
-                                        lineHeight = 14.sp,
-                                        fontFamily = Roboto,
-                                        fontWeight = FontWeight.Normal,
+                                        style = dropdownTextStyle
                                     )
                                 },
-                                onClick = {},// onDeleteAllClick,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        val isSuccess = noteViewModel.deleteAllNote()
+                                        if (!isSuccess) {
+                                            snackbarHost.showSnackbar(
+                                                message = "Delete all note failed",
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                        showActionMenu = false
+                                    }
+                                },
                                 trailingIcon = {
                                     Icon(
                                         painter = painterResource(R.drawable.outline_trash),
                                         contentDescription = "Delete all",
                                         modifier = Modifier.size(24.dp),
                                     )
-                                }
+                                },
+                                contentPadding = PaddingValues(horizontal = horizontalPadding)
                             )
-                            // ... more items ...
                         }
                     }
                 }
@@ -216,108 +233,130 @@ fun NoteScreen(
                 .imePadding()
                 .fillMaxSize(),
         ) {
-            shouldShowNoteItemDialog?.let {
-                NoteItemDialog(
-                    onDismissRequest = { shouldShowNoteItemDialog = null },
-                )
-            }
-
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = {
-                    coroutineScope.launch {
-                        isRefreshing = true
-                        val isSuccess = noteViewModel.refreshNotes()
-                        isRefreshing = false
-
-                        if (!isSuccess) {
-                            snackbarHost.showSnackbar(
-                                message = "Refresh notes failed. Something not work",
-                                withDismissAction = true,
-                            )
-                        }
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                if (notes.value.isEmpty()) {
-                    EmptyNote(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+            if (!isFirstLoad) {
+                shouldShowNoteItemDialog?.let {
+                    NoteItemDialog(
+                        onArchive = {
+                            coroutineScope.launch {
+                                val isSuccess = noteViewModel.updateNoteArchive(
+                                    docId = it.docId!!,
+                                    newState = true,
+                                )
+                                if (!isSuccess) snackbarHost.showSnackbar(
+                                    message = "Archive note failed",
+                                    withDismissAction = true,
+                                )
+                                shouldShowNoteItemDialog = null
+                            }
+                        },
+                        onDelete = {
+                            coroutineScope.launch {
+                                val isSuccess = noteViewModel.deleteNote(it.docId!!)
+                                if (!isSuccess) snackbarHost.showSnackbar(
+                                    message = "Delete note failed",
+                                    withDismissAction = true,
+                                )
+                                shouldShowNoteItemDialog = null
+                            }
+                        },
+                        onDismissRequest = { shouldShowNoteItemDialog = null },
                     )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
-                    ) {
-                        itemsIndexed(
-                            items = notes.value,
-                            key = { _, note -> note.docId.hashCode() }
-                        ) { idx, note ->
-                            NoteItem(
-                                note = note,
-                                onClick = {
-                                    navController.navigate(
-                                        Screen.NoteDetail.route.replace(
-                                            "{noteId}",
-                                            note.docId ?: ""
-                                        )
-                                    )
-                                },
-                                onCompleteClick = {
-                                    coroutineScope.launch {
-                                        if (note.docId != null) {
-                                            val currentState = note.completed ?: false
-                                            val isSuccess = noteViewModel.updateNoteComplete(
-                                                docId = note.docId,
-                                                newState = !currentState,
+                }
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        coroutineScope.launch {
+                            isRefreshing = true
+                            val isSuccess = noteViewModel.refreshNotes()
+                            isRefreshing = false
+
+                            if (!isSuccess) {
+                                snackbarHost.showSnackbar(
+                                    message = "Refresh notes failed. Something not work",
+                                    withDismissAction = true,
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (displayNotes.isEmpty()) {
+                        EmptyNote(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 16.dp)
+                        ) {
+                            itemsIndexed(
+                                items = displayNotes,
+                                key = { _, note -> note.docId.hashCode() }
+                            ) { idx, note ->
+                                NoteItem(
+                                    note = note,
+                                    onClick = {
+                                        navController.navigate(
+                                            Screen.NoteDetail.route.replace(
+                                                "{noteId}",
+                                                note.docId ?: ""
                                             )
-                                            if (!isSuccess) {
+                                        )
+                                    },
+                                    onCompleteClick = {
+                                        coroutineScope.launch {
+                                            if (note.docId != null) {
+                                                val currentState = note.completed ?: false
+                                                val isSuccess = noteViewModel.updateNoteComplete(
+                                                    docId = note.docId,
+                                                    newState = !currentState,
+                                                )
+                                                if (!isSuccess) {
+                                                    snackbarHost.showSnackbar(
+                                                        message = "Mark note completed failed",
+                                                        withDismissAction = true,
+                                                    )
+                                                }
+                                            } else {
                                                 snackbarHost.showSnackbar(
-                                                    message = "Mark note completed failed",
+                                                    message = "Note not founded",
                                                     withDismissAction = true,
                                                 )
                                             }
-                                        } else {
-                                            snackbarHost.showSnackbar(
-                                                message = "Note not founded",
-                                                withDismissAction = true,
-                                            )
                                         }
-                                    }
-                                },
-                                onLongClick = { shouldShowNoteItemDialog = note }
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
+                                    },
+                                    onLongClick = { shouldShowNoteItemDialog = note }
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
                         }
                     }
                 }
-            }
 
-            AddNoteInput(
-                value = noteName,
-                onValueChange = { noteName = it },
-                onAdd = {
-                    if (noteName.isNotBlank()) {
-                        coroutineScope.launch {
-                            noteViewModel.addNote(
-                                Note(
-                                    name = noteName,
-                                    description = "",
-                                    cover = null,
-                                    completed = false,
-                                    archived = false,
+                AddNoteInput(
+                    value = noteName,
+                    onValueChange = { noteName = it },
+                    onAdd = {
+                        if (noteName.isNotBlank()) {
+                            coroutineScope.launch {
+                                noteViewModel.addNote(
+                                    Note(
+                                        name = noteName, description = "", cover = null,
+                                        completed = false, archived = false, isLoading = true,
+                                        createdAt = Timestamp.now()
+                                    )
                                 )
-                            )
-                            noteName = ""
+                                noteName = ""
+                            }
                         }
-                    }
-                },
-                onCancel = { focusManager.clearFocus() },
-                isFocused = isFocused,
-                interactionSource = interactionSource,
-            )
+                    },
+                    onCancel = { focusManager.clearFocus() },
+                    isFocused = isFocused,
+                    interactionSource = interactionSource,
+                )
+            } else LoadingScreen()
         }
     }
 }

@@ -26,26 +26,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import com.apcs.worknestapp.R
-import com.apcs.worknestapp.ui.theme.Inter
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteItemDialog(
+    onArchive: () -> Unit,
+    onDelete: () -> Unit,
     onDismissRequest: () -> Unit,
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(dismissOnClickOutside = true),
+        modifier = Modifier.fillMaxWidth(0.8f)
     ) {
         val buttonTextStyle = TextStyle(
-            fontSize = 15.sp,
-            lineHeight = 15.sp,
-            letterSpacing = 0.sp,
-            fontFamily = Roboto,
-            fontWeight = FontWeight.Medium
+            fontSize = 15.sp, lineHeight = 15.sp, letterSpacing = 0.sp,
+            fontFamily = Roboto, fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Card(
             colors = CardDefaults.cardColors(
@@ -53,7 +51,7 @@ fun NoteItemDialog(
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ),
             shape = RoundedCornerShape(6.dp),
-            modifier = Modifier.fillMaxWidth(0.9f)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 val rowPadding = PaddingValues(vertical = 16.dp, horizontal = 20.dp)
@@ -62,7 +60,7 @@ fun NoteItemDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(onClick = {})
+                        .clickable(onClick = onArchive)
                         .padding(rowPadding)
                 ) {
                     Icon(
@@ -71,22 +69,19 @@ fun NoteItemDialog(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(leadingIconSpacer))
-                    Text(
-                        text = "Archive",
-                        style = buttonTextStyle,
-                    )
+                    Text(text = "Archive", style = buttonTextStyle)
                 }
                 HorizontalDivider()
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(onClick = {})
+                        .clickable(onClick = onDelete)
                         .padding(rowPadding)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.outline_trash),
-                        contentDescription = "Archive note",
+                        contentDescription = "Delete note",
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(24.dp)
                     )

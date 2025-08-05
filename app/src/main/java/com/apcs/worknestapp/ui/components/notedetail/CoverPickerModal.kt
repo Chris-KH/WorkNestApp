@@ -102,7 +102,7 @@ fun CoverPickerModal(
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 val shape = RoundedCornerShape(6.dp)
-                ColorPreviewCard(
+                CoverPreviewCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(2f)
@@ -131,9 +131,7 @@ fun CoverPickerModal(
             }
 
             itemsIndexed(
-                items = listCoverColor,
-                key = { idx, _ -> idx }
-            ) { index, color ->
+                items = listCoverColor, key = { idx, _ -> idx }) { index, color ->
                 val isSelected = color == selectedColor
                 val shape = RoundedCornerShape(4.dp)
                 Box(

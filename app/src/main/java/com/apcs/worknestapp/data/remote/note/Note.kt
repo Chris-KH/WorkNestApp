@@ -14,4 +14,7 @@ data class Note(
     val completed: Boolean? = null,
     val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
+
+    //Date use-case, not on server
+    val isLoading: Boolean? = null,
 )

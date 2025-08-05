@@ -49,6 +49,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
@@ -111,6 +114,7 @@ fun NoteDetailScreen(
 
     //NoteState
     var noteName by remember { mutableStateOf("") }
+    var noteNameInitial by remember { mutableStateOf("") }
     var noteCover by remember { mutableStateOf<Int?>(null) }
     val noteCoverColor = if (noteCover != null) ColorUtils.safeParse(noteCover!!) else null
     var noteCompleted by remember { mutableStateOf(false) }
@@ -149,6 +153,7 @@ fun NoteDetailScreen(
             navController.popBackStack()
         } else {
             noteName = note.name ?: ""
+            noteNameInitial = noteName
             noteCover = note.cover
             noteCover?.let { topBarBackground = surfaceColorOverlay }
             noteCompleted = note.completed ?: false
@@ -410,6 +415,8 @@ fun NoteDetailScreen(
                         }
                     }
                     item(key = "Name") {
+                        val focusRequester = remember { FocusRequester() }
+
                         Row(
                             verticalAlignment = Alignment.Top,
                             modifier = Modifier
@@ -468,11 +475,33 @@ fun NoteDetailScreen(
                                     fontSize = fontSize,
                                     lineHeight = fontSize,
                                     fontFamily = fontFamily,
+                                    letterSpacing = 0.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onBackground
                                 ),
                                 containerColor = Color.Transparent,
                                 modifier = Modifier
+                                    .focusRequester(focusRequester)
+                                    .onFocusChanged { state ->
+                                        if (!state.isFocused && noteName != noteNameInitial) {
+                                            coroutineScope.launch {
+                                                if (noteName.isBlank()) noteName = noteNameInitial
+                                                else {
+                                                    noteNameInitial = noteName
+                                                    val isSuccess = noteViewModel.updateNoteName(
+                                                        docId = noteId,
+                                                        name = noteName,
+                                                    )
+                                                    if (!isSuccess) {
+                                                        snackbarHost.showSnackbar(
+                                                            message = "Update note name failed. Try again",
+                                                            withDismissAction = true,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                             )
                         }
                     }

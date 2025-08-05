@@ -27,18 +27,12 @@ import com.apcs.worknestapp.ui.theme.Inter
 fun EmptyNote(
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(20f),
-                )
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20f))
                 .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

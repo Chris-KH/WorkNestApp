@@ -43,13 +43,21 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         val noteRef = firestore.collection("users")
             .document(authUser.uid)
             .collection("notes")
-            .add(note)
-            .await()
+            .document()
 
+        val noteId = noteRef.id
+
+        //Optimistic
+        _notes.value = _notes.value + note.copy(docId = noteId, isLoading = true)
+
+        noteRef.set(note.copy(docId = noteId, isLoading = null)).await()
         val snapshot = noteRef.get().await()
         val newNote = snapshot.toObject(Note::class.java)
 
         newNote?.let {
+            _notes.update { list ->
+                list.filterNot { it.docId == noteId }
+            }
             _notes.value = _notes.value + newNote
         }
     }
@@ -88,6 +96,39 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         }
     }
 
+    override suspend fun deleteAllNote() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+
+        val previousState = _notes.value
+
+        try {
+            _notes.value = emptyList()
+
+            val snapshot = noteRef.get().await()
+            val batch = firestore.batch()
+            snapshot.documents.forEach { batch.delete(it.reference) }
+            batch.commit().await()
+        } catch(_: Exception) {
+            _notes.value = previousState
+        }
+    }
+
+    override suspend fun updateNoteName(docId: String, name: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(docId)
+
+        noteRef.update("name", name).await()
+        _notes.update { list ->
+            list.map { if (it.docId == docId) it.copy(name = name) else it }
+        }
+    }
+
     override suspend fun updateNoteCover(docId: String, color: Int?) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
         val noteRef = firestore.collection("users")
@@ -116,7 +157,6 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         _notes.update { list ->
             list.map { if (it.docId == docId) it.copy(description = description) else it }
         }
-
     }
 
     override suspend fun updateNoteComplete(docId: String, newState: Boolean) {
