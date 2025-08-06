@@ -11,10 +11,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.apcs.worknestapp.ui.screens.Screen
-import com.apcs.worknestapp.ui.theme.Roboto
+import com.apcs.worknestapp.ui.theme.NotoSerif
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,8 +28,9 @@ fun MainTopBar(
             title = {
                 Text(
                     text = title,
-                    fontFamily = Roboto,
-                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Serif,
+                    fontStyle = FontStyle.Italic,
+                    fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier
                 )
             },
@@ -45,7 +47,7 @@ fun MainTopBar(
 
         HorizontalDivider(
             modifier = Modifier.fillMaxWidth(),
-            thickness = (0.5).dp,
+            thickness = (1).dp,
             color = MaterialTheme.colorScheme.outlineVariant,
         )
     }

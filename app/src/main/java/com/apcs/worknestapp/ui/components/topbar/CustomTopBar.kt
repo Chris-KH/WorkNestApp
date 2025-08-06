@@ -52,7 +52,7 @@ fun CustomTopBar(
         if (showDivider) {
             HorizontalDivider(
                 modifier = Modifier.fillMaxWidth(),
-                thickness = (0.5).dp,
+                thickness = (1).dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
             )
         }

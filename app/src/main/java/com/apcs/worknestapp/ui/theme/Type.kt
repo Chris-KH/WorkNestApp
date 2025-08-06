@@ -12,28 +12,28 @@ val Typography = Typography(
         fontFamily = Roboto,
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
-        lineHeight = 22.sp,
+        lineHeight = 16.sp,
         letterSpacing = 0.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = Roboto,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
-        lineHeight = 20.sp,
+        lineHeight = 14.sp,
         letterSpacing = 0.sp
     ),
     bodySmall = TextStyle(
         fontFamily = Roboto,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
-        lineHeight = 16.sp,
+        lineHeight = 12.sp,
         letterSpacing = 0.sp
     ),
     titleLarge = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.SemiBold,
         fontSize = 22.sp,
-        lineHeight = 28.sp,
+        lineHeight = 22.sp,
         letterSpacing = 0.sp
     ),
     labelSmall = TextStyle(

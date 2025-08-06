@@ -19,24 +19,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apcs.worknestapp.ui.theme.Inter
+import com.apcs.worknestapp.ui.theme.NotoSerif
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun TopNavigation(
     visible: Boolean,
 ) {
-    val animationDuration = 700
-
     var temp by rememberSaveable { mutableStateOf(true) }
+    val animationDuration = 700
 
     AnimatedVisibility(
         visible = visible,
@@ -45,58 +45,56 @@ fun TopNavigation(
         ) + expandVertically(animationSpec = tween(durationMillis = animationDuration)),
         exit = fadeOut(
             animationSpec = tween(durationMillis = animationDuration)
-        ) + shrinkVertically(animationSpec = tween(durationMillis = animationDuration))
+        ) + shrinkVertically(animationSpec = tween(durationMillis = animationDuration)),
+        label = "Contact screen navigation"
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surface,
-                ),
+                .background(color = MaterialTheme.colorScheme.surface),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
+            val textStyle = TextStyle(
+                fontSize = 16.sp, lineHeight = 20.sp,
+                fontFamily = NotoSerif, fontWeight = FontWeight.SemiBold,
+            )
+            val boxButtonModifier = Modifier
+                .height(48.dp)
+                .weight(1f)
+
             Box(
-                modifier = Modifier
-                    .clickable(onClick = { temp = true })
-                    .height(48.dp)
-                    .weight(1f),
+                modifier = boxButtonModifier.clickable(onClick = { temp = true }),
             ) {
                 Text(
                     text = "Chat",
-                    fontSize = 18.sp,
-                    lineHeight = 18.sp,
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Medium,
+                    style = textStyle,
+                    color = if (temp) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(alignment = Alignment.Center)
                 )
                 HorizontalDivider(
                     modifier = Modifier.align(alignment = Alignment.BottomCenter),
                     thickness = 3.dp,
                     color = if (temp) MaterialTheme.colorScheme.primary
-                    else Color.Unspecified,
+                    else MaterialTheme.colorScheme.outlineVariant,
                 )
             }
             Box(
-                modifier = Modifier
-                    .clickable(onClick = { temp = false })
-                    .height(48.dp)
-                    .weight(1f),
-                contentAlignment = Alignment.Center,
+                modifier = boxButtonModifier.clickable(onClick = { temp = false }),
             ) {
                 Text(
                     text = "Contact",
-                    fontSize = 18.sp,
-                    lineHeight = 18.sp,
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Medium,
+                    style = textStyle,
+                    color = if (!temp) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(alignment = Alignment.Center)
                 )
                 HorizontalDivider(
                     modifier = Modifier.align(alignment = Alignment.BottomCenter),
                     thickness = 3.dp,
                     color = if (!temp) MaterialTheme.colorScheme.primary
-                    else Color.Unspecified,
+                    else MaterialTheme.colorScheme.outlineVariant,
                 )
             }
         }

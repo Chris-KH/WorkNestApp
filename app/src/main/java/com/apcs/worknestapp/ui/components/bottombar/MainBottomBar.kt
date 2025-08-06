@@ -8,7 +8,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.ui.screens.Screen
 
@@ -17,7 +16,7 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider(
             modifier = Modifier.fillMaxWidth(),
-            thickness = (0.5).dp,
+            thickness = (1).dp,
             color = MaterialTheme.colorScheme.outlineVariant,
         )
 
