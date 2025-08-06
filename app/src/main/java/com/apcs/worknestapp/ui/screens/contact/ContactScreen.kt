@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.ui.screens.contact
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,7 +24,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -37,6 +37,11 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
+
+enum class ContactSubScreen {
+    MESSAGES,
+    FRIENDS,
+}
 
 @Composable
 fun ContactScreen(
@@ -68,17 +73,13 @@ fun ContactScreen(
         },
         modifier = modifier,
     ) { innerPadding ->
-        val listState = rememberLazyListState()
+        var currentSubScreen by rememberSaveable { mutableStateOf(ContactSubScreen.MESSAGES) }
         var topNavigationVisible by rememberSaveable { mutableStateOf(true) }
-        var previousIndex by remember { mutableIntStateOf(0) }
 
-        LaunchedEffect(listState) {
-            snapshotFlow { listState.firstVisibleItemIndex }
-                .collect { currentIndex ->
-                    topNavigationVisible = currentIndex < previousIndex || currentIndex == 0
-                    previousIndex = currentIndex
-                }
-        }
+        val listStateMessageScreen = rememberLazyListState()
+        var previousIndexMessageScreen by rememberSaveable { mutableIntStateOf(0) }
+        val listStateFriendScreen = rememberLazyListState()
+        var previousIndexFriendScreen by rememberSaveable { mutableIntStateOf(0) }
 
         Column(
             modifier = Modifier
@@ -86,29 +87,95 @@ fun ContactScreen(
                 .animateContentSize()
                 .padding(innerPadding),
         ) {
-            TopNavigation(
+            ContactTopNavigation(
+                currentSubScreen = currentSubScreen,
                 visible = topNavigationVisible,
+                onNavigateToMessageScreen = {
+                    if (currentSubScreen != ContactSubScreen.MESSAGES)
+                        currentSubScreen = ContactSubScreen.MESSAGES
+                },
+                onNavigateToFriendScreen = {
+                    if (currentSubScreen != ContactSubScreen.FRIENDS)
+                        currentSubScreen = ContactSubScreen.FRIENDS
+                },
             )
 
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
+            AnimatedContent(
+                targetState = currentSubScreen,
+                label = "Contact subscreen"
             ) {
-                items(50) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .padding(8.dp)
-                            .background(Color.Gray),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Item $it", color = Color.White)
+                if (it == ContactSubScreen.MESSAGES) {
+                    LaunchedEffect(listStateMessageScreen) {
+                        snapshotFlow { listStateMessageScreen.firstVisibleItemIndex }
+                            .collect { currentIndex ->
+                                if (currentIndex == previousIndexMessageScreen) return@collect
+                                if (currentIndex + 2 < previousIndexMessageScreen || currentIndex == 0) {
+                                    topNavigationVisible = true
+                                    previousIndexMessageScreen = currentIndex
+                                } else if (currentIndex > previousIndexMessageScreen) {
+                                    previousIndexMessageScreen = currentIndex
+                                    topNavigationVisible = false
+                                }
+                            }
                     }
-                }
 
-                item {
-                    Spacer(modifier = Modifier.height(60.dp))
+                    LazyColumn(
+                        state = listStateMessageScreen,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(50) { item ->
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .padding(8.dp)
+                                    .background(Color.Gray),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("Item $item", color = Color.White)
+                            }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(40.dp))
+                        }
+                    }
+                } else {
+                    LaunchedEffect(listStateFriendScreen) {
+                        snapshotFlow { listStateFriendScreen.firstVisibleItemIndex }
+                            .collect { currentIndex ->
+                                if (currentIndex == previousIndexFriendScreen) return@collect
+                                if (currentIndex + 2 < previousIndexFriendScreen || currentIndex == 0) {
+                                    topNavigationVisible = true
+                                    previousIndexFriendScreen = currentIndex
+                                } else if (currentIndex > previousIndexFriendScreen) {
+                                    previousIndexFriendScreen = currentIndex
+                                    topNavigationVisible = false
+                                }
+                            }
+                    }
+
+                    LazyColumn(
+                        state = listStateFriendScreen,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(50) { item ->
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .padding(8.dp)
+                                    .background(Color.Gray),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("Item ${item * 10}", color = Color.White)
+                            }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(60.dp))
+                        }
+                    }
                 }
             }
         }

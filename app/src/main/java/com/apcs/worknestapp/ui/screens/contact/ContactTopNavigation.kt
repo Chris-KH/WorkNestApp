@@ -23,7 +23,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,10 +31,12 @@ import com.apcs.worknestapp.ui.theme.NotoSerif
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
-fun TopNavigation(
+fun ContactTopNavigation(
+    currentSubScreen: ContactSubScreen,
     visible: Boolean,
+    onNavigateToMessageScreen: () -> Unit,
+    onNavigateToFriendScreen: () -> Unit,
 ) {
-    var temp by rememberSaveable { mutableStateOf(true) }
     val animationDuration = 700
 
     AnimatedVisibility(
@@ -46,7 +47,7 @@ fun TopNavigation(
         exit = fadeOut(
             animationSpec = tween(durationMillis = animationDuration)
         ) + shrinkVertically(animationSpec = tween(durationMillis = animationDuration)),
-        label = "Contact screen navigation"
+        label = "Contact screen top navigation"
     ) {
         Row(
             modifier = Modifier
@@ -56,44 +57,46 @@ fun TopNavigation(
             horizontalArrangement = Arrangement.Center,
         ) {
             val textStyle = TextStyle(
-                fontSize = 16.sp, lineHeight = 20.sp,
-                fontFamily = NotoSerif, fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp, lineHeight = 14.sp,
+                fontFamily = Roboto, fontWeight = FontWeight.Medium,
             )
             val boxButtonModifier = Modifier
-                .height(48.dp)
+                .height(44.dp)
                 .weight(1f)
 
             Box(
-                modifier = boxButtonModifier.clickable(onClick = { temp = true }),
+                modifier = boxButtonModifier.clickable(onClick = onNavigateToMessageScreen),
             ) {
+                val isSelected = currentSubScreen == ContactSubScreen.MESSAGES
                 Text(
-                    text = "Chat",
+                    text = "Messages",
                     style = textStyle,
-                    color = if (temp) MaterialTheme.colorScheme.primary
+                    color = if (isSelected) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(alignment = Alignment.Center)
                 )
                 HorizontalDivider(
                     modifier = Modifier.align(alignment = Alignment.BottomCenter),
-                    thickness = 3.dp,
-                    color = if (temp) MaterialTheme.colorScheme.primary
+                    thickness = 2.dp,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.outlineVariant,
                 )
             }
             Box(
-                modifier = boxButtonModifier.clickable(onClick = { temp = false }),
+                modifier = boxButtonModifier.clickable(onClick = onNavigateToFriendScreen),
             ) {
+                val isSelected = currentSubScreen == ContactSubScreen.FRIENDS
                 Text(
-                    text = "Contact",
+                    text = "Friends",
                     style = textStyle,
-                    color = if (!temp) MaterialTheme.colorScheme.primary
+                    color = if (isSelected) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(alignment = Alignment.Center)
                 )
                 HorizontalDivider(
                     modifier = Modifier.align(alignment = Alignment.BottomCenter),
-                    thickness = 3.dp,
-                    color = if (!temp) MaterialTheme.colorScheme.primary
+                    thickness = 2.dp,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.outlineVariant,
                 )
             }
