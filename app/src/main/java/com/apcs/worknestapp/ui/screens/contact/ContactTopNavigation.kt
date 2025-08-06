@@ -17,22 +17,17 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apcs.worknestapp.ui.theme.NotoSerif
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun ContactTopNavigation(
-    currentSubScreen: ContactSubScreen,
+    currentSubScreen: ContactSubScreenState,
     visible: Boolean,
     onNavigateToMessageScreen: () -> Unit,
     onNavigateToFriendScreen: () -> Unit,
@@ -67,7 +62,7 @@ fun ContactTopNavigation(
             Box(
                 modifier = boxButtonModifier.clickable(onClick = onNavigateToMessageScreen),
             ) {
-                val isSelected = currentSubScreen == ContactSubScreen.MESSAGES
+                val isSelected = currentSubScreen == ContactSubScreenState.MESSAGES
                 Text(
                     text = "Messages",
                     style = textStyle,
@@ -85,7 +80,7 @@ fun ContactTopNavigation(
             Box(
                 modifier = boxButtonModifier.clickable(onClick = onNavigateToFriendScreen),
             ) {
-                val isSelected = currentSubScreen == ContactSubScreen.FRIENDS
+                val isSelected = currentSubScreen == ContactSubScreenState.FRIENDS
                 Text(
                     text = "Friends",
                     style = textStyle,

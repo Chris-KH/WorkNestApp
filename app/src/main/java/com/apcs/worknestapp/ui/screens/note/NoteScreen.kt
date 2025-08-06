@@ -71,6 +71,7 @@ fun NoteScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
+    var isRefreshing by remember { mutableStateOf(false) }
     var isInSelectMode by remember { mutableStateOf(false) }
     var showActionMenu by remember { mutableStateOf(false) }
     var shouldShowNoteItemDialog by remember { mutableStateOf<Note?>(null) }
@@ -86,9 +87,6 @@ fun NoteScreen(
                 NoteSortBy.ALPHABETICAL -> list.sortedBy { it.name }
             }
         }
-    var isRefreshing by remember { mutableStateOf(false) }
-
-    var noteName by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         if (isFirstLoad) {
@@ -203,6 +201,7 @@ fun NoteScreen(
         },
         modifier = modifier,
     ) { innerPadding ->
+        var noteName by remember { mutableStateOf("") }
         val interactionSource = remember { MutableInteractionSource() }
         val isFocused by interactionSource.collectIsFocusedAsState()
         val imePadding = WindowInsets.ime.asPaddingValues().calculateBottomPadding()

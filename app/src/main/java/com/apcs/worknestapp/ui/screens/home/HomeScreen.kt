@@ -9,7 +9,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,24 +37,19 @@ import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 
-enum class HomeSubScreen {
-    MAIN,
-    WORKSPACE,
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
-    var currentSubScreen by rememberSaveable { mutableStateOf(HomeSubScreen.MAIN) }
+    var currentSubScreen by rememberSaveable { mutableStateOf(HomeSubScreenState.MAIN) }
     var showModalBottom by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             when(currentSubScreen) {
-                HomeSubScreen.MAIN ->
+                HomeSubScreenState.MAIN ->
                     MainTopBar(
                         title = "WorkNest",
                         actions = {
@@ -83,7 +77,7 @@ fun HomeScreen(
                         }
                     )
 
-                HomeSubScreen.WORKSPACE ->
+                HomeSubScreenState.WORKSPACE ->
                     CustomTopBar(
                         field = "Không gian của tôi",
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -97,7 +91,7 @@ fun HomeScreen(
                                     contentColor = MaterialTheme.colorScheme.primary,
                                     disabledContentColor = Color.Unspecified,
                                 ),
-                                onClick = { currentSubScreen = HomeSubScreen.MAIN }
+                                onClick = { currentSubScreen = HomeSubScreenState.MAIN }
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.symbol_angle_arrow),
@@ -156,7 +150,7 @@ fun HomeScreen(
         AnimatedContent(
             targetState = currentSubScreen,
             transitionSpec = {
-                if (initialState == HomeSubScreen.MAIN && targetState == HomeSubScreen.WORKSPACE) {
+                if (initialState == HomeSubScreenState.MAIN && targetState == HomeSubScreenState.WORKSPACE) {
                     (slideInHorizontally { it } + fadeIn())
                         .togetherWith(slideOutHorizontally { -it } + fadeOut())
                 } else {
@@ -168,12 +162,12 @@ fun HomeScreen(
             label = "HomeContentSwitch"
         ) {
             when(it) {
-                HomeSubScreen.MAIN -> HomeMainScreen(
+                HomeSubScreenState.MAIN -> HomeMainScreen(
                     modifier = Modifier.padding(innerPadding),
-                    onNavigateToWorkspace = { currentSubScreen = HomeSubScreen.WORKSPACE }
+                    onNavigateToWorkspace = { currentSubScreen = HomeSubScreenState.WORKSPACE }
                 )
 
-                HomeSubScreen.WORKSPACE -> HomeWorkspaceScreen(
+                HomeSubScreenState.WORKSPACE -> HomeWorkspaceScreen(
                     modifier = Modifier.padding(innerPadding),
                     showModalBottom = showModalBottom,
                     onHideModal = { showModalBottom = false }
