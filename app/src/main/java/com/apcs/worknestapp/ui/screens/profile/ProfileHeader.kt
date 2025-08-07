@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -69,7 +70,7 @@ fun ProfileHeader(
                     lineHeight = 20.sp,
                 )
 
-                if (pronouns != null) {
+                if (pronouns != null && pronouns.isNotBlank()) {
                     Text(
                         text = "\u0020\u00b7\u0020" + (pronouns),
                         fontWeight = FontWeight.Medium,
@@ -80,12 +81,12 @@ fun ProfileHeader(
                     )
                 }
             }
-
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = email ?: "",
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
-                lineHeight = 20.sp,
+                lineHeight = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

@@ -143,7 +143,12 @@ fun HomeScreen(
                     )
             }
         },
-        bottomBar = { MainBottomBar(currentScreen = Screen.Home, navController = navController) },
+        bottomBar = {
+            MainBottomBar(
+                currentScreen = Screen.Home,
+                navController = navController
+            )
+        },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier,
     ) { innerPadding ->

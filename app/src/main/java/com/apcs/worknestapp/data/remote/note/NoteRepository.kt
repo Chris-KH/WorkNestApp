@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.StateFlow
 interface NoteRepository {
     val notes: StateFlow<List<Note>>
 
+    fun removeListener()
+    fun registerListener()
     suspend fun refreshNotes()
     suspend fun getNote(docId: String): Note
     suspend fun addNote(note: Note)
@@ -20,6 +22,5 @@ interface NoteRepository {
     suspend fun updateNoteArchive(docId: String, newState: Boolean)
     suspend fun updateNoteStartDate(docId: String, dateTime: Timestamp?)
     suspend fun updateNoteEndDate(docId: String, dateTime: Timestamp?)
-    fun removeListener()
     fun clearCache()
 }

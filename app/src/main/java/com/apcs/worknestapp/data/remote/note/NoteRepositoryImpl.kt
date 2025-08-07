@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.data.remote.note
 
+import android.util.Log
 import com.apcs.worknestapp.utils.ColorUtils
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -20,10 +21,37 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
 
     private var listenerRegistration: ListenerRegistration? = null
 
-    override suspend fun refreshNotes() {
+    override fun removeListener() {
+        listenerRegistration?.remove()
+        listenerRegistration = null
+    }
+
+    override fun registerListener() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
+        val notesRef = firestore
+            .collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+
         listenerRegistration?.remove() //Remove old listener
+        listenerRegistration = notesRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("NoteRepository", "Listen notes snapshot failed", error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                val noteList = snapshot.documents.mapNotNull {
+                    it.toObject(Note::class.java)
+                }
+                _notes.value = noteList
+            }
+        }
+    }
+
+    override suspend fun refreshNotes() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val notesRef = firestore
             .collection("users")
@@ -46,8 +74,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             .document()
 
         val noteId = noteRef.id
-
-        //Optimistic
+        
         _notes.value = _notes.value + note.copy(docId = noteId, isLoading = true)
 
         noteRef.set(note.copy(docId = noteId, isLoading = null)).await()
@@ -289,11 +316,6 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         _notes.update { list ->
             list.map { if (it.docId == docId) it.copy(endDate = dateTime) else it }
         }
-    }
-
-    override fun removeListener() {
-        listenerRegistration?.remove()
-        listenerRegistration = null
     }
 
     override fun clearCache() {

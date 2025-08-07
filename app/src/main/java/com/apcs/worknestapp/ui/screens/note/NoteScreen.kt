@@ -19,9 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +27,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,6 +45,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Note
@@ -71,7 +69,6 @@ fun NoteScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
-    var isRefreshing by remember { mutableStateOf(false) }
     var isInSelectMode by remember { mutableStateOf(false) }
     var showActionMenu by remember { mutableStateOf(false) }
     var shouldShowNoteItemDialog by remember { mutableStateOf<Note?>(null) }
@@ -89,13 +86,16 @@ fun NoteScreen(
         }
 
     LaunchedEffect(Unit) {
-        if (isFirstLoad) {
-            if (notes.value.isEmpty()) {
-                isRefreshing = true
-                noteViewModel.refreshNotesIfEmpty()
-                isRefreshing = false
-            }
-            isFirstLoad = false
+        if (isFirstLoad && notes.value.isEmpty()) {
+            noteViewModel.refreshNotesIfEmpty()
+        }
+        isFirstLoad = false
+    }
+
+    LifecycleResumeEffect(Unit) {
+        noteViewModel.registerListener()
+        onPauseOrDispose {
+            noteViewModel.removeListener()
         }
     }
 
@@ -249,31 +249,12 @@ fun NoteScreen(
                         onDismissRequest = { shouldShowNoteItemDialog = null },
                     )
                 }
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = {
-                        coroutineScope.launch {
-                            isRefreshing = true
-                            val isSuccess = noteViewModel.refreshNotes()
-                            isRefreshing = false
-
-                            if (!isSuccess) snackbarHost.showSnackbar(
-                                message = "Refresh notes failed. Something not work",
-                                withDismissAction = true,
-                            )
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
+                Box(modifier = Modifier.weight(1f)) {
                     if (displayNotes.isEmpty()) {
-                        EmptyNote(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                        )
+                        EmptyNote(modifier = Modifier.fillMaxSize())
                     } else {
                         LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier,
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 16.dp)
                         ) {
                             itemsIndexed(
@@ -294,10 +275,11 @@ fun NoteScreen(
                                         coroutineScope.launch {
                                             if (note.docId != null) {
                                                 val currentState = note.completed ?: false
-                                                val isSuccess = noteViewModel.updateNoteComplete(
-                                                    docId = note.docId,
-                                                    newState = !currentState,
-                                                )
+                                                val isSuccess =
+                                                    noteViewModel.updateNoteComplete(
+                                                        docId = note.docId,
+                                                        newState = !currentState,
+                                                    )
                                                 if (!isSuccess) {
                                                     snackbarHost.showSnackbar(
                                                         message = "Mark note completed failed",
@@ -314,7 +296,8 @@ fun NoteScreen(
                                     },
                                     onLongClick = { shouldShowNoteItemDialog = note }
                                 )
-                                Spacer(modifier = Modifier.height(10.dp))
+                                if (idx + 1 < displayNotes.size)
+                                    Spacer(modifier = Modifier.height(10.dp))
                             }
                         }
                     }

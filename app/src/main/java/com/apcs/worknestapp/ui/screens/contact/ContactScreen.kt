@@ -1,6 +1,5 @@
 package com.apcs.worknestapp.ui.screens.contact
 
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
@@ -39,7 +38,7 @@ fun ContactScreen(
             MainTopBar(
                 title = Screen.Contact.title,
                 actions = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = { navController.navigate(Screen.AddContact.route) }) {
                         Icon(
                             painter = painterResource(R.drawable.outline_add_user),
                             contentDescription = "Add more contact",
@@ -95,7 +94,7 @@ fun ContactScreen(
                         listState = listStateMessageScreen,
                         previousIndex = previousIndexMessageScreen,
                         onScroll = { visible, previousIndex ->
-                            topNavigationVisible = visible
+                            if (topNavigationVisible != visible) topNavigationVisible = visible
                             previousIndexMessageScreen.intValue = previousIndex
                         },
                     )
@@ -105,7 +104,7 @@ fun ContactScreen(
                         listState = listStateFriendScreen,
                         previousIndex = previousIndexFriendScreen,
                         onScroll = { visible, previousIndex ->
-                            topNavigationVisible = visible
+                            if (topNavigationVisible != visible) topNavigationVisible = visible
                             previousIndexFriendScreen.intValue = previousIndex
                         },
                     )

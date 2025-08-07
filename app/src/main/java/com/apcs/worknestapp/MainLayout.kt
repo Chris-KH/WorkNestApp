@@ -4,7 +4,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +30,7 @@ import com.apcs.worknestapp.state.rememberNetworkState
 import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.FallbackScreen
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.screens.add_contact.AddContractScreen
 import com.apcs.worknestapp.ui.screens.contact.ContactScreen
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileScreen
@@ -113,6 +116,28 @@ fun MainLayout(startDestination: String) {
 
             composable(route = Screen.Profile.route) {
                 ProfileScreen(
+                    navController = navController,
+                    snackbarHost = snackbarHost,
+                    modifier = Modifier,
+                )
+            }
+
+            composable(
+                route = Screen.AddContact.route,
+                enterTransition = {
+                    slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+                exitTransition = {
+                    slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                }
+            ) {
+                AddContractScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
                     modifier = Modifier,

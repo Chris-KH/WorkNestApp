@@ -11,6 +11,8 @@ import com.apcs.worknestapp.data.remote.note.NoteRepository
 import com.apcs.worknestapp.data.remote.note.NoteRepositoryImpl
 import com.apcs.worknestapp.data.remote.notification.NotificationRepository
 import com.apcs.worknestapp.data.remote.notification.NotificationRepositoryImpl
+import com.apcs.worknestapp.data.remote.user.UserRepository
+import com.apcs.worknestapp.data.remote.user.UserRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -57,4 +59,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideNoteRepository(): NoteRepository = NoteRepositoryImpl()
+
+    @Provides
+    @Singleton
+    fun provideUserRepository(): UserRepository = UserRepositoryImpl()
 }

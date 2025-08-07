@@ -12,6 +12,18 @@ class NoteViewModel @Inject constructor(
 ) : ViewModel() {
     val notes = noteRepo.notes
 
+    fun removeListener() {
+        noteRepo.removeListener()
+    }
+
+    fun registerListener() {
+        try {
+            noteRepo.registerListener()
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Register listener for notes failed", e)
+        }
+    }
+
     suspend fun refreshNotesIfEmpty(): Boolean {
         if (notes.value.isEmpty()) {
             return refreshNotes()
