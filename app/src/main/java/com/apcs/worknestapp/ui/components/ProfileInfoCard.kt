@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.screens.profile
+package com.apcs.worknestapp.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,13 +15,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.google.firebase.Timestamp

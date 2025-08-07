@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
@@ -27,7 +26,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -55,13 +53,7 @@ fun HomeScreen(
                         actions = {
                             var menuExpanded by remember { mutableStateOf(false) }
 
-                            IconButton(
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.primary,
-                                    disabledContentColor = Color.Unspecified,
-                                ),
-                                onClick = { menuExpanded = true }
-                            ) {
+                            IconButton(onClick = { menuExpanded = true }) {
                                 Icon(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = null,
@@ -84,15 +76,11 @@ fun HomeScreen(
                             containerColor = MaterialTheme.colorScheme.surface,
                             scrolledContainerColor = MaterialTheme.colorScheme.surface,
                             titleContentColor = MaterialTheme.colorScheme.onSurface,
+                            navigationIconContentColor = MaterialTheme.colorScheme.primary,
+                            actionIconContentColor = MaterialTheme.colorScheme.primary
                         ),
                         navigationIcon = {
-                            IconButton(
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.primary,
-                                    disabledContentColor = Color.Unspecified,
-                                ),
-                                onClick = { currentSubScreen = HomeSubScreenState.MAIN }
-                            ) {
+                            IconButton(onClick = { currentSubScreen = HomeSubScreenState.MAIN }) {
                                 Icon(
                                     painter = painterResource(R.drawable.symbol_angle_arrow),
                                     contentDescription = "back",
@@ -105,13 +93,7 @@ fun HomeScreen(
                         actions = {
                             var menuExpanded by remember { mutableStateOf(false) }
 
-                            IconButton(
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.primary,
-                                    disabledContentColor = Color.Unspecified,
-                                ),
-                                onClick = { menuExpanded = true }
-                            ) {
+                            IconButton(onClick = { menuExpanded = true }) {
                                 Icon(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = null,
@@ -124,13 +106,7 @@ fun HomeScreen(
                                     onCreateCard = { menuExpanded = false },
                                 )
                             }
-                            IconButton(
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.primary,
-                                    disabledContentColor = Color.Unspecified,
-                                ),
-                                onClick = { showModalBottom = true },
-                            ) {
+                            IconButton(onClick = { showModalBottom = true }) {
                                 Icon(
                                     painter = painterResource(R.drawable.symbol_three_dot),
                                     contentDescription = null,

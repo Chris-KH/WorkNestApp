@@ -1,10 +1,12 @@
-package com.apcs.worknestapp.ui.screens.profile
+package com.apcs.worknestapp.ui.screens.add_contact
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -26,71 +28,54 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.ui.theme.Inter
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
-fun ProfileHeader(
-    imageUrl: String?,
-    name: String?,
-    email: String?,
-    pronouns: String?,
+fun SearchUserItem(
+    user: User,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(imageUrl)
+                .data(user.avatar)
                 .crossfade(true)
                 .build(),
             placeholder = painterResource(R.drawable.fade_avatar_fallback),
             error = painterResource(R.drawable.fade_avatar_fallback),
-            contentDescription = "Avatar",
+            contentDescription = "User avatar",
             contentScale = ContentScale.Crop,
-            filterQuality = FilterQuality.Medium,
+            filterQuality = FilterQuality.Low,
             modifier = Modifier
                 .clip(CircleShape)
-                .size(80.dp),
+                .size(44.dp),
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = (name ?: "Anonymous"),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 20.sp,
-                    lineHeight = 20.sp,
-                    modifier = Modifier.weight(1f)
-                )
-
-                if (pronouns != null && pronouns.isNotBlank()) {
-                    Text(
-                        text = "\u0020\u00b7\u0020" + (pronouns),
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = Inter,
-                        fontSize = 12.sp,
-                        lineHeight = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = email ?: "",
+                text = (user.name ?: "Anonymous"),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 13.sp,
+                lineHeight = 14.sp,
+            )
+            Text(
+                text = user.email ?: "",
                 fontWeight = FontWeight.Normal,
-                fontSize = 12.sp,
-                lineHeight = 12.sp,
+                fontSize = (11.5).sp,
+                lineHeight = (11.5).sp,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

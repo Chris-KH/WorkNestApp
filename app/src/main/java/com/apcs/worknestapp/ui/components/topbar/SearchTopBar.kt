@@ -86,7 +86,7 @@ fun SearchTopBar(
                 }
             },
             actions = {},
-            expandedHeight = 64.dp,
+            expandedHeight = 52.dp,
             colors = colors,
             modifier = Modifier
         )

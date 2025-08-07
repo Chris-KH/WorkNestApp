@@ -1,15 +1,13 @@
 package com.apcs.worknestapp.ui.screens.profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberOverscrollEffect
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,7 +16,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.components.ProfileInfoCard
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
@@ -48,8 +46,6 @@ fun ProfileScreen(
 ) {
     val authViewModel = LocalAuthViewModel.current
     val profile = authViewModel.profile.collectAsState()
-    val scrollState = rememberScrollState()
-    val overscrollEffect = rememberOverscrollEffect()
 
     var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -58,7 +54,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             MainTopBar(
-                title = "My Profile",
+                title = profile.value?.name ?: "My Profile",
                 actions = {
                     IconButton(onClick = {
                         navController.navigate(Screen.Setting.route)
@@ -66,7 +62,6 @@ fun ProfileScreen(
                         Icon(
                             painter = painterResource(R.drawable.outline_gear),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -98,51 +93,49 @@ fun ProfileScreen(
                     }
                 }
             },
-            indicator = {
-                PullToRefreshDefaults.Indicator(
-                    state = pullRefreshState,
-                    isRefreshing = isRefreshing,
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
             contentAlignment = Alignment.TopCenter,
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(
-                        state = scrollState,
-                        overscrollEffect = overscrollEffect,
-                    )
-                    .padding(top = 12.dp)
-                    .padding(horizontal = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 20.dp,
+                    bottom = 4.dp
+                ),
             ) {
-                ProfileHeader(
-                    imageUrl = profile.value?.avatar,
-                    name = profile.value?.name,
-                    email = profile.value?.email,
-                    pronouns = profile.value?.pronouns,
-                )
+                item {
+                    MyProfileHeader(
+                        userId = profile.value?.docId,
+                        userName = profile.value?.name,
+                        userEmail = profile.value?.email,
+                        imageUrl = profile.value?.avatar,
+                        snackbarHost = snackbarHost,
+                    )
+                }
 
-                Spacer(modifier = Modifier.height(16.dp))
-                EditProfileButton(
-                    onClick = {
-                        navController.navigate(Screen.EditProfile.route)
-                    }
-                )
-                Spacer(modifier = Modifier.height(24.dp))
+                item { Spacer(modifier = Modifier.height(16.dp)) }
 
-                ProfileInfoCard(
-                    bio = profile.value?.bio,
-                    createdAt = profile.value?.createdAt,
-                )
+                item {
+                    EditProfileButton(
+                        onClick = {
+                            navController.navigate(Screen.EditProfile.route)
+                        }
+                    )
+                }
+
+                item { Spacer(modifier = Modifier.height(24.dp)) }
+
+                item {
+                    ProfileInfoCard(
+                        bio = profile.value?.bio,
+                        createdAt = profile.value?.createdAt,
+                    )
+                }
             }
         }
     }

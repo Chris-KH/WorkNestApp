@@ -16,32 +16,26 @@ import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
@@ -50,19 +44,17 @@ import coil3.request.crossfade
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.cloudinary.MyCloudinary.uploadAvatarToCloudinary
-import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.utils.FileUtils.copyUriToTempFile
 import com.apcs.worknestapp.utils.FileUtils.createImageFileUri
 import kotlinx.coroutines.launch
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvatarPicker(
     userId: String?,
     imageUrl: String?,
-    isLoading: Boolean,
     snackbarHost: SnackbarHostState,
+    modifier: Modifier = Modifier,
 ) {
     val authViewModel = LocalAuthViewModel.current
     val context = LocalContext.current
@@ -114,8 +106,7 @@ fun AvatarPicker(
                                 withDismissAction = true,
                             )
                         }
-                    }
-                )
+                    })
             } else {
                 snackbarHost.showSnackbar(
                     message = "Fail: Cannot read image file",
@@ -127,8 +118,7 @@ fun AvatarPicker(
 
     // Launcher for photo picker
     val pickMediaLauncher = rememberLauncherForActivityResult(
-        contract = PickVisualMedia(),
-        onResult = { uri: Uri? ->
+        contract = PickVisualMedia(), onResult = { uri: Uri? ->
             // Persist media file access: context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             if (uri != null) {
                 uploadImage(uri)
@@ -140,8 +130,7 @@ fun AvatarPicker(
                     )
                 }
             }
-        }
-    )
+        })
 
     // Launcher for Legacy Gallery (fallback Android < 11 or Photo Picker unavailable)
     val pickImageLegacyLauncher = rememberLauncherForActivityResult(
@@ -157,8 +146,7 @@ fun AvatarPicker(
                     )
                 }
             }
-        }
-    )
+        })
 
     val requestReadPermissionsLauncher = rememberLauncherForActivityResult(
         contract = RequestMultiplePermissions()
@@ -167,12 +155,11 @@ fun AvatarPicker(
         if (isGranted) {
             pickImageLegacyLauncher.launch("image/*")
         } else {
-            val readImagePermission =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    Manifest.permission.READ_MEDIA_IMAGES
-                } else {
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                }
+            val readImagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Manifest.permission.READ_MEDIA_IMAGES
+            } else {
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            }
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(
                     context as Activity,
@@ -209,16 +196,14 @@ fun AvatarPicker(
         if (PickVisualMedia.isPhotoPickerAvailable(context)) {
             pickMediaLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
         } else {
-            val readImagePermission =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    Manifest.permission.READ_MEDIA_IMAGES
-                } else {
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                }
+            val readImagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Manifest.permission.READ_MEDIA_IMAGES
+            } else {
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            }
 
             if (ContextCompat.checkSelfPermission(
-                    context,
-                    readImagePermission
+                    context, readImagePermission
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
                 pickImageLegacyLauncher.launch("image/*")
@@ -230,8 +215,7 @@ fun AvatarPicker(
 
     // Launcher take photo
     val takePhotoLauncher = rememberLauncherForActivityResult(
-        contract = TakePicture(),
-        onResult = { success: Boolean ->
+        contract = TakePicture(), onResult = { success: Boolean ->
             if (success) {
                 uploadImage(tempImageUri!!, true)
             } else {
@@ -246,8 +230,7 @@ fun AvatarPicker(
                     )
                 }
             }
-        }
-    )
+        })
 
     val requestCameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = RequestPermission()
@@ -257,8 +240,7 @@ fun AvatarPicker(
             tempImageUri?.let { takePhotoLauncher.launch(it) }
         } else {
             if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    context as Activity,
-                    Manifest.permission.CAMERA
+                    context as Activity, Manifest.permission.CAMERA
                 )
             ) {
                 coroutineScope.launch {
@@ -300,66 +282,20 @@ fun AvatarPicker(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (showBottomSheet) {
-            AvatarBottomSheet(
-                onDismiss = { showBottomSheet = false },
-                onTakePhoto = onTakePhoto,
-                onChooseFromLibrary = onChooseFromLibrary,
-            )
-        }
-        if (isLoading) {
-            Image(
-                painter = painterResource(R.drawable.fade_avatar_fallback),
-                contentDescription = "Avatar place holder",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(96.dp)
-                    .border(
-                        width = 1.dp,
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                    )
-                    .clip(CircleShape)
-            )
-        } else {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(imageUrl)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(R.drawable.fade_avatar_fallback),
-                error = painterResource(R.drawable.fade_avatar_fallback),
-                contentDescription = "Avatar",
-                contentScale = ContentScale.Crop,
-                filterQuality = FilterQuality.Medium,
-                modifier = Modifier
-                    .size(96.dp)
-                    .border(
-                        width = 1.dp,
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                    )
-                    .clip(CircleShape)
-                    .clickable(
-                        onClick = { showBottomSheet = true },
-                    ),
-            )
-        }
-
-        Text(
-            text = "Edit avatar",
-            fontSize = 14.sp,
-            lineHeight = 14.sp,
-            fontWeight = FontWeight.Normal,
-            fontFamily = Roboto,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(vertical = 8.dp)
+    if (showBottomSheet) {
+        AvatarBottomSheet(
+            onDismiss = { showBottomSheet = false },
+            onTakePhoto = onTakePhoto,
+            onChooseFromLibrary = onChooseFromLibrary,
         )
     }
+    AsyncImage(
+        model = ImageRequest.Builder(context).data(imageUrl).crossfade(true).build(),
+        placeholder = painterResource(R.drawable.fade_avatar_fallback),
+        error = painterResource(R.drawable.fade_avatar_fallback),
+        contentDescription = "Avatar",
+        contentScale = ContentScale.Crop,
+        filterQuality = FilterQuality.Medium,
+        modifier = modifier.clickable(onClick = { showBottomSheet = true }),
+    )
 }

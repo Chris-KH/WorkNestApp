@@ -135,9 +135,6 @@ fun NoteScreen(
                     IconButton(
                         enabled = !showActionMenu,
                         onClick = { showActionMenu = true },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary,
-                        )
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.symbol_three_dot),
