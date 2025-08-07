@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -52,6 +53,7 @@ fun SearchTopBar(
                     onCancel = onCancel,
                     interactionSource = interactionSource,
                     animationDuration = animationDuration,
+                    shape = RoundedCornerShape(50f),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                 )
             },

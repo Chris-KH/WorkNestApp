@@ -112,10 +112,9 @@ fun SearchInput(
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.width(6.dp))
                 Box(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .weight(1f),
+                    modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     innerTextField()
@@ -133,7 +132,7 @@ fun SearchInput(
                     }
                 }
                 if (!value.isEmpty()) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Icon(
                         painter = painterResource(R.drawable.fill_close),
                         contentDescription = null,
@@ -141,7 +140,7 @@ fun SearchInput(
                         modifier = Modifier
                             .clip(CircleShape)
                             .clickable(onClick = { onValueChange("") })
-                            .size(20.dp)
+                            .size(16.dp)
                     )
                 }
             }

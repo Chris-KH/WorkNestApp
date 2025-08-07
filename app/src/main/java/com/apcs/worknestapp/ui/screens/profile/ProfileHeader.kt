@@ -68,16 +68,17 @@ fun ProfileHeader(
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 20.sp,
                     lineHeight = 20.sp,
+                    modifier = Modifier.weight(1f)
                 )
 
                 if (pronouns != null && pronouns.isNotBlank()) {
                     Text(
                         text = "\u0020\u00b7\u0020" + (pronouns),
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.outline,
                         fontFamily = Inter,
                         fontSize = 12.sp,
                         lineHeight = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -89,6 +90,7 @@ fun ProfileHeader(
                 lineHeight = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
