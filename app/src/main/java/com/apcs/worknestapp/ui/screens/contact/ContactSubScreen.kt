@@ -1,7 +1,9 @@
 package com.apcs.worknestapp.ui.screens.contact
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,14 +42,15 @@ fun ContactSubScreen(
 
     LazyColumn(
         state = listState,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 12.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
         items(50) { item ->
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-                    .padding(8.dp)
+                    .height(40.dp)
                     .background(Color.Gray),
                 contentAlignment = Alignment.Center
             ) {

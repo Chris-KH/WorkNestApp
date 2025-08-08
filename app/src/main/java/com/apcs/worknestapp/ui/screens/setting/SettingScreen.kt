@@ -33,7 +33,7 @@ import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.ConfirmDialog
 import com.apcs.worknestapp.ui.components.inputfield.SearchInput
-import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
+import com.apcs.worknestapp.ui.components.topbar.CenterExitOnlyTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
 
@@ -55,7 +55,7 @@ fun SettingScreen(
 
     Scaffold(
         topBar = {
-            ExitOnlyTopBar(
+            CenterExitOnlyTopBar(
                 navController = navController,
                 screen = Screen.Setting,
                 colors = TopAppBarDefaults.topAppBarColors(

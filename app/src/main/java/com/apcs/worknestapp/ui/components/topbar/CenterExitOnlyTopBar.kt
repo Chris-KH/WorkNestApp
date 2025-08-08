@@ -27,9 +27,10 @@ import com.apcs.worknestapp.ui.theme.Roboto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExitOnlyTopBar(
+fun CenterExitOnlyTopBar(
     navController: NavHostController,
     screen: Screen,
+    showDivider: Boolean = true,
     colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -40,8 +41,8 @@ fun ExitOnlyTopBar(
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = Roboto,
                     fontSize = 16.sp,
+                    lineHeight = 16.sp,
                     letterSpacing = (0).sp,
-                    lineHeight = 24.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
@@ -58,16 +59,17 @@ fun ExitOnlyTopBar(
                     )
                 }
             },
-            actions = {},
             expandedHeight = 52.dp,
             colors = colors,
             modifier = Modifier
         )
 
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = (1).dp,
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                thickness = (1).dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
     }
 }

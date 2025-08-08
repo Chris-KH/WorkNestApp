@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.dagger.hilt.android)
     id("com.google.gms.google-services")
     kotlin("plugin.serialization") version "2.2.0"
+    id("kotlin-parcelize")
 }
 
 android {

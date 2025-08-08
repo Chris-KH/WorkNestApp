@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.screens.profile
+package com.apcs.worknestapp.ui.screens.my_profile
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer

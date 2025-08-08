@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.screens.profile
+package com.apcs.worknestapp.ui.screens.my_profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(
+fun MyProfileScreen(
     navController: NavHostController,
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -70,23 +70,24 @@ fun ProfileScreen(
         },
         bottomBar = {
             MainBottomBar(
-                currentScreen = Screen.Profile,
+                currentScreen = Screen.MyProfile,
                 navController = navController,
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier,
     ) { innerPadding ->
         PullToRefreshBox(
             state = pullRefreshState,
             isRefreshing = isRefreshing,
             onRefresh = {
-                isRefreshing = true
                 coroutineScope.launch {
+                    isRefreshing = true
                     val isSuccess = authViewModel.loadUserProfile()
                     isRefreshing = false
                     if (!isSuccess) {
                         snackbarHost.showSnackbar(
-                            message = "Refresh user profile fail",
+                            message = "Refresh your profile failed",
                             withDismissAction = true,
                             duration = SnackbarDuration.Short,
                         )
@@ -101,12 +102,7 @@ fun ProfileScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 20.dp,
-                    bottom = 4.dp
-                ),
+                contentPadding = PaddingValues(vertical = 20.dp, horizontal = 16.dp),
             ) {
                 item {
                     MyProfileHeader(
@@ -114,6 +110,7 @@ fun ProfileScreen(
                         userName = profile.value?.name,
                         userEmail = profile.value?.email,
                         imageUrl = profile.value?.avatar,
+                        avatarSize = 120.dp,
                         snackbarHost = snackbarHost,
                     )
                 }
@@ -136,6 +133,8 @@ fun ProfileScreen(
                         createdAt = profile.value?.createdAt,
                     )
                 }
+
+                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
     }

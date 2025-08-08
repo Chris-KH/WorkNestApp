@@ -1,13 +1,12 @@
 package com.apcs.worknestapp.ui.screens.notification
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -147,13 +146,14 @@ fun NotificationScreen(
                     .fillMaxSize()
             ) {
                 LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(8.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    itemsIndexed(
+                    items(
                         items = notifications.value,
-                        key = { _, item -> item.docId.hashCode() }
-                    ) { idx, item ->
+                        key = { it.docId.hashCode() }
+                    ) { item ->
                         NotificationItem(
                             notification = item,
                             onClick = {
@@ -185,7 +185,6 @@ fun NotificationScreen(
                                 }
                             },
                         )
-                        if (idx + 1 < notifications.value.size) Spacer(Modifier.height(8.dp))
                     }
                 }
             }

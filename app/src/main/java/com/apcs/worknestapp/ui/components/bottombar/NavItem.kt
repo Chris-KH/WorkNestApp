@@ -30,7 +30,7 @@ fun RowScope.NavItem(
     val selected = currentScreen == screen
     val icon = when(screen) {
         is Screen.Home -> if (selected) R.drawable.fill_home else R.drawable.outline_home
-        is Screen.Profile -> if (selected) R.drawable.fill_profile else R.drawable.outline_profile
+        is Screen.MyProfile -> if (selected) R.drawable.fill_profile else R.drawable.outline_profile
         is Screen.Contact -> if (selected) R.drawable.fill_contacts else R.drawable.outline_contacts
         is Screen.Notification -> if (selected) R.drawable.fill_bell else R.drawable.outline_bell
         is Screen.Note -> if (selected) R.drawable.fill_note else R.drawable.outline_note

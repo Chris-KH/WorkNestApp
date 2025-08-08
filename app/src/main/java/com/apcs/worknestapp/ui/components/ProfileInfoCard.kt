@@ -27,9 +27,10 @@ import com.google.firebase.Timestamp
 fun ProfileInfoCard(
     bio: String?,
     createdAt: Timestamp?,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(
                 color = MaterialTheme.colorScheme.surface,

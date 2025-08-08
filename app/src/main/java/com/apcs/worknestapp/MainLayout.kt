@@ -36,17 +36,18 @@ import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileScreen
 import com.apcs.worknestapp.ui.screens.edit_profile_detail.EditProfileDetailScreen
 import com.apcs.worknestapp.ui.screens.home.HomeScreen
-import com.apcs.worknestapp.ui.screens.note_detail.NoteDetailScreen
 import com.apcs.worknestapp.ui.screens.login.LoginScreen
+import com.apcs.worknestapp.ui.screens.my_profile.MyProfileScreen
 import com.apcs.worknestapp.ui.screens.note.NoteScreen
+import com.apcs.worknestapp.ui.screens.note_detail.NoteDetailScreen
 import com.apcs.worknestapp.ui.screens.notification.NotificationScreen
-import com.apcs.worknestapp.ui.screens.profile.ProfileScreen
 import com.apcs.worknestapp.ui.screens.setting.SettingField
 import com.apcs.worknestapp.ui.screens.setting.SettingScreen
 import com.apcs.worknestapp.ui.screens.setting_detail.SettingDetailScreen
 import com.apcs.worknestapp.ui.screens.setting_detail.setting_account.SettingAccountDetailScreen
 import com.apcs.worknestapp.ui.screens.setting_detail.setting_account.SettingAccountField
 import com.apcs.worknestapp.ui.screens.signup.SignUpScreen
+import com.apcs.worknestapp.ui.screens.user_profile.UserProfileScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,12 +115,50 @@ fun MainLayout(startDestination: String) {
                 )
             }
 
-            composable(route = Screen.Profile.route) {
-                ProfileScreen(
+            composable(route = Screen.MyProfile.route) {
+                MyProfileScreen(
                     navController = navController,
                     snackbarHost = snackbarHost,
                     modifier = Modifier,
                 )
+            }
+
+            composable(
+                route = Screen.UserProfile.route,
+                arguments = listOf(navArgument("userId") {
+                    type = NavType.StringType
+                }),
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(transitionDuration))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")
+                if (userId != null) {
+                    UserProfileScreen(
+                        userId = userId,
+                        navController = navController,
+                        snackbarHost = snackbarHost,
+                        modifier = Modifier,
+                    )
+                } else {
+                    FallbackScreen(
+                        message = "User profile not found.",
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
             }
 
             composable(
@@ -130,7 +169,10 @@ fun MainLayout(startDestination: String) {
                         animationSpec = tween(transitionDuration)
                     )
                 },
-                exitTransition = {
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(transitionDuration))
+                },
+                popExitTransition = {
                     slideOutVertically(
                         targetOffsetY = { it },
                         animationSpec = tween(transitionDuration)

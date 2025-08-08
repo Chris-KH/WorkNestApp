@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.ui.components.AvatarPicker
-import com.apcs.worknestapp.ui.components.topbar.ExitOnlyTopBar
+import com.apcs.worknestapp.ui.components.topbar.CenterExitOnlyTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.delay
@@ -58,7 +58,7 @@ fun EditProfileScreen(
 
     Scaffold(
         topBar = {
-            ExitOnlyTopBar(
+            CenterExitOnlyTopBar(
                 navController = navController,
                 screen = Screen.EditProfile,
                 colors = TopAppBarDefaults.topAppBarColors(

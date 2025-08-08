@@ -22,10 +22,10 @@ import com.apcs.worknestapp.ui.theme.Roboto
 @Composable
 fun CustomTopBar(
     field: String,
-    colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
+    showDivider: Boolean = true,
     navigationIcon: @Composable (() -> Unit) = {},
     actions: @Composable (RowScope.() -> Unit) = {},
-    showDivider: Boolean = true,
+    colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         CenterAlignedTopAppBar(
@@ -35,8 +35,8 @@ fun CustomTopBar(
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = Roboto,
                     fontSize = 16.sp,
+                    lineHeight = 16.sp,
                     letterSpacing = (0).sp,
-                    lineHeight = 24.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier

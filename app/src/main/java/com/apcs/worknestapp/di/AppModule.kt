@@ -33,9 +33,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserSessionManager(
+        userRepo: UserRepository,
         noteRepo: NoteRepository,
         notificationRepo: NotificationRepository,
     ): SessionManager = SessionManager(
+        userRepo = userRepo,
         noteRepo = noteRepo,
         notificationRepo = notificationRepo,
     )

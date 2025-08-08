@@ -9,6 +9,25 @@ import javax.inject.Inject
 class UserViewModel @Inject constructor(
     private val userRepo: UserRepository,
 ) : ViewModel() {
+    val friends = userRepo.friends
+
+    suspend fun getUser(docId: String): User? {
+        return try {
+            userRepo.getUser(docId)
+        } catch(e: Exception) {
+            Log.e("UserViewModel", e.message, e)
+            null
+        }
+    }
+
+    suspend fun refreshUser(docId: String): User? {
+        return try {
+            userRepo.refreshUser(docId)
+        } catch(e: Exception) {
+            Log.e("UserViewModel", e.message, e)
+            null
+        }
+    }
 
     suspend fun findUsers(searchValue: String): List<User> {
         return try {
@@ -18,4 +37,6 @@ class UserViewModel @Inject constructor(
             emptyList()
         }
     }
+
+
 }

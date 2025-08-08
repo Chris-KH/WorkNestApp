@@ -3,22 +3,21 @@ package com.apcs.worknestapp.ui.screens.note
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -252,12 +251,13 @@ fun NoteScreen(
                     } else {
                         LazyColumn(
                             modifier = Modifier,
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 16.dp)
                         ) {
-                            itemsIndexed(
+                            items(
                                 items = displayNotes,
-                                key = { _, note -> note.docId.hashCode() }
-                            ) { idx, note ->
+                                key = { it.docId.hashCode() }
+                            ) { note ->
                                 NoteItem(
                                     note = note,
                                     onClick = {
@@ -293,8 +293,6 @@ fun NoteScreen(
                                     },
                                     onLongClick = { shouldShowNoteItemDialog = note }
                                 )
-                                if (idx + 1 < displayNotes.size)
-                                    Spacer(modifier = Modifier.height(10.dp))
                             }
                         }
                     }

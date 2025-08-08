@@ -45,7 +45,7 @@ fun MainBottomBar(currentScreen: Screen, navController: NavHostController) {
                 navController = navController,
             )
             NavItem(
-                screen = Screen.Profile,
+                screen = Screen.MyProfile,
                 currentScreen = currentScreen,
                 navController = navController,
             )

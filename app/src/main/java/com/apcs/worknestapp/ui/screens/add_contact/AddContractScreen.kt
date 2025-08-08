@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -18,8 +19,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
@@ -32,6 +36,7 @@ import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.data.remote.user.UserViewModel
 import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.components.topbar.SearchTopBar
+import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -50,9 +55,15 @@ fun AddContractScreen(
     userViewModel: UserViewModel = hiltViewModel(),
 ) {
     val focusManager = LocalFocusManager.current
-    var searchValue by remember { mutableStateOf("") }
+    var isFirstLoad by remember { mutableStateOf(true) }
+    var searchValue by rememberSaveable { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
-    val userList = remember { mutableStateListOf<User>() }
+    val userList = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() }
+        )
+    ) { mutableStateListOf<User>() }
     val listCache = remember { mutableStateMapOf<String, List<User>>() }
 
     LaunchedEffect(Unit) {
@@ -61,16 +72,19 @@ fun AddContractScreen(
                 .debounce(250)
                 .distinctUntilChanged()
                 .collectLatest { query ->
-                    isSearching = true
-                    if (query.isBlank()) {
-                        userList.clear()
-                    } else {
-                        val result = listCache[searchValue] ?: userViewModel.findUsers(query)
-                        userList.clear()
-                        userList.addAll(result)
-                        listCache[searchValue] = result
+                    if (isFirstLoad) isFirstLoad = false
+                    else {
+                        isSearching = true
+                        if (query.isBlank()) {
+                            userList.clear()
+                        } else {
+                            val result = listCache[searchValue] ?: userViewModel.findUsers(query)
+                            userList.clear()
+                            userList.addAll(result)
+                            listCache[searchValue] = result
+                        }
+                        isSearching = false
                     }
-                    isSearching = false
                 }
         }
 
@@ -78,11 +92,9 @@ fun AddContractScreen(
             flow {
                 while(true) {
                     emit(Unit)
-                    delay(30_000)
+                    delay(60_000)
                 }
-            }.collectLatest {
-                listCache.clear()
-            }
+            }.collectLatest { listCache.clear() }
         }
     }
 
@@ -125,8 +137,13 @@ fun AddContractScreen(
                 ) {
                     SearchUserItem(
                         user = it,
-                        onClick = {},
+                        onClick = {
+                            navController.navigate(
+                                Screen.UserProfile.route.replace("{userId}", it.docId ?: "")
+                            )
+                        },
                     )
+                    HorizontalDivider()
                 }
             }
         }
