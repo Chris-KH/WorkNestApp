@@ -48,8 +48,7 @@ fun MyProfileHeader(
                 snackbarHost = snackbarHost,
                 modifier = Modifier
                     .align(alignment = Alignment.Center)
-                    .size(avatarSize)
-                    .clip(CircleShape),
+                    .size(avatarSize),
             )
         }
         Spacer(modifier = Modifier.height(16.dp))

@@ -14,6 +14,9 @@ import androidx.activity.result.contract.ActivityResultContracts.RequestMultiple
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -24,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -52,6 +56,7 @@ fun AvatarPicker(
     val context = LocalContext.current
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
+    var previewAvatar by remember { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -144,9 +149,8 @@ fun AvatarPicker(
         contract = RequestMultiplePermissions()
     ) { permissions ->
         val isGranted = permissions.entries.all { it.value }
-        if (isGranted) {
-            pickImageLegacyLauncher.launch("image/*")
-        } else {
+        if (isGranted) pickImageLegacyLauncher.launch("image/*")
+        else {
             val readImagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 Manifest.permission.READ_MEDIA_IMAGES
             } else {
@@ -279,8 +283,25 @@ fun AvatarPicker(
             onDismiss = { showBottomSheet = false },
             onTakePhoto = onTakePhoto,
             onChooseFromLibrary = onChooseFromLibrary,
+            onViewAvatar = { previewAvatar = true },
         )
     }
+    if (previewAvatar) {
+        BasicAlertDialog(onDismissRequest = { previewAvatar = false }) {
+            AsyncImage(
+                model = ImageRequest.Builder(context).data(imageUrl).crossfade(true).build(),
+                placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                error = painterResource(R.drawable.fade_avatar_fallback),
+                contentDescription = "Preview avatar",
+                contentScale = ContentScale.Crop,
+                filterQuality = FilterQuality.High,
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .clip(CircleShape),
+            )
+        }
+    }
+
     AsyncImage(
         model = ImageRequest.Builder(context).data(imageUrl).crossfade(true).build(),
         placeholder = painterResource(R.drawable.fade_avatar_fallback),
@@ -288,6 +309,9 @@ fun AvatarPicker(
         contentDescription = "Avatar",
         contentScale = ContentScale.Crop,
         filterQuality = FilterQuality.Medium,
-        modifier = modifier.clickable(onClick = { showBottomSheet = true }),
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(CircleShape)
+            .clickable(onClick = { showBottomSheet = true }),
     )
 }

@@ -37,7 +37,7 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
     }
 
     override suspend fun findUsers(searchValue: String): List<User> {
-        auth.currentUser ?: throw Exception("User not logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val userRef = firestore.collection("users")
         val snapshot = userRef.whereGreaterThanOrEqualTo("email", searchValue)
@@ -47,7 +47,9 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
             .await()
 
         return snapshot.documents.mapNotNull {
-            it.toObject(User::class.java)
+            val user = it.toObject(User::class.java)
+            if (user?.docId == authUser.uid) null
+            else user
         }
     }
 

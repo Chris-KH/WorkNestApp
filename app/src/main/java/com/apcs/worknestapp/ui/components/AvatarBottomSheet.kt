@@ -20,7 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
-import com.apcs.worknestapp.ui.theme.Inter
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,6 +28,7 @@ fun AvatarBottomSheet(
     onDismiss: () -> Unit,
     onChooseFromLibrary: () -> Unit,
     onTakePhoto: () -> Unit,
+    onViewAvatar: (() -> Unit)? = null,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -51,6 +51,37 @@ fun AvatarBottomSheet(
                     .padding(bottom = 8.dp)
                     .fillMaxWidth()
             )
+
+            if (onViewAvatar != null) {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = "View avatar",
+                            fontSize = 14.sp,
+                            lineHeight = 14.sp,
+                            fontFamily = Roboto,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.outline_profile),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    },
+                    modifier = Modifier.clickable {
+                        onViewAvatar()
+                        onDismiss()
+                    },
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        headlineColor = MaterialTheme.colorScheme.onSurface,
+                        leadingIconColor = MaterialTheme.colorScheme.onSurface,
+                    )
+                )
+            }
 
             ListItem(
                 headlineContent = {
