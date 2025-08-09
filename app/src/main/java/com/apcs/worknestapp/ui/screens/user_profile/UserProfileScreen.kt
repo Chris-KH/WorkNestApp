@@ -223,7 +223,7 @@ fun UserProfileScreen(
                             )
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.outline_remove_user),
+                                painter = painterResource(R.drawable.outline_add_user),
                                 contentDescription = "Add friend",
                                 modifier = Modifier.size(24.dp)
                             )

@@ -15,11 +15,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.domain.logic.DateFormater
+import com.apcs.worknestapp.ui.theme.NotoSerif
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.google.firebase.Timestamp
 
@@ -29,6 +31,17 @@ fun ProfileInfoCard(
     createdAt: Timestamp?,
     modifier: Modifier = Modifier,
 ) {
+    val labelStyle = TextStyle(
+        fontFamily = NotoSerif, fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp, lineHeight = 15.sp, letterSpacing = 0.sp,
+    )
+
+    val contentStyle = TextStyle(
+        fontFamily = Roboto, fontWeight = FontWeight.Normal,
+        fontSize = 14.sp, lineHeight = 15.sp, letterSpacing = 0.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -38,51 +51,25 @@ fun ProfileInfoCard(
             )
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "About me",
-                fontFamily = Roboto,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                lineHeight = 18.sp,
-            )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(text = "About me", style = labelStyle)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text =
-                    if (bio == null || bio.isEmpty()) "..."
-                    else bio,
-                fontFamily = Roboto,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                text = if (bio.isNullOrEmpty()) "..." else bio,
+                style = contentStyle,
                 textAlign = TextAlign.Justify,
-                lineHeight = 14.sp,
-                modifier = Modifier.fillMaxWidth(),
             )
         }
-        HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Text(text = "Joined since", style = labelStyle)
             Text(
-                text = "Joined since",
-                fontFamily = Roboto,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                lineHeight = 14.sp,
-            )
-            Text(
-                text =
-                    if (createdAt != null)
-                        DateFormater.format(createdAt.toDate())
-                    else "No information",
-                fontFamily = Roboto,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                lineHeight = 14.sp,
+                text = if (createdAt != null) DateFormater.format(createdAt.toDate()) else "No information",
+                style = contentStyle,
             )
         }
     }

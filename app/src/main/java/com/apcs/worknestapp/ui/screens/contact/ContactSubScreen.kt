@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -30,6 +31,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ContactSubScreen(
     currentSubScreen: ContactSubScreenState,
+    listState: LazyListState,
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -48,8 +50,9 @@ fun ContactSubScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
         LazyColumn(
+            state = listState,
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 12.dp),
+            contentPadding = PaddingValues(vertical = 12.dp, horizontal = 0.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
             items(50) { item ->
@@ -67,7 +70,7 @@ fun ContactSubScreen(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(60.dp)) }
+            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
 }

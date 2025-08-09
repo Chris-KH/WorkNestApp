@@ -4,11 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -28,7 +32,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
@@ -36,6 +42,7 @@ import com.apcs.worknestapp.ui.components.ProfileInfoCard
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
+import com.apcs.worknestapp.ui.theme.Inter
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,7 +110,7 @@ fun MyProfileScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 20.dp, horizontal = 16.dp),
+                contentPadding = PaddingValues(vertical = 24.dp, horizontal = 16.dp),
             ) {
                 item {
                     MyProfileHeader(
@@ -116,14 +123,29 @@ fun MyProfileScreen(
                     )
                 }
 
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(30.dp)) }
 
                 item {
-                    EditProfileButton(
-                        onClick = {
-                            navController.navigate(Screen.EditProfile.route)
-                        }
-                    )
+                    Button(
+                        onClick = { navController.navigate(Screen.EditProfile.route) },
+                        contentPadding = PaddingValues(vertical = 0.dp),
+                        shape = RoundedCornerShape(50f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.fill_edit_pen),
+                            contentDescription = "Edit profile",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Edit profile",
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = Inter,
+                            fontSize = 14.sp,
+                            lineHeight = 14.sp,
+                        )
+                    }
                 }
 
                 item { Spacer(modifier = Modifier.height(24.dp)) }

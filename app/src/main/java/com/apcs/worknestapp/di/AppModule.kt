@@ -7,6 +7,8 @@ import com.apcs.worknestapp.data.remote.auth.AuthRepository
 import com.apcs.worknestapp.data.remote.auth.AuthRepositoryImpl
 import com.apcs.worknestapp.data.remote.auth.GoogleAuthUiClient
 import com.apcs.worknestapp.data.remote.auth.SessionManager
+import com.apcs.worknestapp.data.remote.message.MessageRepository
+import com.apcs.worknestapp.data.remote.message.MessageRepositoryImpl
 import com.apcs.worknestapp.data.remote.note.NoteRepository
 import com.apcs.worknestapp.data.remote.note.NoteRepositoryImpl
 import com.apcs.worknestapp.data.remote.notification.NotificationRepository
@@ -65,4 +67,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserRepository(): UserRepository = UserRepositoryImpl()
+
+    @Provides
+    @Singleton
+    fun provideMessageRepository(): MessageRepository = MessageRepositoryImpl()
 }

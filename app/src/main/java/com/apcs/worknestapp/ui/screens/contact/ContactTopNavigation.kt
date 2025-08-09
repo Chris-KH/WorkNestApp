@@ -56,7 +56,7 @@ fun ContactTopNavigation(
                 fontFamily = Roboto, fontWeight = FontWeight.Medium,
             )
             val boxButtonModifier = Modifier
-                .height(44.dp)
+                .height(40.dp)
                 .weight(1f)
 
             Box(

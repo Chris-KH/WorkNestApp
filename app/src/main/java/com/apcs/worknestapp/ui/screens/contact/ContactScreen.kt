@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,12 +57,14 @@ fun ContactScreen(
         modifier = modifier,
     ) { innerPadding ->
         var currentSubScreen by rememberSaveable { mutableStateOf(ContactSubScreenState.MESSAGES) }
+        val messageListState = rememberLazyListState()
+        val friendListState = rememberLazyListState()
 
         Column(
             modifier = Modifier
+                .padding(innerPadding)
                 .fillMaxSize()
-                .animateContentSize()
-                .padding(innerPadding),
+                .animateContentSize(),
         ) {
             ContactTopNavigation(
                 currentSubScreen = currentSubScreen,
@@ -80,7 +83,17 @@ fun ContactScreen(
                 targetState = currentSubScreen,
                 label = "Contact subscreen"
             ) {
-                ContactSubScreen(currentSubScreen = it)
+                when(it) {
+                    ContactSubScreenState.MESSAGES -> ContactSubScreen(
+                        currentSubScreen = it,
+                        listState = messageListState
+                    )
+
+                    ContactSubScreenState.FRIENDS -> ContactSubScreen(
+                        currentSubScreen = it,
+                        listState = friendListState
+                    )
+                }
             }
         }
     }
