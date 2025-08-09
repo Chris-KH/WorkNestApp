@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.apcs.worknestapp.data.remote.message.MessageViewModel
+import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.data.remote.user.UserViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -37,10 +40,13 @@ fun ContactSubScreen(
     snackbarHost: SnackbarHostState,
     listState: LazyListState,
     userViewModel: UserViewModel = hiltViewModel(),
+    messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val pullRefreshState = rememberPullToRefreshState()
+
+    val friends = userViewModel.friends.collectAsState()
 
     PullToRefreshBox(
         state = pullRefreshState,
@@ -48,7 +54,7 @@ fun ContactSubScreen(
         onRefresh = {
             coroutineScope.launch {
                 isRefreshing = true
-                delay(5000)
+                delay(1000)
                 isRefreshing = false
             }
         },
@@ -80,14 +86,10 @@ fun ContactSubScreen(
     }
 }
 
-/*LaunchedEffect(Unit) {
-        snapshotFlow { listState.firstVisibleItemIndex }
-            .collect { currentIndex ->
-                if (currentIndex == previousIndex.intValue) return@collect
-                if (currentIndex + 1 < previousIndex.intValue || currentIndex == 0) {
-                    onScroll(true, currentIndex)
-                } else if (currentIndex > previousIndex.intValue) {
-                    onScroll(false, currentIndex)
-                }
-            }
-   }*/
+@Composable
+fun FriendItem(
+    friend: User,
+    modifier: Modifier = Modifier,
+) {
+
+}

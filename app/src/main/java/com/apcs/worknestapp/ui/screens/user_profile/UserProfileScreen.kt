@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,13 +21,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
@@ -47,11 +48,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.data.remote.user.UserViewModel
+import com.apcs.worknestapp.ui.components.FallbackScreen
+import com.apcs.worknestapp.ui.components.FriendRequestButton
 import com.apcs.worknestapp.ui.components.ProfileInfoCard
+import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.launch
 
@@ -65,31 +68,38 @@ fun UserProfileScreen(
     userViewModel: UserViewModel = hiltViewModel(),
 ) {
     var user by remember { mutableStateOf<User?>(null) }
+    val friendships = userViewModel.friendships.collectAsState()
+    val friendship = friendships.value.find { it.users?.contains(userId) ?: false }
 
-    var isRefreshing by remember { mutableStateOf(false) }
+    var isFirstLoad by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
-    val pullRefreshState = rememberPullToRefreshState()
+    var isRefreshing by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
-        user = userViewModel.getUser(userId)
+        if (isFirstLoad) {
+            val loadedUser = userViewModel.getUser(userId)
+            if (loadedUser == null) {
+                snackbarHost.showSnackbar(
+                    message = "User not found",
+                    withDismissAction = true,
+                )
+            } else user = loadedUser
+            isFirstLoad = false
+        }
     }
 
     Scaffold(
         topBar = {
-            val currentVisibleIndex = remember {
-                derivedStateOf { listState.firstVisibleItemIndex }
-            }
-
-            val topBarColor = if (currentVisibleIndex.value == 0) Color.Transparent
+            val currentVisibleIdx = remember { derivedStateOf { listState.firstVisibleItemIndex } }
+            val topBarColor = if (currentVisibleIdx.value == 0) Color.Transparent
             else MaterialTheme.colorScheme.surface
 
             TopAppBar(
                 title = {
                     Text(
-                        text =
-                            if (currentVisibleIndex.value == 0) ""
-                            else user?.name ?: "",
+                        text = if (currentVisibleIdx.value == 0) ""
+                        else user?.name ?: "",
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = Roboto,
                         fontSize = 16.sp,
@@ -121,127 +131,184 @@ fun UserProfileScreen(
                 modifier = Modifier
             )
         },
-        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
+        modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
-        PullToRefreshBox(
-            state = pullRefreshState,
-            isRefreshing = isRefreshing,
-            onRefresh = {
-                coroutineScope.launch {
-                    isRefreshing = true
-                    val refreshUser = userViewModel.refreshUser(userId)
-                    isRefreshing = false
-                    if (refreshUser == null) {
-                        snackbarHost.showSnackbar(
-                            message = "Refresh profile failed",
-                            withDismissAction = true,
-                            duration = SnackbarDuration.Short,
-                        )
-                    } else user = refreshUser
-                }
-            },
-            contentAlignment = Alignment.TopCenter,
-            modifier = Modifier
-                .padding(
-                    start = innerPadding.calculateLeftPadding(LayoutDirection.Ltr),
-                    end = innerPadding.calculateRightPadding(LayoutDirection.Ltr),
-                    bottom = innerPadding.calculateBottomPadding(),
-                )
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+        if (isFirstLoad) {
+            Box(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
             ) {
-                item {
-                    val topPadding = innerPadding.calculateTopPadding()
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(topPadding + 60.dp)
-                            .background(Color.DarkGray)
-                    )
-                }
-
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.TopCenter,
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp)
-                                .background(Color.DarkGray)
-                        )
-                        UserProfileHeader(
-                            userName = user?.name,
-                            userEmail = user?.email,
-                            imageUrl = user?.avatar,
-                            avatarSize = 120.dp,
-                            modifier = Modifier.padding(horizontal = 24.dp),
-                        )
-                    }
-                }
-
-                item { Spacer(modifier = Modifier.height(24.dp)) }
-
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Button(
-                            onClick = {},
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_chat),
-                                contentDescription = "Chat with user",
-                                modifier = Modifier.size(24.dp)
+                RotatingIcon(
+                    painter = painterResource(R.drawable.loading_icon_3),
+                    contentDescription = "Load user",
+                    tint = MaterialTheme.colorScheme.primary,
+                    duration = 3000,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .align(alignment = Alignment.Center)
+                )
+            }
+        } else {
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = {
+                    coroutineScope.launch {
+                        isRefreshing = true
+                        val refreshUser = userViewModel.refreshUser(userId)
+                        isRefreshing = false
+                        if (refreshUser == null) {
+                            snackbarHost.showSnackbar(
+                                message = "Refresh profile failed",
+                                withDismissAction = true,
+                                duration = SnackbarDuration.Short,
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Message",
-                                fontSize = 16.sp,
-                                lineHeight = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                fontFamily = Roboto,
+                        } else user = refreshUser
+                    }
+                },
+                contentAlignment = Alignment.TopCenter,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (user == null) {
+                    FallbackScreen(
+                        message = "User not found",
+                        navController = navController,
+                    )
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .padding(
+                                start = innerPadding.calculateLeftPadding(LayoutDirection.Ltr),
+                                end = innerPadding.calculateRightPadding(LayoutDirection.Ltr),
+                                bottom = innerPadding.calculateBottomPadding(),
+                            )
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        item {
+                            val topPadding = innerPadding.calculateTopPadding()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(topPadding + 60.dp)
+                                    .background(Color.DarkGray)
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {},
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.inverseSurface,
-                                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_add_user),
-                                contentDescription = "Add friend",
-                                modifier = Modifier.size(24.dp)
+
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.TopCenter,
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(60.dp)
+                                        .background(Color.DarkGray)
+                                )
+                                UserProfileHeader(
+                                    userName = user?.name,
+                                    userEmail = user?.email,
+                                    imageUrl = user?.avatar,
+                                    avatarSize = 120.dp,
+                                    modifier = Modifier.padding(horizontal = 24.dp),
+                                )
+                            }
+                        }
+
+                        item { Spacer(modifier = Modifier.height(24.dp)) }
+
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                val textStyle = TextStyle(
+                                    fontSize = 16.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
+                                    fontWeight = FontWeight.SemiBold, fontFamily = Roboto,
+                                )
+                                
+                                Button(
+                                    onClick = {},
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_chat),
+                                        contentDescription = "Chat with user",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(text = "Message", style = textStyle)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                FriendRequestButton(
+                                    friendship = friendship,
+                                    targetUserId = userId,
+                                    onAdd = {
+                                        coroutineScope.launch {
+                                            val isSuccess = userViewModel.sendFriendRequest(it)
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Send request failed",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onCancel = {
+                                        coroutineScope.launch {
+                                            val isSuccess = userViewModel.deleteFriendship(it)
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Cancel request failed. Try again",
+                                                    withDismissAction = true,
+                                                )
+                                            } else {
+                                                val isClicked = snackbarHost.showSnackbar(
+                                                    message = "Request was canceled",
+                                                    withDismissAction = true,
+                                                    actionLabel = "Undo",
+                                                )
+                                                if (isClicked == SnackbarResult.ActionPerformed) {
+                                                    userViewModel.sendFriendRequest(userId)
+                                                }
+                                            }
+                                        }
+                                    },
+                                    onRemove = {
+                                        coroutineScope.launch {
+                                            val isSuccess = userViewModel.deleteFriendship(it)
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Unfriend failed. Try again",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        }
+                                    },
+                                    textStyle = textStyle,
+                                )
+                            }
+                        }
+
+                        item { Spacer(modifier = Modifier.height(24.dp)) }
+
+                        item {
+                            ProfileInfoCard(
+                                bio = user?.bio,
+                                createdAt = user?.createdAt,
+                                modifier = Modifier.padding(horizontal = 16.dp)
                             )
                         }
+
+                        item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
                 }
-
-                item { Spacer(modifier = Modifier.height(24.dp)) }
-
-                item {
-                    ProfileInfoCard(
-                        bio = user?.bio,
-                        createdAt = user?.createdAt,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-
-                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
     }

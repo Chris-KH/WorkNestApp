@@ -28,8 +28,10 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
     init {
         auth.addAuthStateListener {
             val user = it.currentUser
-            if (user == null) removeListener()
-            else {
+            if (user == null) {
+                removeListener()
+            } else {
+                removeListener()
                 registerFriendshipListener()
             }
         }
@@ -43,16 +45,15 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
     override fun registerFriendshipListener() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        val friendshipRef = firestore.collection("friendships")
-            .whereArrayContains("users", authUser.uid)
         friendshipListener?.remove()
+
+        val friendshipRef =
+            firestore.collection("friendships").whereArrayContains("users", authUser.uid)
         friendshipListener = friendshipRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("UserRepository", "Listen friendship snapshot failed", error)
                 return@addSnapshotListener
-            }
-
-            if (snapshot != null) {
+            } else if (snapshot != null) {
                 val friendshipList = snapshot.documents.mapNotNull {
                     it.toObject(Friendship::class.java)
                 }
@@ -84,10 +85,7 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
         val userRef = firestore.collection("users")
         val snapshot = userRef.whereGreaterThanOrEqualTo("email", searchValue)
-            .whereLessThan("email", searchValue + "\uF8FF")
-            .orderBy("email")
-            .get()
-            .await()
+            .whereLessThan("email", searchValue + "\uF8FF").orderBy("email").get().await()
 
         return snapshot.documents.mapNotNull {
             val user = it.toObject(User::class.java)
@@ -113,23 +111,23 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
     override suspend fun sendFriendRequest(receiverId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val pairId = listOf(authUser.uid, receiverId).sorted().joinToString("_")
 
-        val friendshipRef = firestore.collection("friendships")
-        val snapshot = friendshipRef.whereArrayContains("users", authUser.uid)
-            .whereArrayContains("users", receiverId)
-            .get()
-            .await()
+        val friendshipRef = firestore.collection("friendships").document(pairId)
+        val friendship = Friendship(
+            docId = pairId,
+            users = listOf(authUser.uid, receiverId),
+            senderId = authUser.uid,
+            receiverId = receiverId,
+            status = "pending",
+        )
 
-        if (!snapshot.isEmpty) {
-            friendshipRef.add(
-                Friendship(
-                    users = listOf(authUser.uid, receiverId),
-                    senderId = authUser.uid,
-                    receiverId = receiverId,
-                    status = "pending",
-                )
-            ).await()
-        }
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(friendshipRef)
+            if (snapshot.exists()) throw Exception("Friend request already exits")
+            else transaction.set(friendshipRef, friendship)
+        }.await()
+        _friendships.update { it + friendship }
     }
 
     override suspend fun acceptFriendRequest(docId: String) {
@@ -144,11 +142,16 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
         val friendshipRef = firestore.collection("friendships")
         friendshipRef.document(docId).delete().await()
+
+        _friendships.update { list ->
+            list.filterNot { it.docId == docId }
+        }
     }
 
     override fun clearCache() {
         removeListener()
         _friends.value = emptyList()
+        _friendships.value = emptyList()
         _foundUsers.value = emptyMap()
     }
 }

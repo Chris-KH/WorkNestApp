@@ -19,13 +19,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.LocalAuthViewModel
+import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.components.inputfield.EmailInput
 import com.apcs.worknestapp.ui.components.inputfield.PasswordInput
 import kotlinx.coroutines.launch
+import com.apcs.worknestapp.R
 
 @Composable
 fun LoginForm(
@@ -62,7 +66,7 @@ fun LoginForm(
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = {
-                if (email.isBlank() || password.isBlank()) {
+                if (email.isNotBlank() && password.isNotBlank()) {
                     coroutineScope.launch {
                         onSubmit()
                         val isSuccess = authViewModel.login(email.trim(), password.trim())
@@ -84,14 +88,25 @@ fun LoginForm(
                 .fillMaxWidth()
                 .height(48.dp)
         ) {
-            if (enabled)
+            val fontSize = 16.sp
+
+            if (enabled) {
                 Text(
-                    "Login",
+                    text = "Login",
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 16.sp,
+                    fontSize = fontSize,
+                    lineHeight = fontSize,
                     fontWeight = FontWeight.SemiBold
                 )
-            else CircularProgressIndicator(modifier = Modifier.size(18.dp))
+            } else {
+                RotatingIcon(
+                    painter = painterResource(R.drawable.loading_icon_2),
+                    contentDescription = "Logging in",
+                    modifier = Modifier.size(
+                        with(LocalDensity.current) { fontSize.toDp() }
+                    )
+                )
+            }
         }
     }
 }

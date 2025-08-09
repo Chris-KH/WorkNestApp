@@ -6,7 +6,6 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.dp
 import com.apcs.worknestapp.ui.theme.onSuccess
 import com.apcs.worknestapp.ui.theme.onWarning
 import com.apcs.worknestapp.ui.theme.success
@@ -31,7 +30,7 @@ fun CustomSnackBar(data: SnackbarData) {
         else -> SnackbarType.INFO
     }
 
-    val background = when (type) {
+    val background = when(type) {
         SnackbarType.SUCCESS -> MaterialTheme.colorScheme.success
         SnackbarType.ERROR -> MaterialTheme.colorScheme.error
         SnackbarType.FAIL -> MaterialTheme.colorScheme.error
@@ -39,7 +38,7 @@ fun CustomSnackBar(data: SnackbarData) {
         SnackbarType.INFO -> SnackbarDefaults.color
     }
 
-    val contentColor = when (type) {
+    val contentColor = when(type) {
         SnackbarType.SUCCESS -> MaterialTheme.colorScheme.onSuccess
         SnackbarType.ERROR -> MaterialTheme.colorScheme.onError
         SnackbarType.FAIL -> MaterialTheme.colorScheme.onError
@@ -47,7 +46,7 @@ fun CustomSnackBar(data: SnackbarData) {
         SnackbarType.INFO -> SnackbarDefaults.contentColor
     }
 
-    val actionColor = when (type) {
+    val actionColor = when(type) {
         SnackbarType.SUCCESS -> MaterialTheme.colorScheme.onSuccess
         SnackbarType.ERROR -> MaterialTheme.colorScheme.onError
         SnackbarType.FAIL -> MaterialTheme.colorScheme.onError

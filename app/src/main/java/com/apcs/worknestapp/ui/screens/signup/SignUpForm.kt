@@ -21,12 +21,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.LocalAuthViewModel
+import com.apcs.worknestapp.R
 import com.apcs.worknestapp.domain.logic.Validator
 import com.apcs.worknestapp.ui.components.ErrorText
+import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.components.inputfield.EmailInput
 import com.apcs.worknestapp.ui.components.inputfield.NameInput
 import com.apcs.worknestapp.ui.components.inputfield.PasswordConfirmInput
@@ -221,14 +225,25 @@ fun SignUpForm(
                 .fillMaxWidth()
                 .height(48.dp)
         ) {
-            if (enabled)
+            val fontSize = 16.sp
+
+            if (enabled) {
                 Text(
-                    "Sign Up",
+                    text = "Sign Up",
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 16.sp,
+                    fontSize = fontSize,
+                    lineHeight = fontSize,
                     fontWeight = FontWeight.SemiBold
                 )
-            else CircularProgressIndicator(modifier = Modifier.size(18.dp))
+            } else {
+                RotatingIcon(
+                    painter = painterResource(R.drawable.loading_icon_2),
+                    contentDescription = "Signing up",
+                    modifier = Modifier.size(
+                        with(LocalDensity.current) { fontSize.toDp() }
+                    )
+                )
+            }
         }
     }
 }
