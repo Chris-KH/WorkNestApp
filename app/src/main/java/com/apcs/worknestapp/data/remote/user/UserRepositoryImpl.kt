@@ -53,6 +53,34 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         }
     }
 
+    override suspend fun sendFriendRequest(receiverId: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val friendshipRef = firestore.collection("friendships")
+        friendshipRef.add(
+            Friendship(
+                users = listOf(authUser.uid, receiverId),
+                senderId = authUser.uid,
+                receiverId = receiverId,
+                status = "pending",
+            )
+        ).await()
+    }
+
+    override suspend fun acceptFriendRequest(docId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
+
+        val friendshipRef = firestore.collection("friendships")
+        friendshipRef.document(docId).update("status", "accepted").await()
+    }
+
+    override suspend fun deleteFriendship(docId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
+        
+        val friendshipRef = firestore.collection("friendships")
+        friendshipRef.document(docId).delete().await()
+    }
+
     override fun clearCache() {
         _friends.value = emptyList()
         _foundUser.value = emptyMap()

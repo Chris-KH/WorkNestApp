@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -14,7 +13,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -58,12 +56,6 @@ fun ContactScreen(
         modifier = modifier,
     ) { innerPadding ->
         var currentSubScreen by rememberSaveable { mutableStateOf(ContactSubScreenState.MESSAGES) }
-        var topNavigationVisible by rememberSaveable { mutableStateOf(true) }
-
-        val listStateMessageScreen = rememberLazyListState()
-        val previousIndexMessageScreen = rememberSaveable { mutableIntStateOf(0) }
-        val listStateFriendScreen = rememberLazyListState()
-        val previousIndexFriendScreen = rememberSaveable { mutableIntStateOf(0) }
 
         Column(
             modifier = Modifier
@@ -73,7 +65,7 @@ fun ContactScreen(
         ) {
             ContactTopNavigation(
                 currentSubScreen = currentSubScreen,
-                visible = topNavigationVisible,
+                visible = true,
                 onNavigateToMessageScreen = {
                     if (currentSubScreen != ContactSubScreenState.MESSAGES)
                         currentSubScreen = ContactSubScreenState.MESSAGES
@@ -88,27 +80,7 @@ fun ContactScreen(
                 targetState = currentSubScreen,
                 label = "Contact subscreen"
             ) {
-                if (it == ContactSubScreenState.MESSAGES) {
-                    ContactSubScreen(
-                        currentSubScreen = it,
-                        listState = listStateMessageScreen,
-                        previousIndex = previousIndexMessageScreen,
-                        onScroll = { visible, previousIndex ->
-                            if (topNavigationVisible != visible) topNavigationVisible = visible
-                            previousIndexMessageScreen.intValue = previousIndex
-                        },
-                    )
-                } else {
-                    ContactSubScreen(
-                        currentSubScreen = ContactSubScreenState.FRIENDS,
-                        listState = listStateFriendScreen,
-                        previousIndex = previousIndexFriendScreen,
-                        onScroll = { visible, previousIndex ->
-                            if (topNavigationVisible != visible) topNavigationVisible = visible
-                            previousIndexFriendScreen.intValue = previousIndex
-                        },
-                    )
-                }
+                ContactSubScreen(currentSubScreen = it)
             }
         }
     }

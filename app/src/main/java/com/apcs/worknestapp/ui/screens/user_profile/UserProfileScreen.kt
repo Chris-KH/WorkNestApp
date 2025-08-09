@@ -64,7 +64,6 @@ fun UserProfileScreen(
     modifier: Modifier = Modifier,
     userViewModel: UserViewModel = hiltViewModel(),
 ) {
-    val authViewModel = LocalAuthViewModel.current
     var user by remember { mutableStateOf<User?>(null) }
 
     var isRefreshing by remember { mutableStateOf(false) }
@@ -78,8 +77,9 @@ fun UserProfileScreen(
 
     Scaffold(
         topBar = {
-            val currentVisibleIndex =
-                remember { derivedStateOf { listState.firstVisibleItemIndex } }
+            val currentVisibleIndex = remember {
+                derivedStateOf { listState.firstVisibleItemIndex }
+            }
 
             val topBarColor = if (currentVisibleIndex.value == 0) Color.Transparent
             else MaterialTheme.colorScheme.surface
@@ -241,7 +241,7 @@ fun UserProfileScreen(
                     )
                 }
 
-                item { Spacer(modifier = Modifier.height(400.dp)) }
+                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
     }

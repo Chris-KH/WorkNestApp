@@ -38,5 +38,33 @@ class UserViewModel @Inject constructor(
         }
     }
 
+    suspend fun sendFriendRequest(receiverId: String): Boolean {
+        return try {
+            userRepo.sendFriendRequest(receiverId)
+            true
+        } catch(e: Exception) {
+            Log.e("UserViewModel", "Send friend request failed", e)
+            false
+        }
+    }
 
+    suspend fun acceptFriendRequest(docId: String): Boolean {
+        return try {
+            userRepo.acceptFriendRequest(docId)
+            true
+        } catch(e: Exception) {
+            Log.e("UserViewModel", "Accept friend request failed", e)
+            false
+        }
+    }
+
+    suspend fun deleteFriendship(docId: String): Boolean {
+        return try {
+            userRepo.deleteFriendship(docId)
+            true
+        } catch(e: Exception) {
+            Log.e("UserViewModel", "Delete friendship failed", e)
+            false
+        }
+    }
 }
