@@ -49,15 +49,15 @@ fun FallbackScreen(
             Text(
                 text = "Something went wrong!".uppercase(),
                 fontSize = 22.sp,
-                lineHeight = 30.sp,
+                lineHeight = 28.sp,
                 fontFamily = Inter,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = message,
-                fontSize = 14.sp,
-                lineHeight = 16.sp,
+                fontSize = 16.sp,
+                lineHeight = 18.sp,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Normal,
                 modifier = Modifier.padding(horizontal = 24.dp)

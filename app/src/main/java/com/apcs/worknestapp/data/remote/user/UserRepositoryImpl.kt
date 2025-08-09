@@ -135,6 +135,10 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
         val friendshipRef = firestore.collection("friendships")
         friendshipRef.document(docId).update("status", "accepted").await()
+
+        _friendships.update { list ->
+            list.map { if (it.docId == docId) it.copy(status = "accepted") else it }
+        }
     }
 
     override suspend fun deleteFriendship(docId: String) {

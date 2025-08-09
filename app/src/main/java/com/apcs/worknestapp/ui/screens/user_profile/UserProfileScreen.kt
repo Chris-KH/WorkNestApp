@@ -231,7 +231,7 @@ fun UserProfileScreen(
                                     fontSize = 16.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
                                     fontWeight = FontWeight.SemiBold, fontFamily = Roboto,
                                 )
-                                
+
                                 Button(
                                     onClick = {},
                                     shape = RoundedCornerShape(8.dp),
@@ -255,6 +255,17 @@ fun UserProfileScreen(
                                             if (!isSuccess) {
                                                 snackbarHost.showSnackbar(
                                                     message = "Send request failed",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onConfirm = {
+                                        coroutineScope.launch {
+                                            val isSuccess = userViewModel.acceptFriendRequest(it)
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Accept request failed. Try again",
                                                     withDismissAction = true,
                                                 )
                                             }
