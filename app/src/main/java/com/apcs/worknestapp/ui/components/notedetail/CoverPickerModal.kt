@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -30,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +39,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.apcs.worknestapp.utils.ColorUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,33 +50,26 @@ fun CoverPickerModal(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedColor by remember { mutableStateOf<Color?>(currentColor) }
-
-    val listCoverColor: List<Color> = listOf(
-        Color(0xFF366B4D),
-        Color(0xFF79611B),
-        Color(0xFF8C531E),
-        Color(0xFFA13825),
-        Color(0xFF5B4CAB),
-        Color(0xFF2453C7),
-        Color(0xFF356A70),
-        Color(0xFF53692B),
-        Color(0xFF8C4273),
-        Color(0xFF5B6473),
-        Color(0xFF304946),
-        Color(0xFF484B52),
-        Color(0xFF507A86),
-        Color(0xFF5A4f4B),
-        Color(0xFF737278),
+    val coroutineScope = rememberCoroutineScope()
+    var selectedColor by remember { mutableStateOf(currentColor) }
+    val listCoverColor = ColorUtils.listCoverColor
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = {
+            it != SheetValue.Hidden
+        }
     )
 
     ModalBottomSheet(
-        sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = true
-        ),
+        sheetState = sheetState,
         dragHandle = null,
         shape = RoundedCornerShape(12.dp),
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = {
+            coroutineScope.launch {
+                sheetState.hide()
+                onDismissRequest()
+            }
+        },
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier
             .fillMaxSize()
@@ -80,7 +77,12 @@ fun CoverPickerModal(
     ) {
         NoteModalBottomTopBar(
             title = "Cover Settings",
-            onClose = onDismissRequest,
+            onClose = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    onDismissRequest()
+                }
+            },
             onSave = { onSave(selectedColor) },
         )
         LazyVerticalGrid(
@@ -170,6 +172,10 @@ fun CoverPickerModal(
                         )
                     )
                 }
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
     }

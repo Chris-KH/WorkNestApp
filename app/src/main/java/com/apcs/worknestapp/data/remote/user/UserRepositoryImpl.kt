@@ -1,7 +1,9 @@
 package com.apcs.worknestapp.data.remote.user
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -15,12 +17,53 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
     private val _friends = MutableStateFlow(emptyList<User>())
     override val friends: StateFlow<List<User>> = _friends
 
-    private val _foundUser = MutableStateFlow(emptyMap<String, User>())
-    override val foundUser: StateFlow<Map<String, User>> = _foundUser
+    private val _friendships = MutableStateFlow(emptyList<Friendship>())
+    override val friendships: StateFlow<List<Friendship>> = _friendships
+
+    private val _foundUsers = MutableStateFlow(emptyMap<String, User>())
+    override val foundUsers: StateFlow<Map<String, User>> = _foundUsers
+
+    private var friendshipListener: ListenerRegistration? = null
+
+    init {
+        auth.addAuthStateListener {
+            val user = it.currentUser
+            if (user == null) removeListener()
+            else {
+                registerFriendshipListener()
+            }
+        }
+    }
+
+    override fun removeListener() {
+        friendshipListener?.remove()
+        friendshipListener = null
+    }
+
+    override fun registerFriendshipListener() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val friendshipRef = firestore.collection("friendships")
+            .whereArrayContains("users", authUser.uid)
+        friendshipListener?.remove()
+        friendshipListener = friendshipRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("UserRepository", "Listen friendship snapshot failed", error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                val friendshipList = snapshot.documents.mapNotNull {
+                    it.toObject(Friendship::class.java)
+                }
+                _friendships.value = friendshipList
+            }
+        }
+    }
 
     override suspend fun getUser(docId: String): User {
         auth.currentUser ?: throw Exception("User not logged in")
-        _foundUser.value[docId]?.let { return it }
+        _foundUsers.value[docId]?.let { return it }
 
         return refreshUser(docId)
     }
@@ -31,7 +74,7 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         val userRef = firestore.collection("users")
         val snapshot = userRef.document(docId).get().await()
         val user = snapshot.toObject(User::class.java) ?: throw Exception("User not found")
-        _foundUser.update { it + (docId to user) }
+        _foundUsers.update { it + (docId to user) }
 
         return user
     }
@@ -53,18 +96,40 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         }
     }
 
+    override suspend fun loadFriends() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+    }
+
+    override suspend fun loadFriendship() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val friendshipRef = firestore.collection("friendships")
+        val snapshot = friendshipRef.whereArrayContains("users", authUser.uid).get().await()
+
+        _friendships.value = snapshot.documents.mapNotNull {
+            it.toObject(Friendship::class.java)
+        }
+    }
+
     override suspend fun sendFriendRequest(receiverId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val friendshipRef = firestore.collection("friendships")
-        friendshipRef.add(
-            Friendship(
-                users = listOf(authUser.uid, receiverId),
-                senderId = authUser.uid,
-                receiverId = receiverId,
-                status = "pending",
-            )
-        ).await()
+        val snapshot = friendshipRef.whereArrayContains("users", authUser.uid)
+            .whereArrayContains("users", receiverId)
+            .get()
+            .await()
+
+        if (!snapshot.isEmpty) {
+            friendshipRef.add(
+                Friendship(
+                    users = listOf(authUser.uid, receiverId),
+                    senderId = authUser.uid,
+                    receiverId = receiverId,
+                    status = "pending",
+                )
+            ).await()
+        }
     }
 
     override suspend fun acceptFriendRequest(docId: String) {
@@ -76,13 +141,14 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
     override suspend fun deleteFriendship(docId: String) {
         auth.currentUser ?: throw Exception("User not logged in")
-        
+
         val friendshipRef = firestore.collection("friendships")
         friendshipRef.document(docId).delete().await()
     }
 
     override fun clearCache() {
+        removeListener()
         _friends.value = emptyList()
-        _foundUser.value = emptyMap()
+        _foundUsers.value = emptyMap()
     }
 }

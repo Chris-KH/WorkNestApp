@@ -10,12 +10,13 @@ class UserViewModel @Inject constructor(
     private val userRepo: UserRepository,
 ) : ViewModel() {
     val friends = userRepo.friends
+    val friendships = userRepo.friendships
 
     suspend fun getUser(docId: String): User? {
         return try {
             userRepo.getUser(docId)
         } catch(e: Exception) {
-            Log.e("UserViewModel", e.message, e)
+            Log.e("UserViewModel", "Get user failed", e)
             null
         }
     }
@@ -24,7 +25,7 @@ class UserViewModel @Inject constructor(
         return try {
             userRepo.refreshUser(docId)
         } catch(e: Exception) {
-            Log.e("UserViewModel", e.message, e)
+            Log.e("UserViewModel", "Refresh user failed", e)
             null
         }
     }

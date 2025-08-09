@@ -93,9 +93,7 @@ fun NoteScreen(
 
     LifecycleResumeEffect(Unit) {
         noteViewModel.registerListener()
-        onPauseOrDispose {
-            noteViewModel.removeListener()
-        }
+        onPauseOrDispose { noteViewModel.removeListener() }
     }
 
     Scaffold(

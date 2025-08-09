@@ -3,19 +3,20 @@ package com.apcs.worknestapp.ui.components.notedetail
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +39,7 @@ fun DescriptionEditModal(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var description by remember {
         mutableStateOf(
             TextFieldValue(
@@ -46,18 +49,27 @@ fun DescriptionEditModal(
         )
     }
     val focusRequester = remember { FocusRequester() }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = {
+            it != SheetValue.Hidden
+        }
+    )
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
 
     ModalBottomSheet(
-        sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = true
-        ),
+        sheetState = sheetState,
         dragHandle = null,
         shape = RoundedCornerShape(12.dp),
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = {
+            coroutineScope.launch {
+                sheetState.hide()
+                onDismissRequest()
+            }
+        },
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier
             .fillMaxSize()
@@ -65,7 +77,12 @@ fun DescriptionEditModal(
     ) {
         NoteModalBottomTopBar(
             title = "Description",
-            onClose = onDismissRequest,
+            onClose = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    onDismissRequest()
+                }
+            },
             onSave = { onSave(description.text) },
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         )

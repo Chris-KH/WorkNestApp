@@ -83,17 +83,12 @@ fun ContactScreen(
                 targetState = currentSubScreen,
                 label = "Contact subscreen"
             ) {
-                when(it) {
-                    ContactSubScreenState.MESSAGES -> ContactSubScreen(
-                        currentSubScreen = it,
-                        listState = messageListState
-                    )
-
-                    ContactSubScreenState.FRIENDS -> ContactSubScreen(
-                        currentSubScreen = it,
-                        listState = friendListState
-                    )
-                }
+                ContactSubScreen(
+                    currentSubScreen = it,
+                    snackbarHost = snackbarHost,
+                    listState = if (it == ContactSubScreenState.MESSAGES) messageListState
+                    else friendListState
+                )
             }
         }
     }

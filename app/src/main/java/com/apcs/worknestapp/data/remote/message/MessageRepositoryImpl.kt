@@ -12,4 +12,8 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
     private val _messageMap = MutableStateFlow<Map<String, List<Message>>>(emptyMap())
     override val messageMap: StateFlow<Map<String, List<Message>>> = _messageMap
+
+    override fun clearCache() {
+        _messageMap.value = emptyMap()
+    }
 }

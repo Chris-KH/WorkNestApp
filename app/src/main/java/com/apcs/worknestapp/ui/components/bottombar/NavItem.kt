@@ -70,8 +70,8 @@ fun RowScope.NavItem(
         colors = NavigationBarItemDefaults.colors(
             selectedIconColor = MaterialTheme.colorScheme.primary,
             selectedTextColor = MaterialTheme.colorScheme.primary,
-            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     )
 }

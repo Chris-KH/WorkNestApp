@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -24,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.apcs.worknestapp.data.remote.user.UserViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -31,7 +34,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun ContactSubScreen(
     currentSubScreen: ContactSubScreenState,
+    snackbarHost: SnackbarHostState,
     listState: LazyListState,
+    userViewModel: UserViewModel = hiltViewModel(),
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -55,7 +60,7 @@ fun ContactSubScreen(
             contentPadding = PaddingValues(vertical = 12.dp, horizontal = 0.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
-            items(50) { item ->
+            items(50) {
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -64,7 +69,7 @@ fun ContactSubScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "Item ${if (currentSubScreen == ContactSubScreenState.MESSAGES) item else item * 10}",
+                        "Item ${if (currentSubScreen == ContactSubScreenState.MESSAGES) it else it * 10}",
                         color = Color.White
                     )
                 }

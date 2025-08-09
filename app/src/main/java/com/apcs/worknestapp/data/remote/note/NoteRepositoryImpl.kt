@@ -19,11 +19,19 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     override val notes: StateFlow<List<Note>> = _notes
 
-    private var listenerRegistration: ListenerRegistration? = null
+    private var notesListener: ListenerRegistration? = null
+
+    init {
+        auth.addAuthStateListener {
+            val user = it.currentUser
+            if (user == null) removeListener()
+            else registerListener()
+        }
+    }
 
     override fun removeListener() {
-        listenerRegistration?.remove()
-        listenerRegistration = null
+        notesListener?.remove()
+        notesListener = null
     }
 
     override fun registerListener() {
@@ -34,8 +42,8 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             .document(authUser.uid)
             .collection("notes")
 
-        listenerRegistration?.remove() //Remove old listener
-        listenerRegistration = notesRef.addSnapshotListener { snapshot, error ->
+        notesListener?.remove() //Remove old listener
+        notesListener = notesRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("NoteRepository", "Listen notes snapshot failed", error)
                 return@addSnapshotListener
@@ -74,7 +82,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             .document()
 
         val noteId = noteRef.id
-        
+
         _notes.value = _notes.value + note.copy(docId = noteId, isLoading = true)
 
         noteRef.set(note.copy(docId = noteId, isLoading = null)).await()
@@ -319,6 +327,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     }
 
     override fun clearCache() {
+        removeListener()
         _notes.value = emptyList()
     }
 }

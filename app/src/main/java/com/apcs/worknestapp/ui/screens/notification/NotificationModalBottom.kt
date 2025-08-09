@@ -29,26 +29,35 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.ui.theme.Roboto
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationModalBottom(
     onDismissRequest: () -> Unit,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
+        confirmValueChange = { it != SheetValue.Hidden }
     )
     val scrollState = rememberScrollState()
 
     ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
         sheetState = sheetState,
+        onDismissRequest = {
+            coroutineScope.launch {
+                sheetState.hide()
+                onDismissRequest()
+            }
+        },
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(12.dp),
         contentWindowInsets = { WindowInsets(0.dp) },
@@ -78,7 +87,12 @@ fun NotificationModalBottom(
                         .wrapContentHeight(),
                 ) {
                     IconButton(
-                        onClick = onDismissRequest,
+                        onClick = {
+                            coroutineScope.launch {
+                                sheetState.hide()
+                                onDismissRequest()
+                            }
+                        },
                         modifier = Modifier.align(Alignment.CenterStart)
                     ) {
                         Icon(
