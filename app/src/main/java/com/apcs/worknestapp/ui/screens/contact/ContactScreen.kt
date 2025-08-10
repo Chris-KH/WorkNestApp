@@ -1,7 +1,13 @@
 package com.apcs.worknestapp.ui.screens.contact
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -81,6 +87,18 @@ fun ContactScreen(
 
             AnimatedContent(
                 targetState = currentSubScreen,
+                transitionSpec = {
+                    if (
+                        initialState == ContactSubScreenState.MESSAGES
+                        && targetState == ContactSubScreenState.FRIENDS
+                    ) {
+                        (slideInHorizontally { it } + fadeIn())
+                            .togetherWith(slideOutHorizontally { -it } + fadeOut())
+                    } else {
+                        (slideInHorizontally { -it } + fadeIn())
+                            .togetherWith(slideOutHorizontally { it } + fadeOut())
+                    }.using(SizeTransform(clip = false))
+                },
                 label = "Contact subscreen"
             ) {
                 ContactSubScreen(

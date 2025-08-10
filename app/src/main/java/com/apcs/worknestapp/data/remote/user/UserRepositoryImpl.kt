@@ -2,6 +2,7 @@ package com.apcs.worknestapp.data.remote.user
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,6 +97,41 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
     override suspend fun loadFriends() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val friendshipSnapshot = firestore
+            .collection("friendships")
+            .whereArrayContains("users", authUser.uid)
+            .get()
+            .await()
+
+        val friendshipList = friendshipSnapshot.documents.mapNotNull {
+            it.toObject(Friendship::class.java)
+        }
+
+        _friendships.value = friendshipList
+
+        val friendUserIds = friendshipList
+            .filter { it.status == "accepted" }
+            .flatMap { it.users ?: emptyList() }
+            .filter { it != authUser.uid }
+            .distinct()
+
+        if (friendUserIds.isEmpty()) {
+            _friends.value = emptyList()
+            return
+        }
+
+        val friendsSnapshot = firestore
+            .collection("users")
+            .whereIn(FieldPath.documentId(), friendUserIds)
+            .get()
+            .await()
+
+        val friendUsers = friendsSnapshot.documents.mapNotNull {
+            it.toObject(User::class.java)
+        }
+
+        _friends.value = friendUsers
     }
 
     override suspend fun loadFriendship() {

@@ -25,12 +25,8 @@ class NoteViewModel @Inject constructor(
     }
 
     suspend fun refreshNotesIfEmpty(): Boolean {
-        return try {
-            if (notes.value.isEmpty()) refreshNotes() else true
-        } catch(e: Exception) {
-            Log.e("NoteViewModel", "Refresh notes failed", e)
-            false
-        }
+        if (notes.value.isEmpty()) return refreshNotes()
+        return true
     }
 
     suspend fun refreshNotes(): Boolean {

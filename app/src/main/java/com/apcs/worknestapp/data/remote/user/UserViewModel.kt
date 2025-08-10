@@ -39,6 +39,21 @@ class UserViewModel @Inject constructor(
         }
     }
 
+    suspend fun loadFriends(): Boolean {
+        return try {
+            userRepo.loadFriends()
+            true
+        } catch(e: Exception) {
+            Log.e("UserViewModel", "Load friends failed", e)
+            false
+        }
+    }
+
+    suspend fun loadFriendsIfEmpty(): Boolean {
+        if (friends.value.isEmpty()) return loadFriends()
+        return true
+    }
+
     suspend fun sendFriendRequest(receiverId: String): Boolean {
         return try {
             userRepo.sendFriendRequest(receiverId)

@@ -24,7 +24,6 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 repository.checkAuth()
-                Log.d("AuthViewModel", "Profile: ${repository.profile.value}")
             } catch(e: Exception) {
                 signOut()
                 Log.e("AuthViewModel", "Check failed", e)
@@ -47,7 +46,6 @@ class AuthViewModel @Inject constructor(
     suspend fun signUpWithEmailPassword(email: String, password: String, name: String): String? {
         return try {
             repository.signUpWithEmailPassword(email = email, password = password, name = name)
-            Log.d("AuthViewModel", "Signup success")
             null
         } catch(e: Exception) {
             Log.e("AuthViewModel", "Signup failed", e)
@@ -59,7 +57,6 @@ class AuthViewModel @Inject constructor(
     suspend fun login(email: String, password: String): Boolean {
         return try {
             repository.login(email, password)
-            Log.d("AuthViewModel", "Login success")
             true
         } catch(e: Exception) {
             Log.e("AuthViewModel", "Login failed", e)
@@ -71,7 +68,6 @@ class AuthViewModel @Inject constructor(
     suspend fun loginWithGoogle(idToken: String?): Boolean {
         return try {
             if (idToken == null) throw Exception("ID token null")
-
             repository.loginWithGoogle(idToken)
             true
         } catch(e: Exception) {
