@@ -44,7 +44,7 @@ object ColorUtils {
     fun safeParse(hex: Int): Color? {
         return try {
             Color(hex)
-        } catch(e: IllegalArgumentException) {
+        } catch(_: IllegalArgumentException) {
             null
         }
     }

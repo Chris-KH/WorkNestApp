@@ -31,6 +31,7 @@ import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.FallbackScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.screens.add_contact.AddContractScreen
+import com.apcs.worknestapp.ui.screens.chat.ChatScreen
 import com.apcs.worknestapp.ui.screens.contact.ContactScreen
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileScreen
@@ -388,6 +389,28 @@ fun MainLayout(startDestination: String) {
                 } else {
                     FallbackScreen(
                         message = "Cannot open this note. Note ID is missing.",
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+
+            composable(
+                route = Screen.Chat.route,
+                arguments = listOf(navArgument("userId") {
+                    type = NavType.StringType
+                })
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")
+                if (userId != null) {
+                    ChatScreen(
+                        userId = userId,
+                        navController = navController,
+                        snackbarHost = snackbarHost,
+                    )
+                } else {
+                    FallbackScreen(
+                        message = "Cannot found this chat.",
                         navController = navController,
                         modifier = Modifier.padding(innerPadding)
                     )

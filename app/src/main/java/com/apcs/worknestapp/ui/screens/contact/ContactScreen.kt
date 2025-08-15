@@ -20,7 +20,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -65,6 +67,18 @@ fun ContactScreen(
         var currentSubScreen by rememberSaveable { mutableStateOf(ContactSubScreenState.MESSAGES) }
         val messageListState = rememberLazyListState()
         val friendListState = rememberLazyListState()
+        val isFirstLoad = rememberSaveable(
+            saver = mapSaver(
+                save = { it.toMap() },
+                restore = { restoredMap ->
+                    mutableStateMapOf<String, Boolean>().apply {
+                        restoredMap.forEach { (key, value) ->
+                            put(key, value as Boolean)
+                        }
+                    }
+                }
+            )
+        ) { mutableStateMapOf() }
 
         Column(
             modifier = Modifier
@@ -105,7 +119,9 @@ fun ContactScreen(
                     currentSubScreen = it,
                     snackbarHost = snackbarHost,
                     listState = if (it == ContactSubScreenState.MESSAGES) messageListState
-                    else friendListState
+                    else friendListState,
+                    isFirstLoad = isFirstLoad[it.name] ?: true,
+                    onFirstLoadDone = { isFirstLoad[it.name] = false }
                 )
             }
         }

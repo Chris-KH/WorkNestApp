@@ -192,8 +192,8 @@ fun UserProfileScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(topPadding + 60.dp)
-                                    .background(Color.DarkGray)
+                                    .height(topPadding + 40.dp)
+                                    .background(Color.Gray)
                             )
                         }
 
@@ -202,17 +202,18 @@ fun UserProfileScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.TopCenter,
                             ) {
+                                val avatarSize = 140.dp
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(60.dp)
-                                        .background(Color.DarkGray)
+                                        .height(avatarSize / 2)
+                                        .background(Color.Gray)
                                 )
                                 UserProfileHeader(
                                     userName = user?.name,
                                     userEmail = user?.email,
                                     imageUrl = user?.avatar,
-                                    avatarSize = 120.dp,
+                                    avatarSize = avatarSize,
                                     modifier = Modifier.padding(horizontal = 24.dp),
                                 )
                             }
@@ -317,7 +318,7 @@ fun UserProfileScreen(
                             )
                         }
 
-                        item { Spacer(modifier = Modifier.height(80.dp)) }
+                        item { Spacer(modifier = Modifier.height(600.dp)) }
                     }
                 }
             }

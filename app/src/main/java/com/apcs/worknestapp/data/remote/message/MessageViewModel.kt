@@ -8,6 +8,6 @@ import javax.inject.Inject
 class MessageViewModel @Inject constructor(
     messageRepo: MessageRepository,
 ) : ViewModel() {
-    val messageMap = messageRepo.messageMap
+    val conservations = messageRepo.conservations
 
 }

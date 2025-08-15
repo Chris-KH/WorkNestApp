@@ -4,16 +4,18 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
-    private val _messageMap = MutableStateFlow<Map<String, List<Message>>>(emptyMap())
-    override val messageMap: StateFlow<Map<String, List<Message>>> = _messageMap
+    private val _conservations = MutableStateFlow(emptyList<Conservation>())
+    override val conservations: StateFlow<List<Conservation>> = _conservations.asStateFlow()
+
 
     override fun clearCache() {
-        _messageMap.value = emptyMap()
+        _conservations.value = emptyList()
     }
 }

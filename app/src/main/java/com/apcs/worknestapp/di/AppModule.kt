@@ -38,10 +38,12 @@ object AppModule {
         userRepo: UserRepository,
         noteRepo: NoteRepository,
         notificationRepo: NotificationRepository,
+        messageRepo: MessageRepository,
     ): SessionManager = SessionManager(
         userRepo = userRepo,
         noteRepo = noteRepo,
         notificationRepo = notificationRepo,
+        messageRepo = messageRepo,
     )
 
     @Provides

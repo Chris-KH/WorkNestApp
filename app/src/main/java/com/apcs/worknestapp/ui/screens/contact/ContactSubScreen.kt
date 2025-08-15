@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.ui.screens.contact
 
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,7 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,7 +49,7 @@ import com.apcs.worknestapp.data.remote.message.MessageViewModel
 import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.data.remote.user.UserViewModel
 import com.apcs.worknestapp.ui.components.RotatingIcon
-import com.google.firebase.auth.FirebaseAuth
+import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -59,11 +59,11 @@ fun ContactSubScreen(
     currentSubScreen: ContactSubScreenState,
     snackbarHost: SnackbarHostState,
     listState: LazyListState,
+    isFirstLoad: Boolean,
+    onFirstLoadDone: () -> Unit,
     userViewModel: UserViewModel = hiltViewModel(),
     messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
-    val authUserId = FirebaseAuth.getInstance().currentUser?.uid
-    var isFirstLoad by remember(currentSubScreen) { mutableStateOf(true) }
     var isRefreshing by remember(currentSubScreen) { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -75,7 +75,7 @@ fun ContactSubScreen(
                 ContactSubScreenState.MESSAGES -> delay(1000)
                 ContactSubScreenState.FRIENDS -> userViewModel.loadFriendsIfEmpty()
             }
-            isFirstLoad = false
+            onFirstLoadDone()
         }
     }
 
@@ -84,7 +84,7 @@ fun ContactSubScreen(
         onRefresh = {
             coroutineScope.launch {
                 isRefreshing = true
-                when(currentSubScreen) {
+                val isSuccess = when(currentSubScreen) {
                     ContactSubScreenState.MESSAGES -> delay(10000)
                     ContactSubScreenState.FRIENDS -> userViewModel.loadFriends()
                 }
@@ -129,8 +129,6 @@ fun ContactSubScreen(
                         }
                     }
                 }
-
-                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
     }
@@ -142,15 +140,19 @@ fun FriendItem(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .combinedClickable(
                 onClick = onClick,
-                onLongClick = {}
+                onLongClick = {},
+                indication = ripple(color = MaterialTheme.colorScheme.primary),
+                interactionSource = interactionSource,
             )
             .fillMaxWidth()
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+            .padding(vertical = 12.dp, horizontal = 12.dp),
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -163,7 +165,7 @@ fun FriendItem(
             contentScale = ContentScale.Crop,
             filterQuality = FilterQuality.Low,
             modifier = Modifier
-                .size(48.dp)
+                .size(46.dp)
                 .clip(CircleShape),
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -171,6 +173,7 @@ fun FriendItem(
             text = friend.name ?: "",
             fontSize = 16.sp,
             lineHeight = 16.sp,
+            fontFamily = Roboto,
             fontWeight = FontWeight.Normal,
         )
     }

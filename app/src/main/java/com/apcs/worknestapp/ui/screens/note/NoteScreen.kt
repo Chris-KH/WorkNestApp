@@ -144,7 +144,7 @@ fun NoteScreen(
                             expanded = showActionMenu,
                             onDismissRequest = { showActionMenu = false },
                             onChangeBackground = {},
-                            onSort = {},
+                            onSort = { notesSortBy = it },
                             onViewArchive = {},
                             onArchiveCompletedNotes = {
                                 coroutineScope.launch {

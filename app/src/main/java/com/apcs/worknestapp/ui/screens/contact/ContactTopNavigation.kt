@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -16,7 +17,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -60,7 +63,11 @@ fun ContactTopNavigation(
                 .weight(1f)
 
             Box(
-                modifier = boxButtonModifier.clickable(onClick = onNavigateToMessageScreen),
+                modifier = boxButtonModifier.clickable(
+                    onClick = onNavigateToMessageScreen,
+                    indication = ripple(color = MaterialTheme.colorScheme.primary),
+                    interactionSource = remember { MutableInteractionSource() },
+                ),
             ) {
                 val isSelected = currentSubScreen == ContactSubScreenState.MESSAGES
                 Text(
@@ -78,7 +85,11 @@ fun ContactTopNavigation(
                 )
             }
             Box(
-                modifier = boxButtonModifier.clickable(onClick = onNavigateToFriendScreen),
+                modifier = boxButtonModifier.clickable(
+                    onClick = onNavigateToFriendScreen,
+                    indication = ripple(color = MaterialTheme.colorScheme.primary),
+                    interactionSource = remember { MutableInteractionSource() },
+                ),
             ) {
                 val isSelected = currentSubScreen == ContactSubScreenState.FRIENDS
                 Text(

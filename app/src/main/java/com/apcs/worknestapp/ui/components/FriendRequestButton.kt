@@ -161,7 +161,7 @@ fun FriendRequestButton(
             Spacer(modifier = Modifier.width(4.dp))
             Text(text = "Friend", style = textStyle)
         }
-    } else if (friendship.receiverId == targetUserId) {
+    } else if (friendship.receiver?.id == targetUserId) {
         Button(
             onClick = { if (friendship.docId != null) onCancel(friendship.docId) },
             colors = ButtonDefaults.buttonColors(

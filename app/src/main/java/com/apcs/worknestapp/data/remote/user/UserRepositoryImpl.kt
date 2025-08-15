@@ -48,8 +48,8 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
         friendshipListener?.remove()
 
-        val friendshipRef =
-            firestore.collection("friendships").whereArrayContains("users", authUser.uid)
+        val friendshipRef = firestore.collection("friendships")
+            .whereArrayContains("users", authUser.uid)
         friendshipListener = friendshipRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("UserRepository", "Listen friendship snapshot failed", error)
@@ -150,11 +150,14 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         val pairId = listOf(authUser.uid, receiverId).sorted().joinToString("_")
 
         val friendshipRef = firestore.collection("friendships").document(pairId)
+        val senderRef = firestore.collection("users").document(authUser.uid)
+        val receiverRef = firestore.collection("users").document(receiverId)
+
         val friendship = Friendship(
             docId = pairId,
-            users = listOf(authUser.uid, receiverId),
-            senderId = authUser.uid,
-            receiverId = receiverId,
+            users = listOf(authUser.uid, receiverId).sorted(),
+            sender = senderRef,
+            receiver = receiverRef,
             status = "pending",
         )
 

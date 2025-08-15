@@ -84,9 +84,9 @@ fun UserProfileHeader(
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.Medium,
                 modifier = Modifier
-                    .align(alignment = Alignment.Center)
-                    .aspectRatio(1f)
                     .size(avatarSize)
+                    .aspectRatio(1f)
+                    .align(alignment = Alignment.Center)
                     .clip(CircleShape)
                     .clickable(
                         onClick = { previewAvatar = true },

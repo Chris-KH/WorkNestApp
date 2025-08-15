@@ -1,6 +1,5 @@
 package com.apcs.worknestapp.ui.screens.add_contact
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,8 +28,6 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.user.User
-import com.apcs.worknestapp.ui.theme.Inter
-import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun SearchUserItem(
