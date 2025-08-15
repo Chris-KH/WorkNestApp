@@ -15,6 +15,22 @@ data class Note(
     val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 
-    //Date use-case, not on server
+    //Use-case, not fields of document Note
+    val checklists: List<Checklist> = emptyList(),
+    val comments: List<String> = emptyList(),
     val isLoading: Boolean? = null,
+)
+
+data class Checklist(
+    @DocumentId val docId: String? = null,
+    val name: String? = null,
+
+    //Use-case, not fields of document Checklists
+    val tasks: List<Task> = emptyList(),
+)
+
+data class Task(
+    @DocumentId val docId: String? = null,
+    val name: String? = null,
+    val done: Boolean? = null,
 )
