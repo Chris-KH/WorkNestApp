@@ -49,6 +49,7 @@ class AuthRepositoryImpl @Inject constructor(
 
         _profile.value = getUserRemoteProfile(currentUser.uid)
         _user.value = currentUser
+        updateUserStatus(isOnline = true)
     }
 
     override suspend fun signUpWithEmailPassword(email: String, password: String, name: String) {
@@ -81,6 +82,7 @@ class AuthRepositoryImpl @Inject constructor(
 
         _profile.value = newProfile
         _user.value = authUser
+        updateUserStatus(isOnline = true)
     }
 
     override suspend fun login(email: String, password: String) {
@@ -91,6 +93,7 @@ class AuthRepositoryImpl @Inject constructor(
 
         _profile.value = getUserRemoteProfile(authUser.uid)
         _user.value = authUser
+        updateUserStatus(isOnline = true)
     }
 
     override suspend fun loginWithGoogle(idToken: String) {
@@ -124,6 +127,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
 
         _user.value = authUser
+        updateUserStatus(isOnline = true)
     }
 
     override suspend fun updateUserName(name: String) {
@@ -195,7 +199,19 @@ class AuthRepositoryImpl @Inject constructor(
         _profile.update { it?.copy(pronouns = pronouns) }
     }
 
+    override suspend fun updateUserStatus(isOnline: Boolean) {
+        val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
+
+        firestore.collection("users")
+            .document(uid)
+            .update("online", isOnline)
+            .await()
+
+        _profile.update { it?.copy(online = isOnline) }
+    }
+
     override suspend fun signOut() {
+        updateUserStatus(false)
         googleAuthUiClient.clearCredential()
         sessionManager.signOutAndClearAll()
         auth.signOut()

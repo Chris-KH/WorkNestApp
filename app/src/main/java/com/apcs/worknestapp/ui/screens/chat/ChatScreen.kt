@@ -3,7 +3,6 @@ package com.apcs.worknestapp.ui.screens.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,12 +47,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.message.MessageViewModel
 import com.apcs.worknestapp.ui.components.ChatInputSection
 import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
 import com.apcs.worknestapp.ui.theme.Roboto
@@ -61,15 +61,20 @@ import com.apcs.worknestapp.ui.theme.Roboto
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    userId: String,
+    conservationId: String,
     navController: NavHostController,
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
+    messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
     val focusManager = LocalFocusManager.current
 
     var chatFocused by remember { mutableStateOf(false) }
     var textMessage by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        messageViewModel.updateConservationSeen(conservationId, true)
+    }
 
     Scaffold(
         topBar = {
@@ -92,12 +97,12 @@ fun ChatScreen(
                                 .size(36.dp)
                                 .clip(CircleShape),
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
                                 text = "Name here",
-                                fontSize = 16.sp,
-                                lineHeight = 16.sp,
+                                fontSize = 15.sp,
+                                lineHeight = 15.sp,
                                 fontFamily = Roboto,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,

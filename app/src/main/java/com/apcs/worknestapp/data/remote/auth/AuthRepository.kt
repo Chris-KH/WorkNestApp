@@ -18,6 +18,7 @@ interface AuthRepository {
     suspend fun updateUserAddress(address: String)
     suspend fun updateUserBio(bio: String)
     suspend fun updateUserPronouns(pronouns: String)
+    suspend fun updateUserStatus(isOnline: Boolean)
     suspend fun checkAuth()
     suspend fun signOut()
 }

@@ -397,12 +397,12 @@ fun MainLayout(startDestination: String) {
 
             composable(
                 route = Screen.Chat.route,
-                arguments = listOf(navArgument("userId") {
+                arguments = listOf(navArgument("conservationId") {
                     type = NavType.StringType
                 })
             ) { backStackEntry ->
-                val userId = backStackEntry.arguments?.getString("userId")
-                if (userId.isNullOrBlank()) {
+                val conservationId = backStackEntry.arguments?.getString("conservationId")
+                if (conservationId.isNullOrBlank()) {
                     FallbackScreen(
                         message = "Cannot found this chat.",
                         navController = navController,
@@ -410,7 +410,7 @@ fun MainLayout(startDestination: String) {
                     )
                 } else {
                     ChatScreen(
-                        userId = userId,
+                        conservationId = conservationId,
                         navController = navController,
                         snackbarHost = snackbarHost,
                     )

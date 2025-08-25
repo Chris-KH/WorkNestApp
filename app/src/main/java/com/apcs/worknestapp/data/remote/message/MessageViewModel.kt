@@ -26,4 +26,14 @@ class MessageViewModel @Inject constructor(
         return true
     }
 
+    suspend fun updateConservationSeen(docId: String, state: Boolean): Boolean {
+        return try {
+            messageRepo.updateConservationSeen(docId, state)
+            true
+        } catch(e: Exception) {
+            Log.e("MessageViewModel", "Update conservation seen failed", e)
+            false
+        }
+    }
+
 }

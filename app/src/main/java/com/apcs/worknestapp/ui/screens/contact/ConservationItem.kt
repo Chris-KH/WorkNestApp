@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -49,6 +52,8 @@ fun ConservationItem(
     conservation: Conservation,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    onMarkSeenState: (Boolean) -> Unit,
+    onDelete: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     var showDropdown by remember { mutableStateOf(false) }
@@ -57,6 +62,8 @@ fun ConservationItem(
     val verticalPadding = 12.dp
     val spacerWidth = 12.dp
     val avatarSize = 52.dp
+
+    var isPin by remember { mutableStateOf(true) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -73,10 +80,81 @@ fun ConservationItem(
         DropdownMenu(
             expanded = showDropdown,
             onDismissRequest = { showDropdown = false },
+            modifier = Modifier.widthIn(min = 200.dp)
         ) {
+            val dropdownTextStyle = TextStyle(
+                fontSize = 14.sp,
+                lineHeight = 14.sp,
+                fontWeight = FontWeight.Normal
+            )
+
             DropdownMenuItem(
-                text = { Text("Heh") },
-                onClick = {},
+                text = {
+                    Text(
+                        text = "Mark as ${if (conservation.seen == true) "unread" else "read"}",
+                        style = dropdownTextStyle,
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(
+                            if (conservation.seen == true) R.drawable.outline_unread
+                            else R.drawable.outline_read
+                        ),
+                        contentDescription = "Mark ${if (conservation.seen == true) "unread" else "read"}",
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                onClick = {
+                    onMarkSeenState(conservation.seen != true)
+                    showDropdown = false
+                },
+            )
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = if (isPin) "Unpin" else "Pin",
+                        style = dropdownTextStyle,
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(
+                            if (isPin) R.drawable.outline_unpin
+                            else R.drawable.outline_pin
+                        ),
+                        contentDescription = if (isPin) "Unpin" else "Pin",
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                onClick = {
+                    //TODO: Future feature, but not now:))
+                    showDropdown = false
+                },
+            )
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "Delete",
+                        style = dropdownTextStyle,
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.outline_trash),
+                        contentDescription = "Delete conservation",
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                onClick = {
+                    onDelete()
+                    showDropdown = false
+                },
+                colors = MenuDefaults.itemColors(
+                    textColor = MaterialTheme.colorScheme.error,
+                    leadingIconColor = MaterialTheme.colorScheme.error,
+                    trailingIconColor = MaterialTheme.colorScheme.error,
+                )
             )
         }
         AsyncImage(
@@ -109,7 +187,7 @@ fun ConservationItem(
                 Text(
                     text = "Name here",
                     fontSize = 15.sp,
-                    lineHeight = 16.sp,
+                    lineHeight = 15.sp,
                     fontFamily = Roboto,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,

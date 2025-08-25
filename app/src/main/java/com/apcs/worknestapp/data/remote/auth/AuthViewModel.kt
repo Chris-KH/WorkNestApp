@@ -154,6 +154,20 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun updateUserState(
+        isOnline: Boolean,
+    ) {
+        viewModelScope.launch {
+            try {
+                repository.updateUserStatus(isOnline = isOnline)
+                true
+            } catch(e: Exception) {
+                Log.e("AuthViewModel", "Update user status (on/offline) failed", e)
+                false
+            }
+        }
+    }
+
     suspend fun signOut(): Boolean {
         return try {
             repository.signOut()

@@ -8,5 +8,6 @@ interface MessageRepository {
     fun removeListener()
     fun registerConservationListener()
     suspend fun loadConservations()
+    suspend fun updateConservationSeen(docId: String, state: Boolean)
     fun clearCache()
 }

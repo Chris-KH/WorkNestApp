@@ -42,7 +42,7 @@ fun FriendItem(
     val horizontalPadding = 16.dp
     val verticalPadding = 12.dp
     val spacerWidth = 16.dp
-    val avatarSize = 56.dp
+    val avatarSize = 52.dp
 
     Row(
         verticalAlignment = Alignment.CenterVertically,

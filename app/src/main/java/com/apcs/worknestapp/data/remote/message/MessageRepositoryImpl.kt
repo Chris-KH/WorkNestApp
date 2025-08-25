@@ -8,6 +8,7 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -41,7 +42,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
         val conservationSnapshot = firestore
             .collection("conservations")
-            .whereArrayContains("users", authUser.uid)
+            .whereArrayContains("userIds", authUser.uid)
             .orderBy("lastTime", Query.Direction.DESCENDING)
 
         conservationsListener?.remove()
@@ -58,13 +59,12 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         }
     }
 
-
     override suspend fun loadConservations() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val conservationSnapshot = firestore
             .collection("conservations")
-            .whereArrayContains("users", authUser.uid)
+            .whereArrayContains("userIds", authUser.uid)
             .orderBy("lastTime", Query.Direction.DESCENDING)
             .get()
             .await()
@@ -73,6 +73,17 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             it.toObject(Conservation::class.java)
         }
         _conservations.value = conservationList
+    }
+
+    override suspend fun updateConservationSeen(docId: String, state: Boolean) {
+        auth.currentUser ?: throw Exception("User not logged in")
+        if (_conservations.value.find { it.docId == docId } == null)
+            throw Exception("Conservation not found")
+
+        firestore.collection("conservations").document(docId).update("seen", state).await()
+        _conservations.update { list ->
+            list.map { if (it.docId == docId) it.copy(seen = state) else it }
+        }
     }
 
     override fun clearCache() {

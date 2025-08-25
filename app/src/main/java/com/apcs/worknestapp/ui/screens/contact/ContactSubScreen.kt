@@ -2,7 +2,6 @@ package com.apcs.worknestapp.ui.screens.contact
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -104,7 +103,6 @@ fun ContactSubScreen(
         } else {
             LazyColumn(
                 state = listState,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
                 when(currentSubScreen) {
@@ -116,9 +114,19 @@ fun ContactSubScreen(
                             ConservationItem(
                                 conservation = it,
                                 modifier = Modifier,
+                                onMarkSeenState = { state ->
+                                    if (it.docId == null) return@ConservationItem
+                                    coroutineScope.launch {
+                                        messageViewModel.updateConservationSeen(it.docId, state)
+                                    }
+                                },
+                                onDelete = {},
                                 onClick = {
                                     navController.navigate(
-                                        Screen.Chat.route.replace("{userId}", it.docId ?: "")
+                                        Screen.Chat.route.replace(
+                                            "{conservationId}",
+                                            it.docId ?: ""
+                                        )
                                     )
                                 },
                             )
