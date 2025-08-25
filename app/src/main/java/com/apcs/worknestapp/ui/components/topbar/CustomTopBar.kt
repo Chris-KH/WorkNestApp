@@ -44,7 +44,7 @@ fun CustomTopBar(
             },
             navigationIcon = navigationIcon,
             actions = actions,
-            expandedHeight = 52.dp,
+            expandedHeight = TopBarDefault.expandedHeight,
             colors = colors,
             modifier = Modifier
         )

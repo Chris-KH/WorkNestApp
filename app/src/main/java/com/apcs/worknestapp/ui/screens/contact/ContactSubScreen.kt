@@ -25,16 +25,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.MessageViewModel
 import com.apcs.worknestapp.data.remote.user.UserViewModel
 import com.apcs.worknestapp.ui.components.RotatingIcon
+import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactSubScreen(
     currentSubScreen: ContactSubScreenState,
+    navController: NavHostController,
     snackbarHost: SnackbarHostState,
     listState: LazyListState,
     isFirstLoad: Boolean,
@@ -113,7 +116,11 @@ fun ContactSubScreen(
                             ConservationItem(
                                 conservation = it,
                                 modifier = Modifier,
-                                onClick = {},
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Chat.route.replace("{userId}", it.docId ?: "")
+                                    )
+                                },
                             )
                         }
                     }

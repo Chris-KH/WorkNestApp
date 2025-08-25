@@ -55,7 +55,7 @@ fun ContactTopNavigation(
             horizontalArrangement = Arrangement.Center,
         ) {
             val textStyle = TextStyle(
-                fontSize = 14.sp, lineHeight = 14.sp,
+                fontSize = 15.sp, lineHeight = 15.sp,
                 fontFamily = Roboto, fontWeight = FontWeight.Medium,
             )
             val boxButtonModifier = Modifier

@@ -12,14 +12,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,12 +41,8 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.Conservation
-import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.domain.logic.DateFormater
-import com.apcs.worknestapp.ui.theme.Inter
 import com.apcs.worknestapp.ui.theme.Roboto
-import com.google.firebase.Timestamp
-import java.util.Date
 
 @Composable
 fun ConservationItem(
@@ -51,19 +51,34 @@ fun ConservationItem(
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    var showDropdown by remember { mutableStateOf(false) }
+
+    val horizontalPadding = 16.dp
+    val verticalPadding = 12.dp
+    val spacerWidth = 12.dp
+    val avatarSize = 52.dp
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .combinedClickable(
                 onClick = onClick,
-                onLongClick = {},
+                onLongClick = { showDropdown = true },
                 indication = ripple(color = MaterialTheme.colorScheme.primary),
                 interactionSource = interactionSource,
             )
             .fillMaxWidth()
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+            .padding(vertical = verticalPadding, horizontal = horizontalPadding),
     ) {
+        DropdownMenu(
+            expanded = showDropdown,
+            onDismissRequest = { showDropdown = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text("Heh") },
+                onClick = {},
+            )
+        }
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(null)
@@ -71,50 +86,49 @@ fun ConservationItem(
                 .build(),
             placeholder = painterResource(R.drawable.fade_avatar_fallback),
             error = painterResource(R.drawable.fade_avatar_fallback),
-            contentDescription = "Preview avatar",
+            contentDescription = "Avatar",
             contentScale = ContentScale.Crop,
             filterQuality = FilterQuality.Low,
             modifier = Modifier
-                .size(56.dp)
+                .size(avatarSize)
                 .clip(CircleShape),
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(spacerWidth))
         Column(modifier = Modifier.weight(1f)) {
-            val textColor =
-                if (conservation.seen == true) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onBackground
-            val fontWeight = if (conservation.seen == true) FontWeight.Normal else FontWeight.Medium
+            val contentTextStyle = TextStyle(
+                fontSize = 12.sp, lineHeight = 12.sp, fontFamily = Roboto,
+                color =
+                    if (conservation.seen == true) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onBackground,
+                fontWeight =
+                    if (conservation.seen == true) FontWeight.Normal
+                    else FontWeight.Medium
+            )
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "Name here",
-                    fontSize = 14.sp,
-                    lineHeight = 14.sp,
+                    fontSize = 15.sp,
+                    lineHeight = 16.sp,
                     fontFamily = Roboto,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    fontWeight = fontWeight,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = if (conservation.lastTime == null) ""
                     else DateFormater.formatConversationTime(conservation.lastTime),
-                    fontSize = 11.sp,
-                    lineHeight = 11.sp,
-                    fontFamily = Roboto,
-                    color = textColor,
-                    fontWeight = fontWeight,
+                    style = contentTextStyle,
                 )
             }
             Spacer(modifier = Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = conservation.lastContent ?: "...",
-                    fontSize = 12.sp,
-                    lineHeight = 12.sp,
-                    fontFamily = Roboto,
-                    color = textColor,
-                    fontWeight = fontWeight,
+                    style = contentTextStyle,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
@@ -130,4 +144,10 @@ fun ConservationItem(
             }
         }
     }
+    HorizontalDivider(
+        thickness = (0.75).dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = horizontalPadding + avatarSize + spacerWidth)
+    )
 }

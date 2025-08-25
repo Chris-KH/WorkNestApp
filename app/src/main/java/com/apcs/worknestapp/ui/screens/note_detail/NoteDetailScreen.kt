@@ -129,6 +129,7 @@ fun NoteDetailScreen(
     var currentBoard by remember { mutableStateOf<String?>("inbox") }
     var quickMenu by remember { mutableStateOf(false) }
 
+    var commentInputFocused by remember { mutableStateOf(false) }
     var commentText by remember { mutableStateOf("") }
     var commentList by remember { mutableStateOf(emptyList<Comment>()) }
 
@@ -138,7 +139,7 @@ fun NoteDetailScreen(
     //LayoutState
     val lazyListState = rememberLazyListState()
     val surfaceColor = MaterialTheme.colorScheme.surface
-    val surfaceColorOverlay = surfaceColor.copy(alpha = 0.05f)
+    val surfaceColorOverlay = surfaceColor.copy(alpha = 0.04f)
     var topBarBackground by remember { mutableStateOf(surfaceColorOverlay) }
 
     LaunchedEffect(Unit) {
@@ -213,14 +214,18 @@ fun NoteDetailScreen(
     ) { innerPadding ->
         if (isFirstLoading) LoadingScreen(modifier = Modifier.padding(innerPadding))
         else {
-            Box(
+            Column(
                 modifier = Modifier
                     .padding(
                         start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
                         end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
                     )
-                    .imePadding()
+                    .let {
+                        if (commentInputFocused) return@let it.imePadding()
+                        return@let it
+                    }
                     .fillMaxSize()
+
             ) {
                 when(modalBottomType) {
                     NoteModalBottomType.COVER -> {
@@ -325,24 +330,11 @@ fun NoteDetailScreen(
 
                     null -> null
                 }
-                CommentInputSection(
-                    commentText = commentText,
-                    onCommentTextChange = { commentText = it },
-                    onPostComment = { },
-                    modifier = Modifier
-                        .align(alignment = Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
-                        .padding(bottom = innerPadding.calculateBottomPadding())
-                        .zIndex(10f)
-                )
                 LazyColumn(
                     state = lazyListState,
                     modifier = Modifier
-                        .padding(bottom = innerPadding.calculateBottomPadding())
-                        .imePadding()
-                        .fillMaxSize()
-                        .zIndex(1f),
+                        .weight(1f)
+                        .fillMaxWidth()
                 )
                 {
                     val spacerWidth = 12.dp
@@ -802,6 +794,19 @@ fun NoteDetailScreen(
                     }
                     item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(240.dp)) }
                 }
+                CommentInputSection(
+                    commentText = commentText,
+                    onCommentTextChange = { commentText = it },
+                    onPostComment = { },
+                    modifier = Modifier
+                        .onFocusChanged { commentInputFocused = it.isFocused }
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .let {
+                            if (commentInputFocused) return@let it
+                            return@let it.padding(bottom = innerPadding.calculateBottomPadding())
+                        }
+                )
             }
         }
     }

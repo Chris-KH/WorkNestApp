@@ -380,17 +380,17 @@ fun MainLayout(startDestination: String) {
                 })
             ) { backStackEntry ->
                 val noteId = backStackEntry.arguments?.getString("noteId")
-                if (noteId != null) {
-                    NoteDetailScreen(
-                        navController = navController,
-                        snackbarHost = snackbarHost,
-                        noteId = noteId
-                    )
-                } else {
+                if (noteId.isNullOrBlank()) {
                     FallbackScreen(
                         message = "Cannot open this note. Note ID is missing.",
                         navController = navController,
                         modifier = Modifier.padding(innerPadding)
+                    )
+                } else {
+                    NoteDetailScreen(
+                        navController = navController,
+                        snackbarHost = snackbarHost,
+                        noteId = noteId
                     )
                 }
             }
@@ -402,17 +402,17 @@ fun MainLayout(startDestination: String) {
                 })
             ) { backStackEntry ->
                 val userId = backStackEntry.arguments?.getString("userId")
-                if (userId != null) {
-                    ChatScreen(
-                        userId = userId,
-                        navController = navController,
-                        snackbarHost = snackbarHost,
-                    )
-                } else {
+                if (userId.isNullOrBlank()) {
                     FallbackScreen(
                         message = "Cannot found this chat.",
                         navController = navController,
                         modifier = Modifier.padding(innerPadding)
+                    )
+                } else {
+                    ChatScreen(
+                        userId = userId,
+                        navController = navController,
+                        snackbarHost = snackbarHost,
                     )
                 }
             }

@@ -59,7 +59,7 @@ fun CenterExitOnlyTopBar(
                     )
                 }
             },
-            expandedHeight = 52.dp,
+            expandedHeight = TopBarDefault.expandedHeight,
             colors = colors,
             modifier = Modifier
         )

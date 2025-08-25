@@ -39,6 +39,11 @@ fun FriendItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
+    val horizontalPadding = 16.dp
+    val verticalPadding = 12.dp
+    val spacerWidth = 16.dp
+    val avatarSize = 56.dp
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
@@ -49,7 +54,7 @@ fun FriendItem(
                 interactionSource = interactionSource,
             )
             .fillMaxWidth()
-            .padding(vertical = 10.dp, horizontal = 16.dp),
+            .padding(vertical = verticalPadding, horizontal = horizontalPadding),
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -62,10 +67,10 @@ fun FriendItem(
             contentScale = ContentScale.Crop,
             filterQuality = FilterQuality.Low,
             modifier = Modifier
-                .size(48.dp)
+                .size(avatarSize)
                 .clip(CircleShape),
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(spacerWidth))
         Text(
             text = friend.name ?: "",
             fontSize = 14.sp,

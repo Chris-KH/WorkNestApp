@@ -117,6 +117,7 @@ fun ContactScreen(
             ) {
                 ContactSubScreen(
                     currentSubScreen = it,
+                    navController = navController,
                     snackbarHost = snackbarHost,
                     listState = if (it == ContactSubScreenState.MESSAGES) messageListState
                     else friendListState,

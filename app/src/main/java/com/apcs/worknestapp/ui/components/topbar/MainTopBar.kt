@@ -44,7 +44,7 @@ fun MainTopBar(
                 )
             },
             actions = actions,
-            expandedHeight = 52.dp,
+            expandedHeight = TopBarDefault.expandedHeight,
             colors = colors,
             modifier = Modifier
         )
