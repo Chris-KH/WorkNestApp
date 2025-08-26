@@ -80,9 +80,7 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(null)

@@ -12,7 +12,11 @@ data class Conservation(
     val lastTime: Timestamp? = null,
     val seen: Boolean? = null,
 
-    //Use-case
+    //Get user
+    val userData: ConservationUserData = ConservationUserData(),
+)
+
+data class ConservationUserData(
     val name: String? = null,
     val avatar: String? = null,
     val online: Boolean? = null,

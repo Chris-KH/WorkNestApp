@@ -8,24 +8,21 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.lifecycleScope
 import com.apcs.worknestapp.data.local.theme.ThemeMode
+import com.apcs.worknestapp.data.local.theme.ThemeViewModel
 import com.apcs.worknestapp.data.remote.auth.AuthViewModel
 import com.apcs.worknestapp.ui.components.ApplySystemBarTheme
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.WorkNestAppTheme
-import com.apcs.worknestapp.data.local.theme.ThemeViewModel
 import com.cloudinary.android.MediaManager
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
 val LocalAuthViewModel = staticCompositionLocalOf<AuthViewModel> {
     error("AuthViewModel not provided")

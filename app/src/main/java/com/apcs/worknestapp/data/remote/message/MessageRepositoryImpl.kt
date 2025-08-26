@@ -5,11 +5,18 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class MessageRepositoryImpl @Inject constructor() : MessageRepository {
@@ -32,6 +39,31 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         }
     }
 
+    private suspend fun Conservation.withOtherUserData(otherUserId: String): Conservation {
+        return try {
+            val userDoc = firestore.collection("users")
+                .document(otherUserId)
+                .get()
+                .await()
+
+            copy(
+                userData = ConservationUserData(
+                    name = userDoc.getString("name"),
+                    avatar = userDoc.getString("avatar"),
+                    online = userDoc.getBoolean("online"),
+                )
+            )
+        } catch(_: Exception) {
+            copy(
+                userData = ConservationUserData(
+                    name = "Unknown",
+                    avatar = null,
+                    online = false,
+                )
+            )
+        }
+    }
+
     override fun removeListener() {
         conservationsListener?.remove()
         conservationsListener = null
@@ -40,8 +72,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     override fun registerConservationListener() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        val conservationSnapshot = firestore
-            .collection("conservations")
+        val conservationSnapshot = firestore.collection("conservations")
             .whereArrayContains("userIds", authUser.uid)
             .orderBy("lastTime", Query.Direction.DESCENDING)
 
@@ -50,11 +81,24 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             if (error != null) {
                 Log.e("MessageRepository", "Listen conservations snapshot failed", error)
                 return@addSnapshotListener
-            } else if (snapshot != null) {
-                val conservationList = snapshot.documents.mapNotNull {
-                    it.toObject(Conservation::class.java)
+            }
+            if (snapshot == null) return@addSnapshotListener
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val conservationList = coroutineScope {
+                    val authUser = auth.currentUser ?: return@coroutineScope emptyList()
+                    snapshot.documents.mapNotNull { doc ->
+                        val cons = doc.toObject(Conservation::class.java)
+                        val otherUserId = cons?.userIds?.firstOrNull { it != authUser.uid }
+                            ?: return@mapNotNull null
+
+                        async { cons.withOtherUserData(otherUserId) }
+                    }.awaitAll()
                 }
-                _conservations.value = conservationList
+
+                withContext(Dispatchers.Main) {
+                    _conservations.value = conservationList
+                }
             }
         }
     }
@@ -69,9 +113,16 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             .get()
             .await()
 
-        val conservationList = conservationSnapshot.documents.mapNotNull {
-            it.toObject(Conservation::class.java)
+        val conservationList = coroutineScope {
+            conservationSnapshot.documents.mapNotNull { doc ->
+                val cons = doc.toObject(Conservation::class.java)
+                val otherUserId = cons?.userIds?.firstOrNull { it != authUser.uid }
+                    ?: return@mapNotNull null
+
+                async { cons.withOtherUserData(otherUserId) }
+            }.awaitAll()
         }
+
         _conservations.value = conservationList
     }
 
@@ -87,6 +138,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
     override fun clearCache() {
+        removeListener()
         _conservations.value = emptyList()
     }
 }

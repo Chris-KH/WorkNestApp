@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -46,6 +47,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.Conservation
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.apcs.worknestapp.ui.theme.success
 
 @Composable
 fun ConservationItem(
@@ -157,20 +159,30 @@ fun ConservationItem(
                 )
             )
         }
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(null)
-                .crossfade(true)
-                .build(),
-            placeholder = painterResource(R.drawable.fade_avatar_fallback),
-            error = painterResource(R.drawable.fade_avatar_fallback),
-            contentDescription = "Avatar",
-            contentScale = ContentScale.Crop,
-            filterQuality = FilterQuality.Low,
-            modifier = Modifier
-                .size(avatarSize)
-                .clip(CircleShape),
-        )
+        Box(modifier = Modifier.wrapContentSize()) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(conservation.userData.avatar)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                error = painterResource(R.drawable.fade_avatar_fallback),
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
+                filterQuality = FilterQuality.Low,
+                modifier = Modifier
+                    .size(avatarSize)
+                    .clip(CircleShape),
+            )
+            if (conservation.userData.online == true) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(MaterialTheme.colorScheme.success, CircleShape)
+                        .align(alignment = Alignment.BottomEnd)
+                )
+            }
+        }
         Spacer(modifier = Modifier.width(spacerWidth))
         Column(modifier = Modifier.weight(1f)) {
             val contentTextStyle = TextStyle(
@@ -185,7 +197,7 @@ fun ConservationItem(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Name here",
+                    text = conservation.userData.name ?: "Unknown",
                     fontSize = 15.sp,
                     lineHeight = 15.sp,
                     fontFamily = Roboto,
