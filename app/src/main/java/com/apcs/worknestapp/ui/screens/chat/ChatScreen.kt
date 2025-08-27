@@ -2,7 +2,9 @@ package com.apcs.worknestapp.ui.screens.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,9 +18,12 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,11 +34,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,12 +64,16 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.message.Conservation
+import com.apcs.worknestapp.data.remote.message.Message
 import com.apcs.worknestapp.data.remote.message.MessageViewModel
 import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.apcs.worknestapp.ui.components.ChatInputSection
 import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
+import kotlinx.coroutines.launch
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +85,7 @@ fun ChatScreen(
     messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
 
     val conservation = messageViewModel.currentConservation.collectAsState()
     var chatFocused by remember { mutableStateOf(false) }
@@ -82,6 +94,12 @@ fun ChatScreen(
     LaunchedEffect(Unit) {
         messageViewModel.getCacheConservation(docId = conservationId)
         messageViewModel.updateConservationSeen(conservationId, true)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            messageViewModel.getCacheConservation(docId = null)
+        }
     }
 
     Scaffold(
@@ -101,7 +119,7 @@ fun ChatScreen(
                                 contentScale = ContentScale.Crop,
                                 filterQuality = FilterQuality.Low,
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(40.dp)
                                     .clip(CircleShape),
                             )
                             if (conservation.value?.userData?.online == true) {
@@ -175,46 +193,121 @@ fun ChatScreen(
             indication = null, interactionSource = remember { MutableInteractionSource() }
         ),
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(
-                    top = innerPadding.calculateTopPadding(),
-                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
-                )
-                .imePadding()
-                .fillMaxSize()
-        ) {
-            LazyColumn(
-                reverseLayout = true,
-                contentPadding = PaddingValues(vertical = 8.dp),
+        if (conservation.value != null) {
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-            ) {
-                items(50) {
-                    Text(
-                        text = "Online $it",
-                        fontSize = 16.sp,
-                        lineHeight = 16.sp,
-                        fontFamily = Roboto,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    .padding(
+                        top = innerPadding.calculateTopPadding(),
+                        start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                        end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
                     )
-                }
-            }
-            ChatInputSection(
-                text = textMessage,
-                onTextChange = { textMessage = it },
-                onSend = {},
-                modifier = Modifier
-                    .onFocusChanged { chatFocused = it.isFocused }
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
-                    .let {
-                        if (chatFocused) return@let it
-                        return@let it.padding(bottom = innerPadding.calculateBottomPadding())
+                    .imePadding()
+                    .fillMaxSize()
+            ) {
+                LazyColumn(
+                    reverseLayout = true,
+                    verticalArrangement = Arrangement.Top,
+                    contentPadding = PaddingValues(vertical = 12.dp, horizontal = 10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    val messages = conservation.value!!.messages
+
+                    itemsIndexed(
+                        items = messages,
+                        key = { _, it -> it.docId ?: UUID.randomUUID() }
+                    ) { idx, mes ->
+                        MessageItem(
+                            message = mes,
+                            conservation = conservation.value!!,
+                            modifier = Modifier,
+                        )
                     }
+                }
+                ChatInputSection(
+                    text = textMessage,
+                    onTextChange = { textMessage = it },
+                    onSend = {
+                        coroutineScope.launch {
+                            if (textMessage.isNotBlank()) {
+                                val message = Message(
+
+
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .onFocusChanged { chatFocused = it.isFocused }
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .let {
+                            if (chatFocused) return@let it
+                            return@let it.padding(bottom = innerPadding.calculateBottomPadding())
+                        }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MessageItem(
+    message: Message,
+    conservation: Conservation,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+    ) {
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier
+                .padding(vertical = 2.dp)
+                .fillMaxWidth(0.85f)
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(conservation.userData.avatar ?: AppDefault.AVATAR)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                error = painterResource(R.drawable.fade_avatar_fallback),
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
+                filterQuality = FilterQuality.Low,
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape),
             )
+            Spacer(modifier = Modifier.width(6.dp))
+            Box(
+                modifier = Modifier
+                    .wrapContentSize()
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .clip(RoundedCornerShape(10.dp))
+                    .combinedClickable(
+                        onClick = {},
+                        onLongClick = {},
+                    )
+                    .padding(10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = message.content ?: "Hehe",
+                    fontSize = 14.sp,
+                    lineHeight = 15.sp,
+                    fontFamily = Roboto,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

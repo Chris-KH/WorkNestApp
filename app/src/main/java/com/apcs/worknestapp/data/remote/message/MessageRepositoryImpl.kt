@@ -47,21 +47,24 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         val listener = firestore.collection("users")
             .document(otherUserId)
             .addSnapshotListener { snapshot, _ ->
-                snapshot?.let {
+                snapshot?.let { userDoc ->
                     val userData = ConservationUserData(
-                        docId = it.id,
-                        name = it.getString("name") ?: AppDefault.USER_NAME,
-                        avatar = it.getString("avatar") ?: AppDefault.AVATAR,
-                        online = it.getBoolean("online") ?: false,
+                        docId = userDoc.id,
+                        name = userDoc.getString("name") ?: AppDefault.USER_NAME,
+                        avatar = userDoc.getString("avatar") ?: AppDefault.AVATAR,
+                        online = userDoc.getBoolean("online") ?: false,
                     )
                     userCache[otherUserId] = userData
-
                     _conservations.update { list ->
                         list.map { cons ->
                             if (cons.userIds?.contains(otherUserId) == true)
                                 cons.copy(userData = userData)
                             else cons
                         }
+                    }
+
+                    if (_currentConservation.value?.userData?.docId == userData.docId) {
+                        _currentConservation.update { it?.copy(userData = userData) }
                     }
                 }
             }
@@ -189,6 +192,56 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         _conservations.update { list ->
             list.map { if (it.docId == docId) it.copy(seen = state) else it }
         }
+    }
+
+    override suspend fun loadMessages(conservationId: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val conservation = _conservations.value.find { it.docId == conservationId }
+            ?: throw Exception("Conservation not found")
+        val currentMessage = conservation.messages
+
+        val snapshot = firestore.collection("conservations")
+            .document(conservationId)
+            .collection("messages")
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .get()
+            .await()
+
+        val messageList = snapshot.documents.mapNotNull {
+            it.toObject(Message::class.java)
+        }
+
+        _conservations.update { list ->
+            list.map { if (it.docId == conservationId) it.copy(messages = messageList) else it }
+        }
+        _currentConservation.value = conservation.copy(messages = messageList)
+    }
+
+    override suspend fun sendMessage(conservationId: String, message: Message) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val newMessage = message.copy(
+            sender = firestore.collection("users").document(authUser.uid),
+            isSending = null,
+            isSentSuccess = null,
+        )
+
+        val messageRef = firestore
+            .collection("conservations")
+            .document(conservationId)
+            .collection("messages")
+            .add(newMessage)
+            .await()
+
+        val sentMessage = message.copy(
+            docId = messageRef.id,
+            isSending = false,
+            isSentSuccess = true,
+        )
+    }
+
+    override suspend fun deleteMessage(conservationId: String, messageId: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
     }
 
     override fun clearCache() {

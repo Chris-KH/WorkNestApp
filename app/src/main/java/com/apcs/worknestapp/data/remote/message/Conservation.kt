@@ -13,8 +13,9 @@ data class Conservation(
     val lastTime: Timestamp? = null,
     val seen: Boolean? = null,
 
-    //Get user
+    //Additional data
     val userData: ConservationUserData = ConservationUserData(),
+    val messages: List<Message> = emptyList(),
 )
 
 data class ConservationUserData(

@@ -11,5 +11,8 @@ interface MessageRepository {
     fun getCacheConservation(docId: String?)
     suspend fun loadConservations()
     suspend fun updateConservationSeen(docId: String, state: Boolean)
+    suspend fun loadMessages(conservationId: String)
+    suspend fun sendMessage(conservationId: String, message: Message)
+    suspend fun deleteMessage(conservationId: String, messageId: String)
     fun clearCache()
 }

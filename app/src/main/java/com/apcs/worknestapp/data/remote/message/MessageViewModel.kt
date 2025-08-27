@@ -3,9 +3,6 @@ package com.apcs.worknestapp.data.remote.message
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
@@ -50,4 +47,13 @@ class MessageViewModel @Inject constructor(
         }
     }
 
+    suspend fun sendMessage(conservationId: String, message: Message): Boolean {
+        return try {
+            messageRepo.sendMessage(conservationId, message)
+            true
+        } catch(e: Exception) {
+            Log.e("MessageViewModel", "Send message failed", e)
+            false
+        }
+    }
 }
