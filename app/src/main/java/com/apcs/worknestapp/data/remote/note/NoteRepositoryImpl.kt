@@ -24,7 +24,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     init {
         auth.addAuthStateListener {
             val user = it.currentUser
-            if (user == null) removeListener()
+            if (user == null) clearCache()
         }
     }
 

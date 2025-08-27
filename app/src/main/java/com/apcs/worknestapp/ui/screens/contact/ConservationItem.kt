@@ -40,12 +40,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.Conservation
 import com.apcs.worknestapp.domain.logic.DateFormater
+import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 
@@ -162,7 +164,7 @@ fun ConservationItem(
         Box(modifier = Modifier.wrapContentSize()) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(conservation.userData.avatar)
+                    .data(conservation.userData.avatar ?: AppDefault.AVATAR)
                     .crossfade(true)
                     .build(),
                 placeholder = painterResource(R.drawable.fade_avatar_fallback),
@@ -180,6 +182,7 @@ fun ConservationItem(
                         .size(16.dp)
                         .background(MaterialTheme.colorScheme.success, CircleShape)
                         .align(alignment = Alignment.BottomEnd)
+                        .zIndex(10f)
                 )
             }
         }
@@ -197,7 +200,7 @@ fun ConservationItem(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = conservation.userData.name ?: "Unknown",
+                    text = conservation.userData.name ?: AppDefault.USER_NAME,
                     fontSize = 15.sp,
                     lineHeight = 15.sp,
                     fontFamily = Roboto,

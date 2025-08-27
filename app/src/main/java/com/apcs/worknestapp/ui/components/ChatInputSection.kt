@@ -18,21 +18,17 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apcs.worknestapp.LocalAuthViewModel
+import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.theme.Roboto
-import com.apcs.worknestapp.R
 
 @Composable
 fun ChatInputSection(

@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.data.remote.message
 
 import android.util.Log
+import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -23,50 +24,91 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
+    private var conservationsListener: ListenerRegistration? = null
+    private val userCache = mutableMapOf<String, ConservationUserData>()
+    private val userListeners = mutableMapOf<String, ListenerRegistration>()
+
     private val _conservations = MutableStateFlow(emptyList<Conservation>())
     override val conservations: StateFlow<List<Conservation>> = _conservations.asStateFlow()
 
-    private var conservationsListener: ListenerRegistration? = null
+    private val _currentConservation = MutableStateFlow<Conservation?>(null)
+    override val currentConservation: StateFlow<Conservation?> = _currentConservation.asStateFlow()
 
     init {
         auth.addAuthStateListener {
             val user = it.currentUser
-            if (user == null) removeListener()
-            else {
-                removeListener()
-                registerConservationListener()
-            }
+            if (user == null) clearCache()
         }
     }
 
-    private suspend fun Conservation.withOtherUserData(otherUserId: String): Conservation {
+    private fun observeUser(otherUserId: String) {
+        if (userListeners.containsKey(otherUserId)) return
+
+        val listener = firestore.collection("users")
+            .document(otherUserId)
+            .addSnapshotListener { snapshot, _ ->
+                snapshot?.let {
+                    val userData = ConservationUserData(
+                        docId = it.id,
+                        name = it.getString("name") ?: AppDefault.USER_NAME,
+                        avatar = it.getString("avatar") ?: AppDefault.AVATAR,
+                        online = it.getBoolean("online") ?: false,
+                    )
+                    userCache[otherUserId] = userData
+
+                    _conservations.update { list ->
+                        list.map { cons ->
+                            if (cons.userIds?.contains(otherUserId) == true)
+                                cons.copy(userData = userData)
+                            else cons
+                        }
+                    }
+                }
+            }
+
+        userListeners[otherUserId] = listener
+    }
+
+    private suspend fun Conservation.withOtherUserData(
+        otherUserId: String,
+        isCache: Boolean = false,
+    ): Conservation {
+        if (isCache) {
+            val cached = userCache[otherUserId]
+            if (cached != null) {
+                observeUser(otherUserId)
+                return copy(userData = cached)
+            }
+        }
+
         return try {
             val userDoc = firestore.collection("users")
                 .document(otherUserId)
                 .get()
                 .await()
 
-            copy(
-                userData = ConservationUserData(
-                    name = userDoc.getString("name"),
-                    avatar = userDoc.getString("avatar"),
-                    online = userDoc.getBoolean("online"),
-                )
+            val userData = ConservationUserData(
+                docId = userDoc.id,
+                name = userDoc.getString("name") ?: AppDefault.USER_NAME,
+                avatar = userDoc.getString("avatar") ?: AppDefault.AVATAR,
+                online = userDoc.getBoolean("online") ?: false,
             )
+
+            userCache[otherUserId] = userData
+            observeUser(otherUserId)
+
+            copy(userData = userData)
         } catch(_: Exception) {
-            copy(
-                userData = ConservationUserData(
-                    name = "Unknown",
-                    avatar = null,
-                    online = false,
-                )
-            )
+            copy(userData = ConservationUserData())
         }
     }
 
     override fun removeListener() {
         conservationsListener?.remove()
         conservationsListener = null
+
+        userListeners.forEach { it.value.remove() }
+        userListeners.clear()
     }
 
     override fun registerConservationListener() {
@@ -92,7 +134,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                         val otherUserId = cons?.userIds?.firstOrNull { it != authUser.uid }
                             ?: return@mapNotNull null
 
-                        async { cons.withOtherUserData(otherUserId) }
+                        async { cons.withOtherUserData(otherUserId, isCache = true) }
                     }.awaitAll()
                 }
 
@@ -100,6 +142,18 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                     _conservations.value = conservationList
                 }
             }
+        }
+    }
+
+    override fun getCacheConservation(docId: String?) {
+        auth.currentUser ?: throw Exception("User not logged in")
+        if (docId == null) {
+            _currentConservation.value = null
+        } else {
+            val conservation = _conservations.value.find { it.docId == docId }
+                ?: throw Exception("This conservation does not exist")
+
+            _currentConservation.value = conservation
         }
     }
 
@@ -139,6 +193,10 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
     override fun clearCache() {
         removeListener()
+        userCache.clear()
+        userListeners.forEach { it.value.remove() }
+        userListeners.clear()
         _conservations.value = emptyList()
+
     }
 }

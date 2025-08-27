@@ -18,6 +18,18 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
 
     private var listenerRegistration: ListenerRegistration? = null
 
+    init {
+        auth.addAuthStateListener {
+            val user = it.currentUser
+            if (user == null) clearCache()
+        }
+    }
+
+    override fun removeListener() {
+        listenerRegistration?.remove()
+        listenerRegistration = null
+    }
+
     override suspend fun refreshNotifications() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
@@ -107,11 +119,6 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
         _notifications.update { list ->
             list.map { it.copy(read = true) }
         }
-    }
-
-    override fun removeListener() {
-        listenerRegistration?.remove()
-        listenerRegistration = null
     }
 
     override fun clearCache() {

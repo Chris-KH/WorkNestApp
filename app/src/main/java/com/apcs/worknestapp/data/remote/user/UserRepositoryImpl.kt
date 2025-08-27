@@ -30,7 +30,7 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         auth.addAuthStateListener {
             val user = it.currentUser
             if (user == null) {
-                removeListener()
+                clearCache()
             } else {
                 removeListener()
                 registerFriendshipListener()

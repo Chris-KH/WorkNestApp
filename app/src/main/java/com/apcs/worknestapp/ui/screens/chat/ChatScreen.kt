@@ -3,6 +3,7 @@ package com.apcs.worknestapp.ui.screens.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +30,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
@@ -54,9 +58,11 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.MessageViewModel
+import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.apcs.worknestapp.ui.components.ChatInputSection
 import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.apcs.worknestapp.ui.theme.success
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,10 +75,12 @@ fun ChatScreen(
 ) {
     val focusManager = LocalFocusManager.current
 
+    val conservation = messageViewModel.currentConservation.collectAsState()
     var chatFocused by remember { mutableStateOf(false) }
     var textMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
+        messageViewModel.getCacheConservation(docId = conservationId)
         messageViewModel.updateConservationSeen(conservationId, true)
     }
 
@@ -81,24 +89,35 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(null)
-                                .crossfade(true)
-                                .build(),
-                            placeholder = painterResource(R.drawable.fade_avatar_fallback),
-                            error = painterResource(R.drawable.fade_avatar_fallback),
-                            contentDescription = "Avatar",
-                            contentScale = ContentScale.Crop,
-                            filterQuality = FilterQuality.Low,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape),
-                        )
+                        Box(modifier = Modifier.wrapContentSize()) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(conservation.value?.userData?.avatar ?: AppDefault.AVATAR)
+                                    .crossfade(true)
+                                    .build(),
+                                placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                                error = painterResource(R.drawable.fade_avatar_fallback),
+                                contentDescription = "Avatar",
+                                contentScale = ContentScale.Crop,
+                                filterQuality = FilterQuality.Low,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape),
+                            )
+                            if (conservation.value?.userData?.online == true) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .background(MaterialTheme.colorScheme.success, CircleShape)
+                                        .align(alignment = Alignment.BottomEnd)
+                                        .zIndex(10f)
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Name here",
+                                text = conservation.value?.userData?.name ?: AppDefault.USER_NAME,
                                 fontSize = 15.sp,
                                 lineHeight = 15.sp,
                                 fontFamily = Roboto,
@@ -107,7 +126,8 @@ fun ChatScreen(
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Text(
-                                text = "Online",
+                                text = if (conservation.value?.userData?.online == true) "Online"
+                                else "Offline",
                                 fontSize = 12.sp,
                                 lineHeight = 12.sp,
                                 fontFamily = Roboto,
@@ -128,8 +148,26 @@ fun ChatScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = { }) {
+                        Icon(
+                            painter = painterResource(R.drawable.outline_menu_3dot),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
                 expandedHeight = TopBarDefault.expandedHeight,
-                colors = TopAppBarDefaults.topAppBarColors(),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+                modifier = Modifier.clickable(
+                    onClick = { },
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                )
             )
         },
         modifier = modifier.clickable(

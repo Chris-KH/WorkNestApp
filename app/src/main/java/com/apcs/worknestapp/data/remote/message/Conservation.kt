@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.data.remote.message
 
+import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.DocumentReference
@@ -17,7 +18,8 @@ data class Conservation(
 )
 
 data class ConservationUserData(
-    val name: String? = null,
-    val avatar: String? = null,
+    @DocumentId val docId: String? = null,
+    val name: String? = AppDefault.USER_NAME,
+    val avatar: String? = AppDefault.AVATAR,
     val online: Boolean? = null,
 )
