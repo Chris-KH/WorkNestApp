@@ -27,9 +27,9 @@ class MessageViewModel @Inject constructor(
         return true
     }
 
-    fun getCacheConservation(docId: String?): Boolean {
+    fun getConservation(docId: String?): Boolean {
         return try {
-            messageRepo.getCacheConservation(docId)
+            messageRepo.getConservation(docId)
             true
         } catch(e: Exception) {
             Log.e("MessageViewModel", "Get cache conservation failed", e)
@@ -43,6 +43,16 @@ class MessageViewModel @Inject constructor(
             true
         } catch(e: Exception) {
             Log.e("MessageViewModel", "Update conservation seen failed", e)
+            false
+        }
+    }
+
+    suspend fun loadNewMessages(conservationId: String): Boolean {
+        return try {
+            messageRepo.loadNewMessages(conservationId)
+            true
+        } catch(e: Exception) {
+            Log.e("MessageViewModel", "Load new messages failed", e)
             false
         }
     }

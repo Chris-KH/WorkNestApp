@@ -2,6 +2,7 @@ package com.apcs.worknestapp.data.remote.message
 
 import android.util.Log
 import com.apcs.worknestapp.domain.usecase.AppDefault
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -25,8 +26,12 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     private val firestore = FirebaseFirestore.getInstance()
 
     private var conservationsListener: ListenerRegistration? = null
+
     private val userCache = mutableMapOf<String, ConservationUserData>()
     private val userListeners = mutableMapOf<String, ListenerRegistration>()
+
+    private val messageCache = mutableMapOf<String, List<Message>>()
+    private val messageListeners = mutableMapOf<String, ListenerRegistration>()
 
     private val _conservations = MutableStateFlow(emptyList<Conservation>())
     override val conservations: StateFlow<List<Conservation>> = _conservations.asStateFlow()
@@ -148,9 +153,10 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         }
     }
 
-    override fun getCacheConservation(docId: String?) {
+    override fun getConservation(docId: String?) {
         auth.currentUser ?: throw Exception("User not logged in")
         if (docId == null) {
+            messageListeners[_currentConservation.value?.docId]?.remove()
             _currentConservation.value = null
         } else {
             val conservation = _conservations.value.find { it.docId == docId }
@@ -194,50 +200,81 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         }
     }
 
-    override suspend fun loadMessages(conservationId: String) {
-        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+    override suspend fun loadNewMessages(conservationId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
         val conservation = _conservations.value.find { it.docId == conservationId }
             ?: throw Exception("Conservation not found")
-        val currentMessage = conservation.messages
+        val currentMessages = messageCache[conservationId] ?: emptyList()
+        val latestCreatedAt =
+            currentMessages.maxByOrNull { it.createdAt ?: Timestamp(0, 0) }?.createdAt
 
-        val snapshot = firestore.collection("conservations")
-            .document(conservationId)
+        val snapshot = firestore.collection("conservations").document(conservationId)
             .collection("messages")
-            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .orderBy("createdAt", Query.Direction.ASCENDING)
+            .let { if (latestCreatedAt != null) it.startAfter(latestCreatedAt) else it }
             .get()
             .await()
 
-        val messageList = snapshot.documents.mapNotNull {
+        val newMessages = snapshot.documents.mapNotNull {
             it.toObject(Message::class.java)
-        }
+        }.reversed()
 
+        val merged = newMessages + currentMessages
+
+        messageCache[conservationId] = merged
         _conservations.update { list ->
-            list.map { if (it.docId == conservationId) it.copy(messages = messageList) else it }
+            list.map { if (it.docId == conservationId) it.copy(messages = merged) else it }
         }
-        _currentConservation.value = conservation.copy(messages = messageList)
+        _currentConservation.value = conservation.copy(messages = merged)
     }
 
     override suspend fun sendMessage(conservationId: String, message: Message) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val conservation = _conservations.value.find { it.docId == conservationId }
+            ?: throw Exception("Conservation not found")
 
+        val messageRef = firestore.collection("conservations").document(conservationId)
+            .collection("messages").document()
+        val createdAt = Timestamp.now()
         val newMessage = message.copy(
+            docId = messageRef.id,
             sender = firestore.collection("users").document(authUser.uid),
-            isSending = null,
+            createdAt = createdAt,
+            isSending = true,
             isSentSuccess = null,
         )
+        val optimisticList = (messageCache[conservationId] ?: emptyList()) + newMessage
+        messageCache[conservationId] = optimisticList
+        _conservations.update { list ->
+            list.map { if (it.docId == conservationId) it.copy(messages = optimisticList) else it }
+        }
+        _currentConservation.value = conservation.copy(messages = optimisticList)
 
-        val messageRef = firestore
-            .collection("conservations")
-            .document(conservationId)
-            .collection("messages")
-            .add(newMessage)
-            .await()
+        try {
+            messageRef.set(newMessage.copy(isSending = null, isSentSuccess = null)).await()
+            val sentMessage = newMessage.copy(isSending = false, isSentSuccess = true)
+            val replacedList = (messageCache[conservationId] ?: emptyList()).map {
+                if (it.docId == sentMessage.docId) sentMessage else it
+            }
+            messageCache[conservationId] = replacedList
 
-        val sentMessage = message.copy(
-            docId = messageRef.id,
-            isSending = false,
-            isSentSuccess = true,
-        )
+            _conservations.update { list ->
+                list.map { if (it.docId == conservationId) it.copy(messages = replacedList) else it }
+            }
+            _currentConservation.value = conservation.copy(messages = replacedList)
+        } catch(e: Exception) {
+            val failMessage = newMessage.copy(isSending = false, isSentSuccess = false)
+            val replacedList = (messageCache[conservationId] ?: emptyList()).map {
+                if (it.docId == failMessage.docId) failMessage else it
+            }
+            messageCache[conservationId] = replacedList
+
+            _conservations.update { list ->
+                list.map { if (it.docId == conservationId) it.copy(messages = replacedList) else it }
+            }
+            _currentConservation.value = conservation.copy(messages = replacedList)
+            throw e
+        }
     }
 
     override suspend fun deleteMessage(conservationId: String, messageId: String) {
@@ -249,6 +286,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         userCache.clear()
         userListeners.forEach { it.value.remove() }
         userListeners.clear()
+        messageCache.clear()
         _conservations.value = emptyList()
 
     }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -63,6 +64,7 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.Conservation
 import com.apcs.worknestapp.data.remote.message.Message
@@ -84,6 +86,9 @@ fun ChatScreen(
     modifier: Modifier = Modifier,
     messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
+    val authViewModel = LocalAuthViewModel.current
+    val authProfile = authViewModel.profile.collectAsState()
+
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -92,13 +97,13 @@ fun ChatScreen(
     var textMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        messageViewModel.getCacheConservation(docId = conservationId)
+        messageViewModel.getConservation(docId = conservationId)
         messageViewModel.updateConservationSeen(conservationId, true)
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            messageViewModel.getCacheConservation(docId = null)
+            messageViewModel.getConservation(docId = null)
         }
     }
 
@@ -221,8 +226,14 @@ fun ChatScreen(
                         MessageItem(
                             message = mes,
                             conservation = conservation.value!!,
+                            isMyMessage = mes.sender?.id == authProfile.value?.docId,
                             modifier = Modifier,
                         )
+                        if (idx + 1 < messages.size) {
+                            if (mes.sender?.id != messages[idx + 1].sender?.id) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
                     }
                 }
                 ChatInputSection(
@@ -255,10 +266,11 @@ fun ChatScreen(
 fun MessageItem(
     message: Message,
     conservation: Conservation,
+    isMyMessage: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Row(
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start,
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight(),
@@ -269,21 +281,23 @@ fun MessageItem(
                 .padding(vertical = 2.dp)
                 .fillMaxWidth(0.85f)
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(conservation.userData.avatar ?: AppDefault.AVATAR)
-                    .crossfade(true)
-                    .build(),
-                placeholder = painterResource(R.drawable.fade_avatar_fallback),
-                error = painterResource(R.drawable.fade_avatar_fallback),
-                contentDescription = "Avatar",
-                contentScale = ContentScale.Crop,
-                filterQuality = FilterQuality.Low,
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
+            if (!isMyMessage) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(conservation.userData.avatar ?: AppDefault.AVATAR)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                    error = painterResource(R.drawable.fade_avatar_fallback),
+                    contentDescription = "Avatar",
+                    contentScale = ContentScale.Crop,
+                    filterQuality = FilterQuality.Low,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            }
             Box(
                 modifier = Modifier
                     .wrapContentSize()
