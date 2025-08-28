@@ -98,6 +98,7 @@ fun ChatScreen(
 
     LaunchedEffect(Unit) {
         messageViewModel.getConservation(docId = conservationId)
+        messageViewModel.loadNewMessages(conservationId)
         messageViewModel.updateConservationSeen(conservationId, true)
     }
 
@@ -276,6 +277,7 @@ fun MessageItem(
             .wrapContentHeight(),
     ) {
         Row(
+            horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start,
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier
                 .padding(vertical = 2.dp)

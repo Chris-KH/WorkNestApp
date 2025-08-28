@@ -123,17 +123,12 @@ fun ContactSubScreen(
                                 onDelete = {},
                                 onClick = {
                                     val conservationId = it.docId
-                                    if (conservationId != null) {
-                                        coroutineScope.launch {
-                                            messageViewModel.loadNewMessages(conservationId)
-                                            navController.navigate(
-                                                Screen.Chat.route.replace(
-                                                    "{conservationId}",
-                                                    conservationId
-                                                )
-                                            )
-                                        }
-                                    }
+                                    navController.navigate(
+                                        Screen.Chat.route.replace(
+                                            "{conservationId}",
+                                            conservationId ?: ""
+                                        )
+                                    )
                                 },
                             )
                         }

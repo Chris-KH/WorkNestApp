@@ -5,6 +5,14 @@ import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ServerTimestamp
 
+enum class MessageType {
+    TEXT,
+    IMAGE,
+    VIDEO,
+    VOICE,
+    DELETED,
+}
+
 data class Message(
     @DocumentId val docId: String? = null,
     val sender: DocumentReference? = null,

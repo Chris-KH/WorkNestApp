@@ -50,6 +50,7 @@ import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ConservationItem(
@@ -59,8 +60,12 @@ fun ConservationItem(
     onMarkSeenState: (Boolean) -> Unit,
     onDelete: () -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    val authId = FirebaseAuth.getInstance().currentUser?.uid
+    val isSeen = (authId == conservation.sender?.id && conservation.senderSeen == true)
+            || (authId != conservation.sender?.id && conservation.receiverSeen == true)
+
     var showDropdown by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
 
     val horizontalPadding = 16.dp
     val verticalPadding = 12.dp
@@ -95,22 +100,22 @@ fun ConservationItem(
             DropdownMenuItem(
                 text = {
                     Text(
-                        text = "Mark as ${if (conservation.seen == true) "unread" else "read"}",
+                        text = "Mark as ${if (isSeen) "unread" else "read"}",
                         style = dropdownTextStyle,
                     )
                 },
                 leadingIcon = {
                     Icon(
                         painter = painterResource(
-                            if (conservation.seen == true) R.drawable.outline_unread
+                            if (isSeen) R.drawable.outline_unread
                             else R.drawable.outline_read
                         ),
-                        contentDescription = "Mark ${if (conservation.seen == true) "unread" else "read"}",
+                        contentDescription = "Mark ${if (isSeen) "unread" else "read"}",
                         modifier = Modifier.size(24.dp)
                     )
                 },
                 onClick = {
-                    onMarkSeenState(conservation.seen != true)
+                    onMarkSeenState(!isSeen)
                     showDropdown = false
                 },
             )
@@ -191,10 +196,10 @@ fun ConservationItem(
             val contentTextStyle = TextStyle(
                 fontSize = 12.sp, lineHeight = 12.sp, fontFamily = Roboto,
                 color =
-                    if (conservation.seen == true) MaterialTheme.colorScheme.onSurfaceVariant
+                    if (isSeen) MaterialTheme.colorScheme.onSurfaceVariant
                     else MaterialTheme.colorScheme.onBackground,
                 fontWeight =
-                    if (conservation.seen == true) FontWeight.Normal
+                    if (isSeen) FontWeight.Normal
                     else FontWeight.Medium
             )
 
@@ -227,7 +232,7 @@ fun ConservationItem(
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
-                if (conservation.seen != true) {
+                if (!isSeen) {
                     Box(
                         modifier = Modifier
                             .size(8.dp)

@@ -11,7 +11,8 @@ data class Conservation(
     val sender: DocumentReference? = null,
     val lastContent: String? = null,
     val lastTime: Timestamp? = null,
-    val seen: Boolean? = null,
+    val senderSeen: Boolean? = null,
+    val receiverSeen: Boolean? = null,
 
     //Additional data
     val userData: ConservationUserData = ConservationUserData(),
