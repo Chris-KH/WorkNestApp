@@ -6,8 +6,10 @@ interface MessageRepository {
     val conservations: StateFlow<List<Conservation>>
     val currentConservation: StateFlow<Conservation?>
 
-    fun removeListener()
     fun registerConservationListener()
+    fun removeConservationListener()
+    fun registerMessageListener(conservationId: String)
+    fun removeMessageListener(conservationId: String)
     fun getConservation(docId: String?)
     suspend fun loadConservations()
     suspend fun deleteConservation(docId: String)

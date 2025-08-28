@@ -213,7 +213,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun signOut() {
         updateUserStatus(false)
         googleAuthUiClient.clearCredential()
-        sessionManager.signOutAndClearAll()
+        sessionManager.clearAllCache()
         auth.signOut()
         _profile.value = null
         _user.value = null

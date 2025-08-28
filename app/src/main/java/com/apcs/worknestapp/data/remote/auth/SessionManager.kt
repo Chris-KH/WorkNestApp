@@ -12,7 +12,7 @@ class SessionManager @Inject constructor(
     private val notificationRepo: NotificationRepository,
     private val messageRepo: MessageRepository,
 ) {
-    fun signOutAndClearAll() {
+    fun clearAllCache() {
         userRepo.clearCache()
         noteRepo.clearCache()
         notificationRepo.clearCache()

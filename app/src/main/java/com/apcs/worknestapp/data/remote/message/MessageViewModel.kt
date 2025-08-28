@@ -47,6 +47,22 @@ class MessageViewModel @Inject constructor(
         }
     }
 
+    fun registerConservationListener() {
+        messageRepo.registerConservationListener()
+    }
+
+    fun removeConservationListener() {
+        messageRepo.removeConservationListener()
+    }
+
+    fun registerMessageListener(conservationId: String) {
+        messageRepo.registerMessageListener(conservationId)
+    }
+
+    fun removeMessageListener(conservationId: String) {
+        messageRepo.removeMessageListener(conservationId)
+    }
+
     suspend fun loadNewMessages(conservationId: String): Boolean {
         return try {
             messageRepo.loadNewMessages(conservationId)

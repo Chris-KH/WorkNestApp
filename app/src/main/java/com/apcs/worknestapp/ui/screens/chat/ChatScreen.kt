@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -101,13 +102,21 @@ fun ChatScreen(
 
     LaunchedEffect(Unit) {
         messageViewModel.getConservation(docId = conservationId)
-        messageViewModel.loadNewMessages(conservationId)
         messageViewModel.updateConservationSeen(conservationId, true)
     }
 
     DisposableEffect(Unit) {
         onDispose {
             messageViewModel.getConservation(docId = null)
+        }
+    }
+
+    LifecycleResumeEffect(Unit) {
+        messageViewModel.getConservation(docId = conservationId)
+        messageViewModel.registerMessageListener(conservationId)
+
+        onPauseOrDispose {
+            messageViewModel.removeMessageListener(conservationId)
         }
     }
 

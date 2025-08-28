@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.MessageViewModel
@@ -63,6 +64,14 @@ fun ContactSubScreen(
                     withDismissAction = true,
                 )
             }
+        }
+    }
+
+    LifecycleResumeEffect(Unit) {
+        messageViewModel.registerConservationListener()
+
+        onPauseOrDispose {
+            messageViewModel.removeConservationListener()
         }
     }
 

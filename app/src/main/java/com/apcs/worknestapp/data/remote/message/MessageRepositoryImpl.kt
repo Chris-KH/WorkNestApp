@@ -4,14 +4,17 @@ import android.util.Log
 import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +28,7 @@ import javax.inject.Inject
 class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private var conservationsListener: ListenerRegistration? = null
 
@@ -112,12 +116,20 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         }
     }
 
-    override fun removeListener() {
-        conservationsListener?.remove()
-        conservationsListener = null
 
-        userListeners.forEach { it.value.remove() }
-        userListeners.clear()
+    private fun updateMessages(
+        conservationId: String,
+        messages: List<Message>,
+    ) {
+        messageCache[conservationId] = messages
+        _conservations.update { list ->
+            list.map { if (it.docId == conservationId) it.copy(messages = messages) else it }
+        }
+        if (_currentConservation.value?.docId == conservationId) {
+            _currentConservation.value = _conservations.value.find {
+                it.docId == conservationId
+            }?.copy(messages = messages)
+        }
     }
 
     override fun registerConservationListener() {
@@ -135,23 +147,75 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             }
             if (snapshot == null) return@addSnapshotListener
 
-            CoroutineScope(Dispatchers.IO).launch {
-                val conservationList = coroutineScope {
-                    val authUser = auth.currentUser ?: return@coroutineScope emptyList()
-                    snapshot.documents.mapNotNull { doc ->
-                        val cons = doc.toObject(Conservation::class.java)
-                        val otherUserId = cons?.userIds?.firstOrNull { it != authUser.uid }
-                            ?: return@mapNotNull null
+            repoScope.launch {
+                val authUser = auth.currentUser ?: return@launch
+                val conservationList = snapshot.documents.mapNotNull { doc ->
+                    val cons = doc.toObject(Conservation::class.java) ?: return@mapNotNull null
+                    val otherUserId = cons.userIds?.firstOrNull { it != authUser.uid }
+                        ?: return@mapNotNull null
 
-                        async { cons.withOtherUserData(otherUserId, isCache = true) }
-                    }.awaitAll()
-                }
-
-                withContext(Dispatchers.Main) {
-                    _conservations.value = conservationList
-                }
+                    async { cons.withOtherUserData(otherUserId, isCache = true) }
+                }.awaitAll().map { it.copy(messages = messageCache[it.docId] ?: emptyList()) }
+                Log.d("Test", conservationList.toString())
+                _conservations.value = conservationList
             }
         }
+    }
+
+    override fun removeConservationListener() {
+        conservationsListener?.remove()
+        conservationsListener = null
+
+        userListeners.forEach { it.value.remove() }
+        userListeners.clear()
+
+        repoScope.coroutineContext.cancelChildren()
+    }
+
+    override fun registerMessageListener(conservationId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
+        if (messageListeners.containsKey(conservationId)) return
+
+        val listener = firestore.collection("conservations").document(conservationId)
+            .collection("messages")
+            .orderBy("createdAt", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("MessageRepository", "Listen messages snapshot failed", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
+                val messages = (messageCache[conservationId] ?: emptyList()).toMutableList()
+
+                for(change in snapshot.documentChanges) {
+                    val msg = change.document.toObject(Message::class.java)
+                    when(change.type) {
+                        DocumentChange.Type.ADDED -> {
+                            if (messages.any { it.docId == msg.docId }) continue
+                            messages.add(msg)
+                        }
+
+                        DocumentChange.Type.MODIFIED -> {
+                            val index = messages.indexOfFirst { it.docId == msg.docId }
+                            if (index != -1) messages[index] = msg
+                        }
+
+                        DocumentChange.Type.REMOVED -> {
+                            val removedId = change.document.id
+                            messages.removeIf { it.docId == removedId }
+                        }
+                    }
+                }
+                updateMessages(
+                    conservationId = conservationId,
+                    messages = messages.sortedByDescending { it.createdAt })
+            }
+        messageListeners[conservationId] = listener
+    }
+
+    override fun removeMessageListener(conservationId: String) {
+        messageListeners[conservationId]?.remove()
+        messageListeners.remove(conservationId)
     }
 
     override fun getConservation(docId: String?) {
@@ -163,7 +227,8 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             val conservation = _conservations.value.find { it.docId == docId }
                 ?: throw Exception("This conservation does not exist")
 
-            _currentConservation.value = conservation
+            _currentConservation.value =
+                conservation.copy(messages = messageCache[docId] ?: emptyList())
         }
     }
 
@@ -185,7 +250,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
                 async { cons.withOtherUserData(otherUserId) }
             }.awaitAll()
-        }
+        }.map { it.copy(messages = messageCache[it.docId] ?: emptyList()) }
 
         _conservations.value = conservationList
     }
@@ -204,8 +269,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         userListeners[docId]?.remove()
         userListeners.remove(docId)
         messageCache.remove(docId)
-        messageListeners[docId]?.remove()
-        messageListeners.remove(docId)
+        removeMessageListener(docId)
     }
 
     override suspend fun updateConservationSeen(docId: String, state: Boolean) {
@@ -235,8 +299,6 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
     override suspend fun loadNewMessages(conservationId: String) {
         auth.currentUser ?: throw Exception("User not logged in")
-        val conservation = _conservations.value.find { it.docId == conservationId }
-            ?: throw Exception("Conservation not found")
         val currentMessages = messageCache[conservationId] ?: emptyList()
         val latestCreatedAt =
             currentMessages.maxByOrNull { it.createdAt ?: Timestamp(0, 0) }?.createdAt
@@ -254,11 +316,9 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
         val merged = newMessages + currentMessages
 
-        messageCache[conservationId] = merged
-        _conservations.update { list ->
-            list.map { if (it.docId == conservationId) it.copy(messages = merged) else it }
-        }
-        _currentConservation.value = conservation.copy(messages = merged)
+        updateMessages(
+            conservationId = conservationId,
+            messages = merged.sortedByDescending { it.createdAt })
     }
 
     override suspend fun sendMessage(conservationId: String, message: Message) {
@@ -278,11 +338,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         )
 
         val optimisticList = listOf(newMessage) + (messageCache[conservationId] ?: emptyList())
-        messageCache[conservationId] = optimisticList
-        _conservations.update { list ->
-            list.map { if (it.docId == conservationId) it.copy(messages = optimisticList) else it }
-        }
-        _currentConservation.value = conservation.copy(messages = optimisticList)
+        updateMessages(conservationId = conservationId, messages = optimisticList)
 
         try {
             firestore.runTransaction { transaction ->
@@ -292,10 +348,6 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                     SetOptions.merge()
                 )
                 val sentMessage = newMessage.copy(isSending = false, isSentSuccess = true)
-                val replacedList = (messageCache[conservationId] ?: emptyList()).map {
-                    if (it.docId == sentMessage.docId) sentMessage else it
-                }
-                messageCache[conservationId] = replacedList
 
                 transaction.update(
                     conservationRef, mapOf(
@@ -312,6 +364,12 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                         "receiverSeen" to false
                     )
                 )
+
+                val replacedList = (messageCache[conservationId] ?: emptyList()).map {
+                    if (it.docId == sentMessage.docId) sentMessage else it
+                }
+                messageCache[conservationId] = replacedList
+
                 _conservations.update { list ->
                     list.map {
                         if (it.docId == conservationId)
@@ -340,11 +398,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                 if (it.docId == failMessage.docId) failMessage else it
             }
             messageCache[conservationId] = replacedList
-
-            _conservations.update { list ->
-                list.map { if (it.docId == conservationId) it.copy(messages = replacedList) else it }
-            }
-            _currentConservation.value = conservation.copy(messages = replacedList)
+            updateMessages(conservationId = conservationId, messages = replacedList)
             throw e
         }
     }
@@ -376,7 +430,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
     override fun clearCache() {
-        removeListener()
+        removeConservationListener()
         userCache.clear()
         userListeners.forEach { it.value.remove() }
         userListeners.clear()
