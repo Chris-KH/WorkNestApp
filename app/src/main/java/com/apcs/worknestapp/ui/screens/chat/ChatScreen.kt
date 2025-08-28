@@ -46,14 +46,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -64,16 +67,17 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.Conservation
 import com.apcs.worknestapp.data.remote.message.Message
+import com.apcs.worknestapp.data.remote.message.MessageType
 import com.apcs.worknestapp.data.remote.message.MessageViewModel
 import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.apcs.worknestapp.ui.components.ChatInputSection
 import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -86,8 +90,7 @@ fun ChatScreen(
     modifier: Modifier = Modifier,
     messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
-    val authViewModel = LocalAuthViewModel.current
-    val authProfile = authViewModel.profile.collectAsState()
+    val authId = FirebaseAuth.getInstance().currentUser?.uid
 
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -227,13 +230,60 @@ fun ChatScreen(
                         MessageItem(
                             message = mes,
                             conservation = conservation.value!!,
-                            isMyMessage = mes.sender?.id == authProfile.value?.docId,
+                            isMyMessage = mes.sender?.id == authId,
                             modifier = Modifier,
                         )
                         if (idx + 1 < messages.size) {
                             if (mes.sender?.id != messages[idx + 1].sender?.id) {
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
+                        }
+                    }
+
+                    item {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 20.dp, horizontal = 24.dp)
+                                .dropShadow(
+                                    shape = RoundedCornerShape(16.dp),
+                                    shadow = Shadow(
+                                        radius = 24.dp,
+                                        spread = 2.dp,
+                                        color = MaterialTheme.colorScheme.outline
+                                    )
+                                )
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(vertical = 20.dp, horizontal = 20.dp),
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(conservation.value?.userData?.avatar ?: AppDefault.AVATAR)
+                                    .crossfade(true)
+                                    .build(),
+                                placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                                error = painterResource(R.drawable.fade_avatar_fallback),
+                                contentDescription = "Avatar",
+                                contentScale = ContentScale.Crop,
+                                filterQuality = FilterQuality.Low,
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(CircleShape),
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = conservation.value?.userData?.name ?: AppDefault.USER_NAME,
+                                fontSize = 20.sp,
+                                lineHeight = 22.sp,
+                                fontFamily = Roboto,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
                         }
                     }
                 }
@@ -244,9 +294,11 @@ fun ChatScreen(
                         coroutineScope.launch {
                             if (textMessage.isNotBlank()) {
                                 val message = Message(
-
-
+                                    content = textMessage,
+                                    type = MessageType.TEXT.name
                                 )
+                                textMessage = ""
+                                messageViewModel.sendMessage(conservationId, message)
                             }
                         }
                     },

@@ -4,6 +4,7 @@ import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.Exclude
 
 data class Conservation(
     @DocumentId val docId: String? = null,
@@ -15,8 +16,8 @@ data class Conservation(
     val receiverSeen: Boolean? = null,
 
     //Additional data
-    val userData: ConservationUserData = ConservationUserData(),
-    val messages: List<Message> = emptyList(),
+    @get:Exclude val userData: ConservationUserData = ConservationUserData(),
+    @get:Exclude val messages: List<Message> = emptyList(),
 )
 
 data class ConservationUserData(

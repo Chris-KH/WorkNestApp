@@ -3,6 +3,7 @@ package com.apcs.worknestapp.data.remote.message
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.ServerTimestamp
 
 enum class MessageType {
@@ -22,6 +23,6 @@ data class Message(
     @ServerTimestamp val createdAt: Timestamp? = null,
 
     //Use-case
-    val isSending: Boolean? = null,
-    val isSentSuccess: Boolean? = null,
+    @get:Exclude val isSending: Boolean? = null,
+    @get:Exclude val isSentSuccess: Boolean? = null,
 )

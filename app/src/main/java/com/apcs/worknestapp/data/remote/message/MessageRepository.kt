@@ -10,6 +10,7 @@ interface MessageRepository {
     fun registerConservationListener()
     fun getConservation(docId: String?)
     suspend fun loadConservations()
+    suspend fun deleteConservation(docId: String)
     suspend fun updateConservationSeen(docId: String, state: Boolean)
     suspend fun loadNewMessages(conservationId: String)
     suspend fun sendMessage(conservationId: String, message: Message)

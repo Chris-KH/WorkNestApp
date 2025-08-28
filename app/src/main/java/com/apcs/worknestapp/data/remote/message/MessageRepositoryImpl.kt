@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -189,6 +190,24 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         _conservations.value = conservationList
     }
 
+    override suspend fun deleteConservation(docId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
+
+        firestore.collection("conservations").document(docId).delete().await()
+
+        _conservations.update { list -> list.filterNot { it.docId == docId } }
+        if (_currentConservation.value?.docId == docId) {
+            _currentConservation.value = null
+        }
+
+        userCache.remove(docId)
+        userListeners[docId]?.remove()
+        userListeners.remove(docId)
+        messageCache.remove(docId)
+        messageListeners[docId]?.remove()
+        messageListeners.remove(docId)
+    }
+
     override suspend fun updateConservationSeen(docId: String, state: Boolean) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
         val conservationRef = firestore.collection("conservations").document(docId)
@@ -247,8 +266,8 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         val conservation = _conservations.value.find { it.docId == conservationId }
             ?: throw Exception("Conservation not found")
 
-        val messageRef = firestore.collection("conservations").document(conservationId)
-            .collection("messages").document()
+        val conservationRef = firestore.collection("conservations").document(conservationId)
+        val messageRef = conservationRef.collection("messages").document()
         val createdAt = Timestamp.now()
         val newMessage = message.copy(
             docId = messageRef.id,
@@ -258,7 +277,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             isSentSuccess = null,
         )
 
-        val optimisticList = (messageCache[conservationId] ?: emptyList()) + newMessage
+        val optimisticList = listOf(newMessage) + (messageCache[conservationId] ?: emptyList())
         messageCache[conservationId] = optimisticList
         _conservations.update { list ->
             list.map { if (it.docId == conservationId) it.copy(messages = optimisticList) else it }
@@ -269,7 +288,8 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             firestore.runTransaction { transaction ->
                 transaction.set(
                     messageRef,
-                    newMessage.copy(isSending = null, isSentSuccess = null)
+                    newMessage.copy(isSending = null, isSentSuccess = null),
+                    SetOptions.merge()
                 )
                 val sentMessage = newMessage.copy(isSending = false, isSentSuccess = true)
                 val replacedList = (messageCache[conservationId] ?: emptyList()).map {
@@ -277,6 +297,21 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                 }
                 messageCache[conservationId] = replacedList
 
+                transaction.update(
+                    conservationRef, mapOf(
+                        "sender" to firestore.collection("users").document(authUser.uid),
+                        "lastTime" to createdAt,
+                        "lastContent" to when(sentMessage.type) {
+                            MessageType.TEXT.name -> sentMessage.content ?: ""
+                            MessageType.IMAGE.name -> "{Someone} has sent a image"
+                            MessageType.VIDEO.name -> "{Someone} has sent a video"
+                            MessageType.VOICE.name -> "{Someone} has sent a voice"
+                            else -> ""
+                        },
+                        "senderSeen" to true,
+                        "receiverSeen" to false
+                    )
+                )
                 _conservations.update { list ->
                     list.map {
                         if (it.docId == conservationId)

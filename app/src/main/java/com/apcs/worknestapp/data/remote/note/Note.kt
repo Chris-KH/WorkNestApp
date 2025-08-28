@@ -2,6 +2,7 @@ package com.apcs.worknestapp.data.remote.note
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.ServerTimestamp
 
 data class Note(
@@ -16,9 +17,9 @@ data class Note(
     @ServerTimestamp val createdAt: Timestamp? = null,
 
     //Use-case, not fields of document Note
-    val checklists: List<Checklist> = emptyList(),
-    val comments: List<String> = emptyList(),
-    val isLoading: Boolean? = null,
+    @get:Exclude val checklists: List<Checklist> = emptyList(),
+    @get:Exclude val comments: List<String> = emptyList(),
+    @get:Exclude val isLoading: Boolean? = null,
 )
 
 data class Checklist(
@@ -26,7 +27,7 @@ data class Checklist(
     val name: String? = null,
 
     //Use-case, not fields of document Checklists
-    val tasks: List<Task> = emptyList(),
+    @get:Exclude val tasks: List<Task> = emptyList(),
 )
 
 data class Task(
