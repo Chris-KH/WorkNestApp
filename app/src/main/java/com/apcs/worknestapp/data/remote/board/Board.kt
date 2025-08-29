@@ -12,7 +12,9 @@ data class Board(
     val name: String? = null,
     val notelists: List<Notelist> = emptyList(),
     val isLoading: Boolean? = null,
-    val members: List<DocumentReference?> = emptyList() /// member list.
+    val ownerId: String? = null,
+    val memberIds: List<String> = emptyList(),
+    val createdBy: String? = null
 )
 data class Notelist(
     @DocumentId val docId: String? = null,
