@@ -119,17 +119,28 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    suspend fun addMember(): Boolean {
+    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean {
         return try {
-            boardRepo.addMember()
+            (boardRepo as? BoardRepositoryImpl)?.addMemberToBoard(boardId, userIdToAdd)
             true
         } catch (e: Exception) {
-            Log.e("BoardViewModel", "Add member failed", e)
+            Log.e("BoardViewModel", "Add member $userIdToAdd to board $boardId failed", e)
             false
         }
     }
 
-    fun clearCache() {
+    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean {
+        return try {
+            (boardRepo as? BoardRepositoryImpl)?.removeMemberFromBoard(boardId, userIdToRemove)
+            true
+        } catch (e: Exception) {
+        Log.e("BoardViewModel", "Remove member $userIdToRemove from board $boardId failed", e)
+        false
+    }
+}
+
+
+fun clearCache() {
         boardRepo.clearCache()
     }
 }
