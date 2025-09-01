@@ -7,8 +7,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -24,6 +28,8 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     private val _notelists = MutableStateFlow<List<Notelist>>(emptyList())
     val notelists: StateFlow<List<Notelist>> = _notelists
     private var boardListener: ListenerRegistration? = null
+    private var notelistListener: ListenerRegistration? = null
+
 
     init {
         auth.addAuthStateListener {
@@ -356,6 +362,75 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             }
         }
         return true
+    }
+
+    override suspend fun refreshNotelists(boardId: String) {
+        val notelistsQuery = firestore.collection("notelists")
+            .whereEqualTo("boardId", boardId)
+            .get()
+            .await()
+        // This is a one-time fetch, useful for initial loading.
+        val notelistList = notelistsQuery.documents.mapNotNull {
+            it.toObject(Notelist::class.java)
+        }
+    }
+    override fun getNotelistsForBoard(boardId: String?): Flow<List<Notelist>> {
+        if (boardId == null) {
+            return flowOf(emptyList())
+        }
+
+        return callbackFlow {
+            val notelistsQuery = firestore.collection("notelists")
+                .whereEqualTo("boardId", boardId)
+
+            val listenerRegistration = notelistsQuery.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val notelistList = snapshot.documents.mapNotNull {
+                        it.toObject(Notelist::class.java)
+                    }
+                    trySend(notelistList)
+                }
+            }
+            awaitClose {
+                listenerRegistration.remove()
+            }
+        }
+    }
+
+    override fun registerNotelistListener(boardId: String) {
+        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        // First, remove any existing listener to prevent duplicates.
+        removeNotelistListener()
+
+        val notelistsRef = firestore.collection("notelists")
+            .whereEqualTo("boardId", boardId)
+
+        // Set up the real-time listener.
+        notelistListener = notelistsRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("BoardRepository", "Listen notelists snapshot failed", error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                val notelistList = snapshot.documents.mapNotNull {
+                    it.toObject(Notelist::class.java)
+                }
+                _notelists.value = notelistList
+            }
+        }
+    }
+
+    override fun removeNotelistListener() {
+        notelistListener?.remove() // Disconnects the listener from the database.
+        notelistListener = null
+        _notelists.value = emptyList() // Clear the data in the StateFlow.
     }
 
     override fun clearCache() {

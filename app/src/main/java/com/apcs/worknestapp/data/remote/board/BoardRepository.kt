@@ -2,6 +2,7 @@ package com.apcs.worknestapp.data.remote.board
 
 import com.apcs.worknestapp.data.remote.note.Note
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 
@@ -23,5 +24,9 @@ interface BoardRepository {
     suspend fun removeNoteFromNotelist(notelistId: String, noteId: String)
     suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean
     suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean
+    fun getNotelistsForBoard(boardId: String?): Flow<List<Notelist>>
+    suspend fun refreshNotelists(boardId: String)
+    fun registerNotelistListener(boardId: String)
+    fun removeNotelistListener()
     fun clearCache()
 }

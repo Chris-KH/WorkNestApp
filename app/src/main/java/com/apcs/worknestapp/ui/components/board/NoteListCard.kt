@@ -35,7 +35,7 @@ fun NoteListCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxHeight(), // Make card take full height of the LazyRow
+        modifier = modifier.fillMaxHeight(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(8.dp)) {

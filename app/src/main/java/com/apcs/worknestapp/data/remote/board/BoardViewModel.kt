@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.apcs.worknestapp.data.remote.note.Note
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 @HiltViewModel
@@ -155,6 +156,19 @@ class BoardViewModel @Inject constructor(
             true
         } catch (e: Exception) {
             Log.e("BoardViewModel", "Remove member $userIdToRemove from board $boardId failed", e)
+            false
+        }
+    }
+    fun getNotelistsForBoard(boardId: String?): Flow<List<Notelist>> {
+        return boardRepo.getNotelistsForBoard(boardId)
+    }
+
+    suspend fun refreshNotelists(boardId: String): Boolean {
+        return try {
+            boardRepo.refreshNotelists(boardId)
+            true
+        } catch (e: Exception) {
+            Log.e("BoardViewModel", "Refresh notelists failed", e)
             false
         }
     }
