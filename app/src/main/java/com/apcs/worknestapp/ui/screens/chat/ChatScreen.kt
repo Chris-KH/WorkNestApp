@@ -100,12 +100,6 @@ fun ChatScreen(
         messageViewModel.updateConservationSeen(conservationId, true)
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            messageViewModel.getConservation(docId = null)
-        }
-    }
-
     LifecycleResumeEffect(Unit) {
         messageViewModel.getConservation(docId = conservationId)
         messageViewModel.registerMessageListener(conservationId)
@@ -215,7 +209,8 @@ fun ChatScreen(
         },
         modifier = modifier.clickable(
             onClick = { focusManager.clearFocus() },
-            indication = null, interactionSource = remember { MutableInteractionSource() }
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
         ),
     ) { innerPadding ->
         if (conservation.value != null) {

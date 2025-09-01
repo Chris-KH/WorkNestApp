@@ -65,8 +65,8 @@ fun MyProfileHeader(
         Text(
             text = userEmail ?: "",
             fontWeight = FontWeight.Normal,
-            fontSize = 12.sp,
-            lineHeight = 12.sp,
+            fontSize = 14.sp,
+            lineHeight = 14.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -172,8 +172,7 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
     override suspend fun acceptFriendRequest(docId: String) {
         auth.currentUser ?: throw Exception("User not logged in")
 
-        val friendshipRef = firestore.collection("friendships")
-        friendshipRef.document(docId).update("status", "accepted").await()
+        firestore.collection("friendships").document(docId).update("status", "accepted").await()
 
         _friendships.update { list ->
             list.map { if (it.docId == docId) it.copy(status = "accepted") else it }
@@ -181,13 +180,19 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
     }
 
     override suspend fun deleteFriendship(docId: String) {
-        auth.currentUser ?: throw Exception("User not logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val friendship = _friendships.value.find { it.docId == docId }
+            ?: throw Exception("Friendship does not exist")
+        val otherUserId = friendship.users?.firstOrNull { it != authUser.uid }
+            ?: throw Exception("Missing a user in a friendship")
 
-        val friendshipRef = firestore.collection("friendships")
-        friendshipRef.document(docId).delete().await()
+        firestore.collection("friendships").document(docId).delete().await()
 
         _friendships.update { list ->
             list.filterNot { it.docId == docId }
+        }
+        _friends.update { list ->
+            list.filterNot { it.docId == otherUserId }
         }
     }
 

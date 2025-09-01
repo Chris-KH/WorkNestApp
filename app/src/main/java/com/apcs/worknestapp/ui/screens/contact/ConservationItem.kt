@@ -89,6 +89,7 @@ fun ConservationItem(
         DropdownMenu(
             expanded = showDropdown,
             onDismissRequest = { showDropdown = false },
+            containerColor = MaterialTheme.colorScheme.surface,
             modifier = Modifier.widthIn(min = 200.dp)
         ) {
             val dropdownTextStyle = TextStyle(

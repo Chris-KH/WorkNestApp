@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.ui.screens.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -113,16 +114,17 @@ fun MessageItem(
                     Box(
                         modifier = Modifier
                             .wrapContentSize()
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                color = if (isMyMessage) MaterialTheme.colorScheme.secondaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
                                 shape = RoundedCornerShape(10.dp)
                             )
-                            .clip(RoundedCornerShape(10.dp))
                             .combinedClickable(
                                 onClick = { isShowDate = !isShowDate },
                                 onLongClick = {},
                             )
-                            .padding(10.dp),
+                            .padding(vertical = 12.dp, horizontal = 14.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -131,7 +133,7 @@ fun MessageItem(
                             lineHeight = 15.sp,
                             fontFamily = Roboto,
                             fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 }
