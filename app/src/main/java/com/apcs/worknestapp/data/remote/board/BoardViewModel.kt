@@ -99,22 +99,42 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    suspend fun addNote(docId: String, note: Note): Boolean {
+    suspend fun addNotelist(boardId: String, notelist: Notelist): Boolean {
         return try {
-            boardRepo.addNote(docId, note)
+            boardRepo.addNotelist(boardId, notelist)
             true
         } catch (e: Exception) {
-            Log.e("BoardViewModel", "Add note to board $docId failed", e)
+            Log.e("BoardViewModel", "Add notelist failed", e)
             false
         }
     }
 
-    suspend fun removeNoteFromBoard(docId: String, noteId: String): Boolean {
+    suspend fun addNoteToList(notelistId: String, note: Note): Boolean {
         return try {
-            boardRepo.removeNoteFromBoard(docId, noteId)
+            boardRepo.addNoteToList(notelistId, note)
             true
         } catch (e: Exception) {
-            Log.e("BoardViewModel", "Remove note $noteId from board $docId failed", e)
+            Log.e("BoardViewModel", "Add note to notelist $notelistId failed", e)
+            false
+        }
+    }
+
+    suspend fun removeNotelist(notelistId: String): Boolean {
+        return try {
+            boardRepo.removeNotelist(notelistId)
+            true
+        } catch (e: Exception) {
+            Log.e("BoardViewModel", "Remove notelist $notelistId failed", e)
+            false
+        }
+    }
+
+    suspend fun removeNoteFromNotelist(notelistId: String, noteId: String): Boolean {
+        return try {
+            boardRepo.removeNoteFromNotelist(notelistId, noteId)
+            true
+        } catch (e: Exception) {
+            Log.e("BoardViewModel", "Remove note $noteId from notelist $notelistId failed", e)
             false
         }
     }
@@ -134,13 +154,13 @@ class BoardViewModel @Inject constructor(
             (boardRepo as? BoardRepositoryImpl)?.removeMemberFromBoard(boardId, userIdToRemove)
             true
         } catch (e: Exception) {
-        Log.e("BoardViewModel", "Remove member $userIdToRemove from board $boardId failed", e)
-        false
+            Log.e("BoardViewModel", "Remove member $userIdToRemove from board $boardId failed", e)
+            false
+        }
     }
-}
 
 
-fun clearCache() {
+    fun clearCache() {
         boardRepo.clearCache()
     }
 }

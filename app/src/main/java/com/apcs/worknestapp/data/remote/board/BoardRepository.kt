@@ -17,8 +17,11 @@ interface BoardRepository {
     suspend fun deleteAllBoards()
     suspend fun updateBoardName(docId: String, name: String)
     suspend fun updateBoardCover(docId: String, color: Int?)
-    suspend fun addNote(docId: String, note: Note)
-    suspend fun removeNoteFromBoard(docId: String, noteId: String)
-    suspend fun addMember()
+    suspend fun addNotelist(boardId: String, notelist: Notelist)
+    suspend fun addNoteToList(notelistId: String, note: Note)
+    suspend fun removeNotelist(notelistId: String)
+    suspend fun removeNoteFromNotelist(notelistId: String, noteId: String)
+    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean
+    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean
     fun clearCache()
 }

@@ -15,7 +15,6 @@ fun BoardActionDropdownMenu(
     onChangeCover: () -> Unit,
     onManageMembers: () -> Unit,
     onDeleteBoard: () -> Unit
-    // Add other actions as needed
 ) {
     DropdownMenu(
         expanded = expanded,

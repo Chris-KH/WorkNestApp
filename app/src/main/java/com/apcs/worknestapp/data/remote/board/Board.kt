@@ -10,7 +10,6 @@ data class Board(
     @DocumentId val docId: String? = null,
     val cover: Int? = null,
     val name: String? = null,
-    val notelists: List<Notelist> = emptyList(),
     val isLoading: Boolean? = null,
     val ownerId: String? = null,
     val memberIds: List<String> = emptyList(),
@@ -22,5 +21,6 @@ data class Notelist(
     val cover: Int? = null,
     val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
+    val boardId: String? = null,
     val notes: List<Note> = emptyList()
 )

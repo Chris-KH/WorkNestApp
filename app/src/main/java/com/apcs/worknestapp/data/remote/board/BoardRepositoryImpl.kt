@@ -21,6 +21,8 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     private val _boards = MutableStateFlow<List<Board>>(emptyList())
     override val board: StateFlow<List<Board>> = _boards
 
+    private val _notelists = MutableStateFlow<List<Notelist>>(emptyList())
+    val notelists: StateFlow<List<Notelist>> = _notelists
     private var boardListener: ListenerRegistration? = null
 
     init {
@@ -201,71 +203,112 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         _boards.update { list -> list.map { if (it.docId == docId) it.copy(cover = color) else it } }
     }
 
-    override suspend fun addNote(docId: String, note: Note) {
+    override suspend fun removeNoteFromNotelist(notelistId: String, noteId: String) {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        val boardRef = firestore.collection("boards").document(docId)
+        val notelistRef = firestore.collection("notelists").document(notelistId)
 
-        val boardSnapshot = boardRef.get().await()
-        val boardData = boardSnapshot.toObject(Board::class.java)
-        if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
-            throw SecurityException("User must be a member to add a note to this board.")
-        }
+        firestore.runTransaction { transaction ->
+            val notelistSnapshot = transaction.get(notelistRef)
+            val notelist = notelistSnapshot.toObject(Notelist::class.java)
 
+            if (notelist == null) {
+                throw Exception("Notelist not found.")
+            }
 
-        val newNotelist = Notelist(
-            docId = firestore.collection("boards").document().id,
-            name = note.name,
-            cover = note.cover,
-            archived = false,
-            createdAt = Timestamp.now(),
-            notes = listOf(note)
-        )
-        boardRef.update("notelists", FieldValue.arrayUnion(newNotelist)).await()
+            val boardId = notelist.boardId ?: throw Exception("Notelist has no parent board ID.")
+            val boardRef = firestore.collection("boards").document(boardId)
+            val boardSnapshot = transaction.get(boardRef)
+            val board = boardSnapshot.toObject(Board::class.java)
 
-        _boards.update { currentBoards ->
-            currentBoards.map {
-                if (it.docId == docId) {
-                    val updatedNotelists = it.notelists + newNotelist
-                    it.copy(notelists = updatedNotelists)
+            if (board == null || (!board.memberIds.contains(currentUser.uid) && board.ownerId != currentUser.uid)) {
+                throw SecurityException("User must be a member or owner to modify this notelist.")
+            }
+
+            val updatedNotes = notelist.notes.filter { it.docId != noteId }
+
+            transaction.update(notelistRef, "notes", updatedNotes)
+
+        }.await()
+        _notelists.update { currentNotelists ->
+            currentNotelists.map { nl ->
+                if (nl.docId == notelistId) {
+                    val updatedNotes = nl.notes.filter { note -> note.docId != noteId }
+                    nl.copy(notes = updatedNotes)
                 } else {
-                    it
+                    nl
                 }
             }
         }
     }
 
-
-    override suspend fun removeNoteFromBoard(docId: String, noteId: String) {
+    override suspend fun addNotelist(boardId: String, notelist: Notelist) {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        val boardRef = firestore.collection("boards").document(docId)
+        val boardRef = firestore.collection("boards").document(boardId)
 
         val boardSnapshot = boardRef.get().await()
-        val board = boardSnapshot.toObject(Board::class.java)
-        if (board == null || (!board.memberIds.contains(currentUser.uid) && board.ownerId != currentUser.uid)) {
-            throw SecurityException("User must be a member to remove a note from this board.")
+        val boardData = boardSnapshot.toObject(Board::class.java)
+        if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
+            throw SecurityException("User must be a member to add a notelist to this board.")
         }
-        val updatedNotelists = board.notelists.mapNotNull { notelist ->
-            val filteredNotes = notelist.notes.filter { it.docId != noteId }
-            if (filteredNotes.isEmpty() && notelist.notes.any { it.docId == noteId }) {
 
-                notelist.copy(notes = filteredNotes)
-            } else if (filteredNotes.size < notelist.notes.size) {
-                notelist.copy(notes = filteredNotes)
-            } else {
-                notelist
-            }
-        }.filter { it.notes.isNotEmpty() || !it.notes.any{note -> note.docId == noteId} } // Optionally remove notelists that become empty
+        val notelistRef = firestore.collection("notelists").document()
+        val newNotelistWithId = notelist.copy(
+            docId = notelistRef.id,
+            boardId = boardId,
+            notes = emptyList()
+        )
 
-
-        boardRef.update("notelists", updatedNotelists).await()
-        _boards.update { list ->
-            list.map {
-                if (it.docId == docId) it.copy(notelists = updatedNotelists) else it
-            }
-        }
+        notelistRef.set(newNotelistWithId).await()
     }
 
-    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean {
+
+    override suspend fun addNoteToList(notelistId: String, note: Note) {
+        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
+        val notelistRef = firestore.collection("notelists").document(notelistId)
+
+        firestore.runTransaction { transaction ->
+            val notelistSnapshot = transaction.get(notelistRef)
+            val notelist = notelistSnapshot.toObject(Notelist::class.java)
+            if (notelist == null) {
+                throw Exception("Notelist not found.")
+            }
+
+            val boardId = notelist.boardId ?: throw Exception("Notelist has no parent board ID.")
+            val boardRef = firestore.collection("boards").document(boardId)
+            val boardSnapshot = transaction.get(boardRef)
+            val board = boardSnapshot.toObject(Board::class.java)
+
+            if (board == null || (!board.memberIds.contains(currentUser.uid) && board.ownerId != currentUser.uid)) {
+                throw SecurityException("User must be a member or owner to add a note to this notelist.")
+            }
+
+            val newNoteWithId = note.copy(docId = firestore.collection("notes").document().id)
+            val updatedNotes = notelist.notes + newNoteWithId
+
+            transaction.update(notelistRef, "notes", updatedNotes)
+        }.await()
+    }
+
+    override suspend fun removeNotelist(notelistId: String) {
+        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
+        val notelistRef = firestore.collection("notelists").document(notelistId)
+
+        val notelistSnapshot = notelistRef.get().await()
+        val notelist = notelistSnapshot.toObject(Notelist::class.java) ?: throw Exception("Notelist not found.")
+
+        val boardRef = firestore.collection("boards").document(notelist.boardId!!)
+        val boardSnapshot = boardRef.get().await()
+        val board = boardSnapshot.toObject(Board::class.java)
+
+        if (board == null || (!board.memberIds.contains(currentUser.uid) && board.ownerId != currentUser.uid)) {
+            throw SecurityException("User must be a member or owner to remove this notelist.")
+        }
+
+        notelistRef.delete().await()
+    }
+
+
+    override suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(boardId)
 
@@ -290,7 +333,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         return true
     }
 
-    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean {
+    override suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(boardId)
 
@@ -314,11 +357,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
         return true
     }
-
-    override suspend fun addMember() {
-        throw NotImplementedError("Use addMemberToBoard(boardId, userIdToAdd) instead.")
-    }
-
 
     override fun clearCache() {
         removeListener()

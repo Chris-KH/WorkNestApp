@@ -44,12 +44,8 @@ fun NoteListCard(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-
-            // Column for notes within this list (vertically scrollable if needed)
-            // For simplicity, this example doesn't make this inner list scrollable,
-            // but for many notes, you'd wrap this in a LazyColumn or Column with verticalScroll.
             Column(
-                modifier = Modifier.weight(1f), // Takes available space before the add button
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 notelist.notes.forEach { note ->
@@ -63,8 +59,7 @@ fun NoteListCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Button to add a new note to this specific list
-            var newNoteName by rememberSaveable(notelist.docId) { mutableStateOf("") } // Keyed by listId for unique state
+            var newNoteName by rememberSaveable(notelist.docId) { mutableStateOf("") }
             OutlinedTextField(
                 value = newNoteName,
                 onValueChange = { newNoteName = it },
@@ -75,7 +70,7 @@ fun NoteListCard(
                     IconButton(onClick = {
                         if (newNoteName.isNotBlank() && notelist.docId != null) {
                             onAddNoteClick(notelist.docId, newNoteName)
-                            newNoteName = "" // Clear after adding
+                            newNoteName = ""
                         }
                     }) {
                         Icon(Icons.Filled.Add, contentDescription = "Add Note")

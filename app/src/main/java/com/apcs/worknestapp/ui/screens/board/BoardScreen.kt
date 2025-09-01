@@ -29,7 +29,7 @@ import com.apcs.worknestapp.ui.components.board.NoteListCard
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 
 // Dummy data classes for placeholder UI elements
-//enum class BoardSortOption { NAME, DATE_CREATED }
+//enum class BoardSortOption { NAME, }
 //data class BoardFilterOption(val id: String, val name: String, var isSelected: Boolean)
 
 
@@ -67,7 +67,7 @@ fun BoardScreen(
     LaunchedEffect(boardId) {
         if (boardId != null) {
             if (isFirstLoad) {
-                boardViewModel.refreshBoardsIfEmpty() // Or refreshBoards()
+                boardViewModel.refreshBoardsIfEmpty()
                 isFirstLoad = false
             }
         }
@@ -92,33 +92,6 @@ fun BoardScreen(
                          }
                     },
                     actions = {
-//                        IconButton(onClick = { showSortMenu = true }) {
-//                            Icon(Icons.Filled.Sort, contentDescription = "Sort")
-//                        }
-//                        SortDropdownMenu(
-//                            expanded = showSortMenu,
-//                            onDismissRequest = { showSortMenu = false },
-//                            onSortSelected = { option ->
-//                                currentSortOption = option
-//                                showSortMenu = false
-//                                // TODO: Implement sort logic
-//                            }
-//                        )
-
-                        // Filter Button
-//                        IconButton(onClick = { showFilterMenu = true }) {
-//                            Icon(Icons.Filled.FilterList, contentDescription = "Filter")
-//                        }
-//                        FilterDropdownMenu(
-//                            expanded = showFilterMenu,
-//                            onDismissRequest = { showFilterMenu = false },
-//                            filterOptions = filterOptions, // Ensure this is correctly managed
-//                            onFilterOptionToggle = { optionId, isSelected ->
-//                                filterOptions.find { it.id == optionId }?.isSelected = isSelected
-//                                // TODO: Implement filter logic
-//                            }
-//                        )
-
                         IconButton(onClick = {
                             // TODO: Handle notifications click
                         }) {
@@ -137,14 +110,14 @@ fun BoardScreen(
                             onDeleteBoard = { /* TODO */ }
                         )
                     },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors( // Or your custom TopAppBarColors
-                        containerColor = MaterialTheme.colorScheme.primaryContainer, // Example color
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
                         titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 )
             } else {
-                CustomTopBar(field = "Loading Board...")// placeholder
+                CustomTopBar(field = "Loading Board...")
             }
         },
         modifier = modifier
