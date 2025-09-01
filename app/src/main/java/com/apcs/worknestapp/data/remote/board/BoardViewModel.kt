@@ -26,6 +26,22 @@ class BoardViewModel @Inject constructor(
         }
     }
 
+    fun registerNotelistListener(boardId: String?) {
+        if (boardId == null) {
+            Log.w("BoardViewModel", "Board ID is null, cannot register notelist listener.")
+            return
+        }
+        try {
+            boardRepo.registerNotelistListener(boardId)
+        } catch (e: Exception) {
+            Log.e("BoardViewModel", "Register listener for notelists failed", e)
+        }
+    }
+
+    fun removeNotelistListener() {
+        boardRepo.removeNotelistListener()
+    }
+
     suspend fun refreshBoardsIfEmpty(): Boolean {
         if (boards.value.isEmpty()) return refreshBoards()
         return true

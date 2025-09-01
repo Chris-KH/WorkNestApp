@@ -6,7 +6,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +24,7 @@ fun NoteListItem(
     note: Note,
     onClick: () -> Unit,
     onCheckedChange: (Boolean) -> Unit,
+    onRemoveThisNote: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -39,5 +44,12 @@ fun NoteListItem(
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyMedium
         )
+        Spacer(modifier = Modifier.width(8.dp))
+        IconButton(onClick = onRemoveThisNote) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "Remove Note"
+            )
+        }
     }
 }
