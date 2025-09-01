@@ -10,7 +10,7 @@ sealed class Screen(
     object Note : Screen(route = "note", title = "Notes")
     object Contact : Screen(route = "contact", title = "Contacts")
     object AddContact : Screen(route = "add-contact", title = "Add Contacts")
-    object Notification : Screen(route = "notification", title = "Notifications")
+    object Notification : Screen(route = "notification", title = "Notification")
     object MyProfile : Screen(route = "my-profile", title = "Profile")
     object UserProfile : Screen(route = "user-profile/{userId}", title = "User Profile")
     object EditProfile : Screen(route = "edit-profile", title = "Edit Profile")

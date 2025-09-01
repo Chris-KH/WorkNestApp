@@ -399,7 +399,22 @@ fun MainLayout(startDestination: String) {
                 route = Screen.Chat.route,
                 arguments = listOf(navArgument("conservationId") {
                     type = NavType.StringType
-                })
+                }),
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(transitionDuration))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(transitionDuration)
+                    )
+                },
             ) { backStackEntry ->
                 val conservationId = backStackEntry.arguments?.getString("conservationId")
                 if (conservationId.isNullOrBlank()) {

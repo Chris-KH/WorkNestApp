@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.data.remote.message
 
+import com.apcs.worknestapp.data.remote.user.User
 import kotlinx.coroutines.flow.StateFlow
 
 interface MessageRepository {
@@ -10,7 +11,9 @@ interface MessageRepository {
     fun removeConservationListener()
     fun registerMessageListener(conservationId: String)
     fun removeMessageListener(conservationId: String)
-    fun getConservation(docId: String?)
+    fun getConservation(docId: String?): Conservation?
+    fun getConservationWith(userId: String): Conservation?
+    fun createConservation(conservation: Conservation, userMetadata: User)
     suspend fun loadConservations()
     suspend fun deleteConservation(docId: String)
     suspend fun updateConservationSeen(docId: String, state: Boolean)

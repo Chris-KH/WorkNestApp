@@ -3,6 +3,7 @@ package com.apcs.worknestapp.data.remote.message
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.apcs.worknestapp.data.remote.user.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -29,13 +30,31 @@ class MessageViewModel @Inject constructor(
         return true
     }
 
-    fun getConservation(docId: String?): Boolean {
+    fun createConservation(conservation: Conservation, userMetadata: User): Boolean {
         return try {
-            messageRepo.getConservation(docId)
+            messageRepo.createConservation(conservation, userMetadata)
             true
         } catch(e: Exception) {
-            Log.e("MessageViewModel", "Get cache conservation failed", e)
+            Log.e("MessageViewModel", "Create conservation failed", e)
             false
+        }
+    }
+
+    fun getConservation(docId: String?): Conservation? {
+        return try {
+            messageRepo.getConservation(docId)
+        } catch(e: Exception) {
+            Log.e("MessageViewModel", "Get cache conservation failed", e)
+            null
+        }
+    }
+
+    fun getConservationWith(userId: String): Conservation? {
+        return try {
+            messageRepo.getConservationWith(userId)
+        } catch(e: Exception) {
+            Log.e("MessageViewModel", "Get cache conservation with user failed", e)
+            null
         }
     }
 

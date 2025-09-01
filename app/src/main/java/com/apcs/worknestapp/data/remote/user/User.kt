@@ -15,5 +15,6 @@ data class User(
     val avatar: String? = AppDefault.AVATAR,
     val bio: String? = null,
     val pronouns: String? = null,
+    val online: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 ) : Parcelable

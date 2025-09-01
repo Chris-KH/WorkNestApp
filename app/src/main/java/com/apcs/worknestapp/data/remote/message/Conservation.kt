@@ -16,6 +16,7 @@ data class Conservation(
     val receiverSeen: Boolean? = null,
 
     //Additional data
+    @get:Exclude val isTemporary: Boolean = false,
     @get:Exclude val userData: ConservationUserData = ConservationUserData(),
     @get:Exclude val messages: List<Message> = emptyList(),
 )

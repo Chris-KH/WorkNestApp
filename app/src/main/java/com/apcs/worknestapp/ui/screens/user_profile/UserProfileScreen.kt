@@ -49,13 +49,18 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.message.Conservation
+import com.apcs.worknestapp.data.remote.message.MessageViewModel
 import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.data.remote.user.UserViewModel
 import com.apcs.worknestapp.ui.components.FallbackScreen
 import com.apcs.worknestapp.ui.components.FriendRequestButton
 import com.apcs.worknestapp.ui.components.ProfileInfoCard
 import com.apcs.worknestapp.ui.components.RotatingIcon
+import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +71,9 @@ fun UserProfileScreen(
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
     userViewModel: UserViewModel = hiltViewModel(),
+    messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
+    val authId = FirebaseAuth.getInstance().currentUser?.uid
     var user by remember { mutableStateOf<User?>(null) }
     val friendships = userViewModel.friendships.collectAsState()
     val friendship = friendships.value.find { it.users?.contains(userId) ?: false }
@@ -234,7 +241,46 @@ fun UserProfileScreen(
                                 )
 
                                 Button(
-                                    onClick = {},
+                                    onClick = {
+                                        if (authId == null) return@Button
+                                        val conservation =
+                                            messageViewModel.getConservationWith(userId)
+                                        if (conservation?.docId != null) {
+                                            navController.navigate(
+                                                Screen.Chat.route.replace(
+                                                    "{conservationId}", conservation.docId
+                                                )
+                                            ) {
+                                                restoreState = true
+                                                launchSingleTop = true
+                                            }
+                                        } else {
+                                            val userIds = listOf(authId, userId).sorted()
+                                            val docId = userIds.joinToString("_")
+                                            val newConservation = Conservation(
+                                                docId = docId,
+                                                userIds = userIds,
+                                                senderSeen = null, receiverSeen = null,
+                                                lastContent = null, lastTime = null,
+                                                isTemporary = true,
+                                            )
+                                            val isSuccess = messageViewModel.createConservation(
+                                                newConservation,
+                                                user!!
+                                            )
+                                            if (isSuccess) {
+                                                messageViewModel.getConservationWith(userId)
+                                                navController.navigate(
+                                                    Screen.Chat.route.replace(
+                                                        "{conservationId}", docId
+                                                    )
+                                                ) {
+                                                    restoreState = true
+                                                    launchSingleTop = true
+                                                }
+                                            }
+                                        }
+                                    },
                                     shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier.weight(1f)
                                 ) {

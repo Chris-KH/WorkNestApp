@@ -56,17 +56,17 @@ fun MessageItem(
     message: Message,
     conservation: Conservation,
     isMyMessage: Boolean,
-    isFirstMessage: Boolean,
+    showSentDate: Boolean,
     isLastMessage: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    var showSentDate by remember { mutableStateOf(false) }
+    var isShowDate by remember { mutableStateOf(false) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
-        if (isFirstMessage || showSentDate) {
+        if (showSentDate || isShowDate) {
             Text(
                 text =
                     if (message.createdAt != null) DateFormater.formatMessageTime(message.createdAt)
@@ -77,6 +77,7 @@ fun MessageItem(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Normal,
+                modifier = Modifier.padding(vertical = 8.dp)
             )
         }
         Row(
@@ -118,7 +119,7 @@ fun MessageItem(
                             )
                             .clip(RoundedCornerShape(10.dp))
                             .combinedClickable(
-                                onClick = { showSentDate = !showSentDate },
+                                onClick = { isShowDate = !isShowDate },
                                 onLongClick = {},
                             )
                             .padding(10.dp),

@@ -117,7 +117,7 @@ fun ContactSubScreen(
                 when(currentSubScreen) {
                     ContactSubScreenState.MESSAGES -> {
                         items(
-                            items = conservations.value,
+                            items = conservations.value.filter { !it.isTemporary },
                             key = { it.docId!! }
                         ) {
                             ConservationItem(
@@ -132,6 +132,7 @@ fun ContactSubScreen(
                                 onDelete = {},
                                 onClick = {
                                     val conservationId = it.docId
+                                    messageViewModel.getConservation(docId = conservationId)
                                     navController.navigate(
                                         Screen.Chat.route.replace(
                                             "{conservationId}",

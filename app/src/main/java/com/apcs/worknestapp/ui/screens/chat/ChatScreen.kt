@@ -70,6 +70,7 @@ import com.apcs.worknestapp.data.remote.message.MessageViewModel
 import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.apcs.worknestapp.ui.components.ChatInputSection
 import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
+import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 import com.google.firebase.auth.FirebaseAuth
@@ -196,7 +197,17 @@ fun ChatScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
                 modifier = Modifier.clickable(
-                    onClick = { },
+                    onClick = {
+                        val otherUserId = conservation.value?.userIds?.find { it != authId }
+
+                        if (otherUserId != null) {
+                            navController.navigate(
+                                Screen.UserProfile.route.replace(
+                                    "{userId}", otherUserId
+                                )
+                            )
+                        }
+                    },
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
                 )
@@ -239,11 +250,25 @@ fun ChatScreen(
                         items = messages,
                         key = { _, it -> it.docId ?: UUID.randomUUID() }
                     ) { idx, mes ->
+                        val currentCreatedAt = mes.createdAt?.toDate()?.time ?: 0L
+                        val nextCreatedAt = messages.getOrNull(idx + 1)?.createdAt?.toDate()?.time
+
+                        val showDate = when {
+                            idx + 1 == messages.size -> true
+
+                            nextCreatedAt != null -> {
+                                val diffMinutes = (currentCreatedAt - nextCreatedAt) / (1000 * 60)
+                                diffMinutes >= 30
+                            }
+
+                            else -> false
+                        }
+
                         MessageItem(
                             message = mes,
                             conservation = conservation.value!!,
                             isMyMessage = mes.sender?.id == authId,
-                            isFirstMessage = idx + 1 == messages.size,
+                            showSentDate = showDate,
                             isLastMessage = idx == 0,
                             modifier = Modifier,
                         )
@@ -253,8 +278,6 @@ fun ChatScreen(
                             }
                         }
                     }
-
-                    item(key = "spacer-0") { Spacer(modifier = Modifier.height(16.dp)) }
                 }
                 ChatInputSection(
                     text = textMessage,

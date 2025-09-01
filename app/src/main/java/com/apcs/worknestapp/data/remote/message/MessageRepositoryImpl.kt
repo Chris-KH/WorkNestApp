@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.data.remote.message
 
 import android.util.Log
+import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -218,18 +219,62 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         messageListeners.remove(conservationId)
     }
 
-    override fun getConservation(docId: String?) {
+    override fun createConservation(conservation: Conservation, userMetadata: User) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        if (conservation.docId == null) throw Exception("Missing conservation id")
+        if (conservation.userIds == null || !conservation.userIds.contains(authUser.uid))
+            throw Exception("Missing user id for conservation")
+
+        val otherUserId = conservation.userIds.firstOrNull { it != authUser.uid }
+            ?: throw Exception("Missing user id for conservation")
+        val docId = listOf(authUser.uid, otherUserId).sorted().joinToString("_")
+        if (conservation.docId != docId) throw Exception("Invalid id for conservation")
+
+        val conservationUserData = ConservationUserData(
+            docId = userMetadata.docId,
+            name = userMetadata.name,
+            avatar = userMetadata.avatar,
+            online = userMetadata.online,
+        )
+        val messages = messageCache[conservation.docId] ?: emptyList()
+
+        _conservations.update { list ->
+            (list + conservation.copy(
+                userData = conservationUserData,
+                messages = messages
+            )).sortedByDescending { it.lastTime }
+        }
+        Log.d("Test", _conservations.value.toString())
+
+        userCache[otherUserId] = conservationUserData
+        messageCache[conservation.docId] = messages
+    }
+
+    override fun getConservation(docId: String?): Conservation? {
         auth.currentUser ?: throw Exception("User not logged in")
         if (docId == null) {
             messageListeners[_currentConservation.value?.docId]?.remove()
             _currentConservation.value = null
+            return null
         } else {
             val conservation = _conservations.value.find { it.docId == docId }
                 ?: throw Exception("This conservation does not exist")
+            val result = conservation.copy(messages = messageCache[docId] ?: emptyList())
 
-            _currentConservation.value =
-                conservation.copy(messages = messageCache[docId] ?: emptyList())
+            _currentConservation.value = result
+            return result
         }
+    }
+
+    override fun getConservationWith(userId: String): Conservation? {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val conservation = _conservations.value.find {
+            it.userIds?.containsAll(listOf(authUser.uid, userId)) == true
+        } ?: throw Exception("This conservation does not exist")
+        val result = conservation.copy(messages = messageCache[conservation.docId] ?: emptyList())
+
+        _currentConservation.value = result
+        return result
     }
 
     override suspend fun loadConservations() {
@@ -342,30 +387,50 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
         try {
             firestore.runTransaction { transaction ->
-                transaction.set(
-                    messageRef,
-                    newMessage.copy(createdAt = null, isSending = null, isSentSuccess = null),
-                    SetOptions.merge()
-                )
                 val sentMessage = newMessage.copy(
                     isSending = false,
                     isSentSuccess = true,
                 )
-
-                transaction.update(
-                    conservationRef, mapOf(
-                        "sender" to firestore.collection("users").document(authUser.uid),
-                        "lastTime" to Timestamp.now(),
-                        "lastContent" to when(sentMessage.type) {
-                            MessageType.TEXT.name -> sentMessage.content ?: ""
-                            MessageType.IMAGE.name -> "{Someone} has sent a image"
-                            MessageType.VIDEO.name -> "{Someone} has sent a video"
-                            MessageType.VOICE.name -> "{Someone} has sent a voice"
-                            else -> ""
-                        },
-                        "senderSeen" to true,
-                        "receiverSeen" to false
+                val conservationSnapshot = transaction.get(conservationRef)
+                if (conservationSnapshot.exists()) {
+                    transaction.update(
+                        conservationRef, mapOf(
+                            "sender" to firestore.collection("users").document(authUser.uid),
+                            "lastTime" to Timestamp.now(),
+                            "lastContent" to when(sentMessage.type) {
+                                MessageType.TEXT.name -> sentMessage.content ?: ""
+                                MessageType.IMAGE.name -> "{Someone} has sent a image"
+                                MessageType.VIDEO.name -> "{Someone} has sent a video"
+                                MessageType.VOICE.name -> "{Someone} has sent a voice"
+                                else -> ""
+                            },
+                            "senderSeen" to true,
+                            "receiverSeen" to false
+                        )
                     )
+                } else {
+                    transaction.set(
+                        conservationRef, mapOf(
+                            "userIds" to conservation.userIds,
+                            "sender" to firestore.collection("users").document(authUser.uid),
+                            "lastTime" to Timestamp.now(),
+                            "lastContent" to when(sentMessage.type) {
+                                MessageType.TEXT.name -> sentMessage.content ?: ""
+                                MessageType.IMAGE.name -> "{Someone} has sent a image"
+                                MessageType.VIDEO.name -> "{Someone} has sent a video"
+                                MessageType.VOICE.name -> "{Someone} has sent a voice"
+                                else -> ""
+                            },
+                            "senderSeen" to true,
+                            "receiverSeen" to false
+                        )
+                    )
+                }
+
+                transaction.set(
+                    messageRef,
+                    newMessage.copy(createdAt = null, isSending = null, isSentSuccess = null),
+                    SetOptions.merge()
                 )
 
                 val replacedList = (messageCache[conservationId] ?: emptyList()).map {
@@ -388,12 +453,14 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                                     else -> ""
                                 },
                                 senderSeen = true,
-                                receiverSeen = false
+                                receiverSeen = false,
+                                isTemporary = false,
                             )
                         else it
-                    }
+                    }.sortedByDescending { it.lastTime }
                 }
-                _currentConservation.value = conservation.copy(messages = replacedList)
+                _currentConservation.value =
+                    conservation.copy(messages = replacedList, isTemporary = false)
             }.await()
         } catch(e: Exception) {
             val failMessage = newMessage.copy(isSending = false, isSentSuccess = false)
