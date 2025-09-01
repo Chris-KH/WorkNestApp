@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class MessageRepositoryImpl @Inject constructor() : MessageRepository {
@@ -139,13 +138,14 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             .whereArrayContains("userIds", authUser.uid)
             .orderBy("lastTime", Query.Direction.DESCENDING)
 
-        conservationsListener?.remove()
+        if (conservationsListener != null) return
         conservationsListener = conservationSnapshot.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("MessageRepository", "Listen conservations snapshot failed", error)
                 return@addSnapshotListener
             }
             if (snapshot == null) return@addSnapshotListener
+            if (snapshot.metadata.isFromCache) return@addSnapshotListener
 
             repoScope.launch {
                 val authUser = auth.currentUser ?: return@launch
@@ -328,11 +328,11 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
         val conservationRef = firestore.collection("conservations").document(conservationId)
         val messageRef = conservationRef.collection("messages").document()
-        val createdAt = Timestamp.now()
+
         val newMessage = message.copy(
             docId = messageRef.id,
             sender = firestore.collection("users").document(authUser.uid),
-            createdAt = createdAt,
+            createdAt = Timestamp.now(),
             isSending = true,
             isSentSuccess = null,
         )
@@ -344,15 +344,18 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             firestore.runTransaction { transaction ->
                 transaction.set(
                     messageRef,
-                    newMessage.copy(isSending = null, isSentSuccess = null),
+                    newMessage.copy(createdAt = null, isSending = null, isSentSuccess = null),
                     SetOptions.merge()
                 )
-                val sentMessage = newMessage.copy(isSending = false, isSentSuccess = true)
+                val sentMessage = newMessage.copy(
+                    isSending = false,
+                    isSentSuccess = true,
+                )
 
                 transaction.update(
                     conservationRef, mapOf(
                         "sender" to firestore.collection("users").document(authUser.uid),
-                        "lastTime" to createdAt,
+                        "lastTime" to Timestamp.now(),
                         "lastContent" to when(sentMessage.type) {
                             MessageType.TEXT.name -> sentMessage.content ?: ""
                             MessageType.IMAGE.name -> "{Someone} has sent a image"
@@ -376,7 +379,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                             it.copy(
                                 sender = firestore.collection("users").document(authUser.uid),
                                 messages = replacedList,
-                                lastTime = createdAt,
+                                lastTime = sentMessage.createdAt,
                                 lastContent = when(sentMessage.type) {
                                     MessageType.TEXT.name -> sentMessage.content ?: ""
                                     MessageType.IMAGE.name -> "{Someone} has sent a image"

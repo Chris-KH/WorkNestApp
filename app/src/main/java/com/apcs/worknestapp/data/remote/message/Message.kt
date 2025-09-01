@@ -23,6 +23,6 @@ data class Message(
     @ServerTimestamp val createdAt: Timestamp? = null,
 
     //Use-case
-    @get:Exclude val isSending: Boolean? = null,
-    @get:Exclude val isSentSuccess: Boolean? = null,
+    @get:Exclude val isSending: Boolean? = false,
+    @get:Exclude val isSentSuccess: Boolean? = true,
 )
