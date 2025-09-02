@@ -61,7 +61,7 @@ fun NoteDropdownActions(
             fontFamily = Roboto, fontWeight = FontWeight.Normal,
         )
         val horizontalPadding = 24.dp
-        val iconSize = 26.dp
+        val iconSize = 24.dp
 
         AnimatedContent(
             targetState = showSortDropdown,

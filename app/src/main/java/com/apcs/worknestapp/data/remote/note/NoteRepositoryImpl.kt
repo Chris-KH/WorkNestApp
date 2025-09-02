@@ -413,6 +413,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(archived = newState) else it }
             }
+            if (_currentNote.value?.docId == docId) {
+                _currentNote.update { it?.copy(archived = newState) }
+            }
 
             noteRef.update("archived", newState).await()
         } catch(e: FirebaseFirestoreException) {

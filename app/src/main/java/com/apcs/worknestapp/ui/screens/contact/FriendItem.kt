@@ -139,36 +139,48 @@ fun FriendItem(
             DropdownMenu(
                 expanded = showDropdownMenu,
                 onDismissRequest = { showDropdownMenu = false },
-                containerColor = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.widthIn(min = 132.dp)
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.widthIn(min = 160.dp)
             ) {
+                val dropdownTextStyle = TextStyle(
+                    fontSize = 15.sp, lineHeight = 16.sp,
+                    fontFamily = Roboto, fontWeight = FontWeight.Normal,
+                )
+                val horizontalPadding = 20.dp
+                val iconSize = 24.dp
+
                 DropdownMenuItem(
-                    text = { Text(text = "Delete") },
+                    text = { Text(text = "Delete", style = dropdownTextStyle) },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.fill_trash),
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(iconSize)
                         )
                     },
                     colors = MenuDefaults.itemColors(
                         textColor = MaterialTheme.colorScheme.error,
                         leadingIconColor = MaterialTheme.colorScheme.error,
                     ),
+                    contentPadding = PaddingValues(horizontal = horizontalPadding),
                     onClick = {
                         showDropdownMenu = false
                         showConfirmDialog = true
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text(text = "More") },
+                    text = { Text(text = "More", style = dropdownTextStyle) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = null,
-                            modifier = Modifier.rotate(90f)
+                            modifier = Modifier
+                                .size(iconSize)
+                                .rotate(90f)
                         )
                     },
+                    contentPadding = PaddingValues(horizontal = horizontalPadding),
                     onClick = {
                         showDropdownMenu = false
                         showDialog = true

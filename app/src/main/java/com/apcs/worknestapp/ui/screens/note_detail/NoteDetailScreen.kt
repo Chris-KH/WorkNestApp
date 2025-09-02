@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -27,12 +29,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -149,10 +154,6 @@ fun NoteDetailScreen(
     LaunchedEffect(note.value) {
         if (note.value == null && !isFirstLoading) {
             navController.popBackStack()
-            snackbarHost.showSnackbar(
-                message = "Note not founded",
-                withDismissAction = true,
-            )
         }
     }
 
@@ -184,7 +185,8 @@ fun NoteDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {}) {
+                    var showDropdownMenu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { showDropdownMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More options",
@@ -192,6 +194,95 @@ fun NoteDetailScreen(
                                 .size(28.dp)
                                 .rotate(-90f)
                         )
+
+                        DropdownMenu(
+                            expanded = showDropdownMenu,
+                            onDismissRequest = { showDropdownMenu = false },
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.widthIn(min = 200.dp)
+                        ) {
+                            val dropdownTextStyle = TextStyle(
+                                fontSize = 15.sp, lineHeight = 16.sp,
+                                fontFamily = Roboto, fontWeight = FontWeight.Normal,
+                            )
+                            val horizontalPadding = 20.dp
+                            val iconSize = 24.dp
+
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = if (note.value?.archived == true) "Restore"
+                                        else "Archive",
+                                        style = dropdownTextStyle
+                                    )
+                                },
+                                onClick = {
+                                    coroutineScope.launch {
+                                        showDropdownMenu = false
+                                        val isArchived = note.value?.archived == true
+                                        val isSuccess = noteViewModel.updateNoteArchive(
+                                            docId = noteId,
+                                            newState = !isArchived,
+                                        )
+                                        if (!isSuccess) {
+                                            snackbarHost.showSnackbar(
+                                                message = "${
+                                                    if (isArchived) "Restore"
+                                                    else "Archive"
+                                                } note completed failed",
+                                                withDismissAction = true,
+                                            )
+                                        } else {
+                                            snackbarHost.showSnackbar(
+                                                message = "The note was ${
+                                                    if (isArchived) "unarchived"
+                                                    else "archived"
+                                                }",
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
+                                },
+                                trailingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_archive),
+                                        contentDescription = "Archive note",
+                                        modifier = Modifier.size(iconSize),
+                                    )
+                                },
+                                contentPadding = PaddingValues(horizontal = horizontalPadding)
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = {
+                                    Text(text = "Delete", style = dropdownTextStyle)
+                                },
+                                onClick = {
+                                    showDropdownMenu = false
+                                    val isSuccess = noteViewModel.deleteNote(noteId)
+
+                                    coroutineScope.launch {
+                                        if (!isSuccess) snackbarHost.showSnackbar(
+                                            message = "Delete note ${note.value?.name ?: ""} failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                },
+                                trailingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_trash),
+                                        contentDescription = "Delete note",
+                                        modifier = Modifier.size(iconSize),
+                                    )
+                                },
+                                colors = MenuDefaults.itemColors(
+                                    textColor = MaterialTheme.colorScheme.error,
+                                    trailingIconColor = MaterialTheme.colorScheme.error,
+                                ),
+                                contentPadding = PaddingValues(horizontal = horizontalPadding)
+                            )
+                        }
                     }
                 })
         },
@@ -199,7 +290,8 @@ fun NoteDetailScreen(
             onClick = { focusManager.clearFocus() },
             indication = null,
             interactionSource = remember { MutableInteractionSource() }),
-    ) { innerPadding ->
+    )
+    { innerPadding ->
         if (isFirstLoading) LoadingScreen(modifier = Modifier.padding(innerPadding))
         else {
             Column(
@@ -213,7 +305,6 @@ fun NoteDetailScreen(
                         return@let it
                     }
                     .fillMaxSize()
-
             ) {
                 when(modalBottomType) {
                     NoteModalBottomType.COVER -> {
@@ -784,11 +875,15 @@ fun NoteDetailScreen(
                     commentText = commentText,
                     onCommentTextChange = { commentText = it },
                     onPostComment = { },
-                    modifier = Modifier.onFocusChanged { commentInputFocused = it.isFocused }
-                        .fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer).let {
+                    modifier = Modifier
+                        .onFocusChanged { commentInputFocused = it.isFocused }
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .let {
                             if (commentInputFocused) return@let it
                             return@let it.padding(bottom = innerPadding.calculateBottomPadding())
-                        })
+                        }
+                )
             }
         }
     }

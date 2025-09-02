@@ -84,7 +84,7 @@ fun NoteScreen(
     var isInSelectMode by remember { mutableStateOf(false) }
     val selectedNotes = remember { mutableStateListOf<String>() }
 
-    var showActionMenu by remember { mutableStateOf(false) }
+
     var showNoteItemDialog by remember { mutableStateOf<Note?>(null) }
     var dialogState by remember { mutableStateOf<ConfirmDialogState?>(null) }
 
@@ -135,6 +135,8 @@ fun NoteScreen(
             MainTopBar(
                 title = if (isInSelectMode) "Select notes" else Screen.Note.title,
                 actions = {
+                    var showActionMenu by remember { mutableStateOf(false) }
+                    
                     if (displayNotes.isNotEmpty()) {
                         IconButton(
                             onClick = { isInSelectMode = !isInSelectMode },
