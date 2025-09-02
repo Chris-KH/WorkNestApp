@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,27 +42,47 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.ui.components.inputfield.SearchInput
 import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeMainScreen(
     modifier: Modifier = Modifier,
     onNavigateToWorkspace: () -> Unit,
+    onNavigateToBoard: (String) -> Unit,
+    boardViewModel: BoardViewModel = hiltViewModel()
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
+
+    val boards by boardViewModel.boards.collectAsState()
 
     fun refresh() {
         coroutineScope.launch {
             isRefreshing = true
             delay(3000)
             isRefreshing = false
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        boardViewModel.refreshBoardsIfEmpty()
+    }
+
+    LifecycleResumeEffect(Unit) {
+        boardViewModel.registerListener()
+        onPauseOrDispose {
+            boardViewModel.removeListener()
         }
     }
 
@@ -158,36 +179,12 @@ fun HomeMainScreen(
                 HorizontalDivider()
             }
 
-            items(count = 50) {
-                Row(
-                    modifier = Modifier
-                        .clickable(onClick = {})
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(horizontal = horizontalPadding, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .height(28.dp)
-                            .aspectRatio(1.33f)
-                            .background(
-                                color = Color.Gray,
-                                shape = RoundedCornerShape(6.dp)
-                            )
-                    )
-                    Spacer(modifier = Modifier.width(horizontalPadding))
-                    Text(
-                        text = "Hello",
-                        fontSize = 15.sp,
-                        lineHeight = 15.sp,
-                        fontFamily = Roboto,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontWeight = FontWeight.Normal,
-                    )
-                }
-                HorizontalDivider()
+            items(items = boards, key = { it.docId ?: "no_id" }) { board ->
+                BoardCard(
+                    board = board,
+                    onClick = onNavigateToBoard
+                )
+                Spacer(modifier = Modifier.width(10.dp))
             }
         }
     }
