@@ -10,7 +10,10 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -115,17 +118,34 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     override suspend fun getNote(docId: String): Note {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        val noteDoc = firestore.collection("users")
-            .document(authUser.uid)
-            .collection("notes")
-            .document(docId)
-            .get()
-            .await()
+        val noteRef = firestore.collection("users").document(authUser.uid)
+            .collection("notes").document(docId)
 
-        val note = noteDoc.toObject(Note::class.java) ?: throw Exception("Invalid note format")
-        _currentNote.value = note
+        val noteDoc = noteRef.get().await()
+        if (!noteDoc.exists()) throw Exception("Note not found")
+        val note = noteDoc.toObject(Note::class.java) ?: throw Exception("Invalid note type")
 
-        return note
+        val checklistsSnapshot = noteRef.collection("checklists").get().await()
+        val checklists = coroutineScope {
+            checklistsSnapshot.documents.map { checklistDoc ->
+                async {
+                    try {
+                        val checklist = checklistDoc.toObject(Checklist::class.java)
+                        val tasksSnapshot = checklistDoc.reference.collection("tasks").get().await()
+                        val tasks = tasksSnapshot.documents.mapNotNull {
+                            it.toObject(Task::class.java)
+                        }
+                        checklist?.copy(tasks = tasks)
+                    } catch(_: Exception) {
+                        null
+                    }
+                }
+            }.awaitAll().filterNotNull()
+        }
+
+        val result = note.copy(checklists = checklists)
+        _currentNote.value = result
+        return result
     }
 
     override fun deleteNote(docId: String) {
@@ -277,6 +297,62 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             withContext(Dispatchers.Main) {
                 _notes.update { list ->
                     list.map { if (it.completed == true) it.copy(archived = true) else it }
+                }
+            }
+        }
+    }
+
+    override fun addNewChecklist(noteId: String, checklist: Checklist) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(noteId)
+
+        val checklistRef = noteRef
+            .collection("checklists")
+            .document()
+
+        repoScope.launch {
+            firestore.runTransaction { transaction ->
+                val noteSnapshot = transaction.get(noteRef)
+                if (!noteSnapshot.exists()) {
+                    if (_currentNote.value?.docId == noteId) {
+                        _currentNote.value = null
+                    }
+                    throw Exception("Note not found")
+                }
+                val newChecklist = checklist.copy(docId = checklistRef.id)
+                transaction.set(checklistRef, newChecklist)
+
+                if (_currentNote.value?.docId == noteId) {
+                    _currentNote.update {
+                        val currentChecklists = it?.checklists ?: emptyList()
+                        it?.copy(checklists = currentChecklists + newChecklist)
+                    }
+                }
+            }.await()
+        }
+    }
+
+    override fun deleteChecklist(noteId: String, checklistId: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        repoScope.launch {
+            firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notes")
+                .document(noteId)
+                .collection("checklists")
+                .document(checklistId)
+                .delete()
+                .await()
+
+            withContext(Dispatchers.IO) {
+                if (_currentNote.value?.docId == noteId) {
+                    _currentNote.update { note ->
+                        val currentChecklists = note?.checklists ?: emptyList()
+                        note?.copy(checklists = currentChecklists.filterNot { it.docId == checklistId })
+                    }
                 }
             }
         }

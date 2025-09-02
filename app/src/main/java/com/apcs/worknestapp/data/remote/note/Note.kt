@@ -24,7 +24,7 @@ data class Note(
 
 data class Checklist(
     @DocumentId val docId: String? = null,
-    val name: String? = null,
+    val name: String? = "Checklist",
 
     //Use-case, not fields of document Checklists
     @get:Exclude val tasks: List<Task> = emptyList(),
@@ -32,6 +32,6 @@ data class Checklist(
 
 data class Task(
     @DocumentId val docId: String? = null,
-    val name: String? = null,
+    val name: String? = "Task",
     val done: Boolean? = null,
 )

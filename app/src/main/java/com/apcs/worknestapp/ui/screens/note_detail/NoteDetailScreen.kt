@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.note.Checklist
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.components.LoadingScreen
@@ -79,14 +80,13 @@ import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.components.notedetail.Attachment
 import com.apcs.worknestapp.ui.components.notedetail.AttachmentOption
 import com.apcs.worknestapp.ui.components.notedetail.AttachmentOptionsDropdownMenu
+import com.apcs.worknestapp.ui.components.notedetail.ChecklistItem
 import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
 import com.apcs.worknestapp.ui.components.notedetail.CoverPickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DateTimePickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DescriptionEditModal
-import com.apcs.worknestapp.ui.components.notedetail.WorklistItem
-import com.apcs.worknestapp.ui.components.notedetail.WorklistItemUI
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
@@ -118,7 +118,6 @@ fun NoteDetailScreen(
     var noteName by remember { mutableStateOf("") }
     val noteCoverColor = note.value?.cover?.let { ColorUtils.safeParse(it) }
 
-    var workList by remember { mutableStateOf(emptyList<WorklistItem>()) }
 //    var history by remember { mutableStateOf(emptyList<String>()) }
 //    var currentBoard by remember { mutableStateOf<String?>("inbox") }
 //    var quickMenu by remember { mutableStateOf(false) }
@@ -401,7 +400,7 @@ fun NoteDetailScreen(
                     val spacerWidth = 12.dp
                     val fontFamily = Roboto
                     val smallLabelTextStyle = TextStyle(
-                        fontSize = 14.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
+                        fontSize = 15.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
                         fontFamily = fontFamily, fontWeight = FontWeight.Normal,
                     )
                     val mediumLabelTextStyle = TextStyle(
@@ -468,7 +467,7 @@ fun NoteDetailScreen(
                     }
 
                     if (note.value?.archived == true) {
-                        item(key = "Archive-Status") {
+                        item(key = "ArchiveStatus") {
                             val shape = RoundedCornerShape(15f)
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
@@ -581,7 +580,8 @@ fun NoteDetailScreen(
                                                 }
                                             }
                                         }
-                                    })
+                                    }
+                            )
                         }
                     }
                     item(key = "Description") {
@@ -703,7 +703,7 @@ fun NoteDetailScreen(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.outline_checkmark),
-                                    contentDescription = "Attachments",
+                                    contentDescription = null,
                                     modifier = Modifier.size(leadingIconSize),
                                 )
                                 Spacer(modifier = Modifier.width(spacerWidth))
@@ -711,37 +711,56 @@ fun NoteDetailScreen(
                             }
                             Spacer(modifier = Modifier.width(spacerWidth))
                             IconButton(
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.primary
-                                ),
                                 onClick = {
-                                    val newWorklistItem =
-                                        WorklistItem(name = "New List", tasks = emptyList())
-                                    workList = workList + newWorklistItem
+                                    val newChecklist = Checklist()
+                                    val isSuccess = noteViewModel
+                                        .addNewChecklist(noteId, newChecklist)
+                                    if (!isSuccess) {
+                                        coroutineScope.launch {
+                                            snackbarHost.showSnackbar(
+                                                message = "Add new checklist failed",
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
                                 },
                             ) {
                                 Icon(
                                     Icons.Filled.Add,
-                                    contentDescription = "Add new task list",
-                                    modifier = Modifier.size(28.dp),
+                                    contentDescription = "Add new check list",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp),
                                 )
                             }
                         }
                     }
-                    itemsIndexed(items = workList, key = { _, item -> item.id }) { idx, item ->
-                        WorklistItemUI(worklistItem = item, onWorklistItemChange = { updatedItem ->
-                            val newList = workList.toMutableList()
-                            newList[idx] = updatedItem
-                            workList = newList
-                        }, onDeleteWorklistItem = {
-                            workList = workList.filterNot { it.id == item.id }
-                        })
-                        if (idx + 1 < workList.size) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                thickness = 4.dp,
-                                color = MaterialTheme.colorScheme.surfaceVariant
-                            )
+                    itemsIndexed(
+                        items = note.value?.checklists ?: emptyList(),
+                        key = { _, item -> item.docId ?: UUID.randomUUID() }
+                    ) { idx, item ->
+                        ChecklistItem(
+                            checklist = item,
+                            onChangeChecklistName = {
+                                
+                            },
+                            onDeleteChecklist = {
+                                val checklistId = item.docId ?: return@ChecklistItem
+                                val isSuccess = noteViewModel.deleteChecklist(noteId, checklistId)
+                                if (!isSuccess) {
+                                    coroutineScope.launch {
+                                        snackbarHost.showSnackbar(
+                                            message = "Delete checklist failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                .padding(horizontal = horizontalPadding)
+                        )
+                        if (idx + 1 < (note.value?.checklists?.size ?: 0)) {
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
                     item(key = "Attachments") {
@@ -773,8 +792,8 @@ fun NoteDetailScreen(
                                     ), onClick = { showAttachmentMenu = true }) {
                                     Icon(
                                         Icons.Filled.Add,
-                                        contentDescription = "Add new task list",
-                                        modifier = Modifier.size(28.dp),
+                                        contentDescription = "Add new attachment",
+                                        modifier = Modifier.size(24.dp),
                                     )
                                 }
                                 // This is the Submenu

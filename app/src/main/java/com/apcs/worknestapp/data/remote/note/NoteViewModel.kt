@@ -129,6 +129,26 @@ class NoteViewModel @Inject constructor(
         }
     }
 
+    fun addNewChecklist(noteId: String, checklist: Checklist): Boolean {
+        return try {
+            noteRepo.addNewChecklist(noteId, checklist)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Add new checklist failed", e)
+            false
+        }
+    }
+
+    fun deleteChecklist(noteId: String, checklistId: String): Boolean {
+        return try {
+            noteRepo.deleteChecklist(noteId, checklistId)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Delete checklist failed", e)
+            false
+        }
+    }
+
     suspend fun updateNoteName(docId: String, name: String): Boolean {
         return try {
             noteRepo.updateNoteName(docId, name)
