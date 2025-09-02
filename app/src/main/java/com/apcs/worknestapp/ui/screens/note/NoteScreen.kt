@@ -32,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -60,6 +61,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
 import com.apcs.worknestapp.ui.components.ConfirmDialog
+import com.apcs.worknestapp.ui.components.ConfirmDialogState
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
@@ -84,7 +86,12 @@ fun NoteScreen(
 
     var showActionMenu by remember { mutableStateOf(false) }
     var showNoteItemDialog by remember { mutableStateOf<Note?>(null) }
-    var showConfirmDialog by remember { mutableStateOf(false) }
+    var dialogState by remember { mutableStateOf<ConfirmDialogState?>(null) }
+
+    val archiveModalSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+    )
+    var showArchiveModal by rememberSaveable { mutableStateOf(false) }
 
     val notes = noteViewModel.notes.collectAsState()
     var notesSortBy by rememberSaveable { mutableStateOf(NoteSortBy.NEWEST) }
@@ -97,6 +104,7 @@ fun NoteScreen(
                 NoteSortBy.ALPHABETICAL -> list.sortedBy { it.name }
             }
         }
+    val archiveNotes = notes.value.filter { it.archived == true }
 
     LaunchedEffect(Unit) {
         if (isFirstLoad) {
@@ -129,9 +137,7 @@ fun NoteScreen(
                 actions = {
                     if (displayNotes.isNotEmpty()) {
                         IconButton(
-                            onClick = {
-                                isInSelectMode = !isInSelectMode
-                            },
+                            onClick = { isInSelectMode = !isInSelectMode },
                             colors = IconButtonDefaults.iconButtonColors(
                                 contentColor = if (isInSelectMode) MaterialTheme.colorScheme.surface
                                 else MaterialTheme.colorScheme.primary,
@@ -174,18 +180,34 @@ fun NoteScreen(
                             onDismissRequest = { showActionMenu = false },
                             onChangeBackground = {},
                             onSort = { notesSortBy = it },
-                            onViewArchive = {},
+                            onViewArchive = {
+                                coroutineScope.launch {
+                                    showActionMenu = false
+                                    showArchiveModal = true
+                                    archiveModalSheetState.show()
+                                }
+                            },
                             onArchiveCompletedNotes = {
                                 noteViewModel.archiveCompletedNotes()
                                 showActionMenu = false
                             },
                             onArchiveAllNotes = {
-                                noteViewModel.archiveAllNotes()
+                                noteViewModel.archiveAllNotes(archived = true)
                                 showActionMenu = false
                             },
                             onDeleteAllNotes = {
                                 showActionMenu = false
-                                showConfirmDialog = true
+                                dialogState = ConfirmDialogState(
+                                    title = "Delete all notes",
+                                    message = "Are you sure to delete all notes",
+                                    confirmText = "Delete",
+                                    cancelText = "Cancel",
+                                    onConfirm = {
+                                        dialogState = null
+                                        noteViewModel.deleteAllArchivedNotes(archived = false)
+                                    },
+                                    onCancel = { dialogState = null }
+                                )
                             }
                         )
                     }
@@ -203,20 +225,33 @@ fun NoteScreen(
         var noteName by remember { mutableStateOf("") }
         val interactionSource = remember { MutableInteractionSource() }
         val isFocused by interactionSource.collectIsFocusedAsState()
-        val isImeVisible = WindowInsets.isImeVisible
 
-        if (showConfirmDialog) {
+        dialogState?.let {
             ConfirmDialog(
-                title = "Delete all notes",
-                message = "Are you sure to delete all notes",
-                onDismissRequest = { showConfirmDialog = false },
-                confirmText = "Delete",
-                cancelText = "Cancel",
-                onConfirm = {
-                    showConfirmDialog = false
-                    noteViewModel.deleteAllArchivedNotes(archived = false)
+                title = it.title,
+                message = it.message,
+                onDismissRequest = { dialogState = null },
+                confirmText = it.confirmText,
+                cancelText = it.cancelText,
+                onConfirm = it.onConfirm,
+                onCancel = it.onCancel,
+            )
+        }
+
+        if (showArchiveModal) {
+            ArchiveModalBottomSheet(
+                sheetState = archiveModalSheetState,
+                onDismissRequest = {
+                    coroutineScope.launch {
+                        archiveModalSheetState.hide()
+                        showArchiveModal = false
+                    }
                 },
-                onCancel = { showConfirmDialog = false }
+                navController = navController,
+                archiveNotes = archiveNotes,
+                onRestore = { list ->
+                    noteViewModel.archiveNotes(noteIds = list, archived = false)
+                }
             )
         }
 
@@ -228,7 +263,7 @@ fun NoteScreen(
                     end = innerPadding.calculateEndPadding(LayoutDirection.Ltr)
                 )
                 .padding(
-                    bottom = if (isFocused && isImeVisible) 0.dp
+                    bottom = if (isFocused && WindowInsets.isImeVisible) 0.dp
                     else innerPadding.calculateBottomPadding()
                 )
                 .imePadding()
@@ -279,7 +314,6 @@ fun NoteScreen(
                                     isSelected = isSelected,
                                     onClick = {
                                         if (note.docId == null) return@NoteItem
-
                                         if (!isInSelectMode) {
                                             navController.navigate(
                                                 Screen.NoteDetail.route.replace(
@@ -314,18 +348,14 @@ fun NoteScreen(
                                             }
                                         }
                                     },
-                                    onLongClick = {
-                                        if (!isInSelectMode) showNoteItemDialog = note
-                                    }
+                                    onLongClick = { if (!isInSelectMode) showNoteItemDialog = note }
                                 )
                             }
                         }
                     }
                 }
 
-                AnimatedContent(
-                    targetState = isInSelectMode,
-                ) {
+                AnimatedContent(targetState = isInSelectMode) {
                     if (!it) {
                         AddNoteInput(
                             value = noteName,
@@ -336,12 +366,8 @@ fun NoteScreen(
                                     noteName = ""
                                     noteViewModel.addNote(
                                         Note(
-                                            name = name,
-                                            description = "",
-                                            cover = null,
-                                            completed = false,
-                                            archived = false,
-                                            isLoading = true,
+                                            name = name, description = "", cover = null,
+                                            completed = false, archived = false, isLoading = true,
                                             createdAt = Timestamp.now()
                                         )
                                     )
@@ -369,20 +395,28 @@ fun NoteScreen(
                             TextButton(
                                 enabled = selectedNotes.isNotEmpty(),
                                 onClick = {
-                                    noteViewModel.archiveNotes(selectedNotes.toList())
+                                    noteViewModel.archiveNotes(selectedNotes.toList(), true)
                                 },
                             ) { Text(text = "Archive") }
                             Text(
                                 text = "${selectedNotes.size} Selected",
-                                fontSize = 16.sp,
-                                lineHeight = 16.sp,
+                                fontSize = 16.sp, lineHeight = 16.sp,
                                 letterSpacing = (0.2).sp,
                                 fontWeight = FontWeight.Medium
                             )
                             TextButton(
                                 enabled = selectedNotes.isNotEmpty(),
                                 onClick = {
-                                    noteViewModel.deleteNotes(selectedNotes.toList())
+                                    dialogState = ConfirmDialogState(
+                                        title = "Delete notes",
+                                        message = "Are you sure to delete these notes?",
+                                        confirmText = "Delete", cancelText = "Cancel",
+                                        onConfirm = {
+                                            dialogState = null
+                                            noteViewModel.deleteNotes(selectedNotes.toList())
+                                        },
+                                        onCancel = { dialogState = null }
+                                    )
                                 }
                             ) { Text(text = "Delete") }
                         }

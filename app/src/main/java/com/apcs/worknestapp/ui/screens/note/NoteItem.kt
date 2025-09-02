@@ -87,9 +87,7 @@ fun NoteItem(
                 val lineHeight = 15.sp
                 val iconSize = with(LocalDensity.current) { fontSize.toDp() + 2.dp }
 
-                AnimatedVisibility(
-                    visible = !selectedMode,
-                ) {
+                AnimatedVisibility(visible = !selectedMode) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             painter = painterResource(

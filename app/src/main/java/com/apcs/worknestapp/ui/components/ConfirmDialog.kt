@@ -25,6 +25,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+data class ConfirmDialogState(
+    val title: String,
+    val message: String,
+    val confirmText: String,
+    val cancelText: String = "Cancel",
+    val onConfirm: () -> Unit,
+    val onCancel: () -> Unit,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfirmDialog(

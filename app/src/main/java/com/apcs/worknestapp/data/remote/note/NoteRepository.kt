@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface NoteRepository {
     val notes: StateFlow<List<Note>>
+    val currentNote: StateFlow<Note?>
 
     fun removeListener()
     fun registerListener()
@@ -15,8 +16,8 @@ interface NoteRepository {
     fun deleteNotes(noteIds: List<String>)
     fun deleteAllNotes()
     fun deleteAllArchivedNotes(archived: Boolean)
-    fun archiveNotes(noteIds: List<String>)
-    fun archiveAllNotes()
+    fun archiveNotes(noteIds: List<String>, archived: Boolean)
+    fun archiveAllNotes(archived: Boolean)
     fun archiveCompletedNotes()
     suspend fun updateNoteName(docId: String, name: String)
     suspend fun updateNoteCover(docId: String, color: Int?)

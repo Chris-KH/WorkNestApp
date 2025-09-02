@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,7 +64,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
@@ -113,6 +113,7 @@ fun NoteDetailScreen(
     var modalBottomType by remember { mutableStateOf<NoteModalBottomType?>(null) }
 
     //NoteState
+    val note = noteViewModel.currentNote.collectAsState()
     var noteName by remember { mutableStateOf("") }
     var noteNameInitial by remember { mutableStateOf("") }
     var noteCover by remember { mutableStateOf<Int?>(null) }
@@ -146,12 +147,11 @@ fun NoteDetailScreen(
         isFirstLoading = true
         val note = noteViewModel.getNote(noteId)
         if (note == null) {
-            noteViewModel.deleteNote(noteId)
+            navController.popBackStack()
             snackbarHost.showSnackbar(
                 message = "Load note failed. Note not founded",
                 withDismissAction = true,
             )
-            navController.popBackStack()
         } else {
             noteName = note.name ?: ""
             noteNameInitial = noteName
@@ -165,6 +165,16 @@ fun NoteDetailScreen(
         }
 
         isFirstLoading = false
+    }
+
+    LaunchedEffect(note.value) {
+        if (note.value == null && !isFirstLoading) {
+            navController.popBackStack()
+            snackbarHost.showSnackbar(
+                message = "Note not founded",
+                withDismissAction = true,
+            )
+        }
     }
 
     LaunchedEffect(lazyListState) {
@@ -348,7 +358,7 @@ fun NoteDetailScreen(
                         fontFamily = fontFamily, fontWeight = FontWeight.Normal,
                     )
                     val verticalPadding = 20.dp
-                    val horizontalPadding = 12.dp
+                    val horizontalPadding = 16.dp
                     val leadingIconSize = with(density) { 16.sp.toDp() + 2.dp }
 
                     item(key = "SpacerCover") {
@@ -371,7 +381,7 @@ fun NoteDetailScreen(
                                     if (noteCoverColor == null) return@let temp
                                     return@let temp.background(noteCoverColor)
                                 }
-                                .padding(horizontal = horizontalPadding, vertical = 8.dp)
+                                .padding(horizontal = horizontalPadding / 2, vertical = 8.dp)
                         ) {
                             val shape = RoundedCornerShape(15f)
                             Row(
@@ -389,7 +399,7 @@ fun NoteDetailScreen(
                                         color = MaterialTheme.colorScheme.outlineVariant,
                                         shape = shape,
                                     )
-                                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                                    .padding(vertical = 8.dp, horizontal = 20.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(
@@ -406,6 +416,38 @@ fun NoteDetailScreen(
                             }
                         }
                     }
+
+                    if (noteArchived) {
+                        item(key = "Archive-Status") {
+                            val shape = RoundedCornerShape(15f)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(
+                                modifier = Modifier
+                                    .clip(shape)
+                                    .padding(horizontal = horizontalPadding)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.error,
+                                        shape = shape
+                                    )
+                                    .padding(vertical = 6.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.outline_archive),
+                                    contentDescription = "Cover",
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Archived",
+                                    fontSize = 12.sp, lineHeight = 12.sp, letterSpacing = 0.sp,
+                                    fontFamily = fontFamily, fontWeight = FontWeight.Normal,
+                                    color = MaterialTheme.colorScheme.onError,
+                                )
+                            }
+                        }
+                    }
+
                     item(key = "Name") {
                         val focusRequester = remember { FocusRequester() }
 
@@ -415,7 +457,8 @@ fun NoteDetailScreen(
                                 .fillMaxWidth()
                                 .padding(horizontal = horizontalPadding, vertical = 24.dp),
                         ) {
-                            val fontSize = 20.sp
+                            val fontSize = 22.sp
+                            val iconSize = with(density) { fontSize.toDp() + 2.dp }
                             Icon(
                                 painter = painterResource(
                                     if (!noteCompleted) R.drawable.outline_circle
@@ -425,7 +468,7 @@ fun NoteDetailScreen(
                                 else MaterialTheme.colorScheme.success,
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .size(with(density) { fontSize.toDp() + 2.dp })
+                                    .size(iconSize)
                                     .clip(CircleShape)
                                     .clickable(onClick = {
                                         coroutineScope.launch {
@@ -459,8 +502,8 @@ fun NoteDetailScreen(
                                         lineHeight = fontSize,
                                         fontFamily = fontFamily,
                                         letterSpacing = 0.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 },
                                 textStyle = TextStyle(
@@ -468,7 +511,7 @@ fun NoteDetailScreen(
                                     lineHeight = fontSize,
                                     fontFamily = fontFamily,
                                     letterSpacing = 0.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onBackground
                                 ),
                                 containerColor = Color.Transparent,
@@ -792,7 +835,7 @@ fun NoteDetailScreen(
                     else itemsIndexed(items = commentList) { index, comment ->
                         CommentItem(comment = comment)
                     }
-                    item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(240.dp)) }
+                    item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(160.dp)) }
                 }
                 CommentInputSection(
                     commentText = commentText,

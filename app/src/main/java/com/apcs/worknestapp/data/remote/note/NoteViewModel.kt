@@ -11,6 +11,7 @@ class NoteViewModel @Inject constructor(
     private val noteRepo: NoteRepository,
 ) : ViewModel() {
     val notes = noteRepo.notes
+    val currentNote = noteRepo.currentNote
 
     fun removeListener() {
         noteRepo.removeListener()
@@ -36,6 +37,15 @@ class NoteViewModel @Inject constructor(
         } catch(e: Exception) {
             Log.e("NoteViewModel", "Refresh notes failed", e)
             false
+        }
+    }
+
+    suspend fun getNote(docId: String): Note? {
+        return try {
+            noteRepo.getNote(docId)
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Get note $docId failed", e)
+            null
         }
     }
 
@@ -89,9 +99,9 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun archiveNotes(noteIds: List<String>): Boolean {
+    fun archiveNotes(noteIds: List<String>, archived: Boolean): Boolean {
         return try {
-            noteRepo.archiveNotes(noteIds)
+            noteRepo.archiveNotes(noteIds, archived)
             true
         } catch(e: Exception) {
             Log.e("NoteViewModel", "Archive list of note failed", e)
@@ -99,9 +109,9 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun archiveAllNotes(): Boolean {
+    fun archiveAllNotes(archived: Boolean): Boolean {
         return try {
-            noteRepo.archiveAllNotes()
+            noteRepo.archiveAllNotes(archived)
             true
         } catch(e: Exception) {
             Log.e("NoteViewModel", "Archive all notes failed", e)
@@ -116,15 +126,6 @@ class NoteViewModel @Inject constructor(
         } catch(e: Exception) {
             Log.e("NoteViewModel", "Archive completed notes failed", e)
             false
-        }
-    }
-
-    suspend fun getNote(docId: String): Note? {
-        return try {
-            noteRepo.getNote(docId)
-        } catch(e: Exception) {
-            Log.e("NoteViewModel", "Get note $docId failed", e)
-            null
         }
     }
 

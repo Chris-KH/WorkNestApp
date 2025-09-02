@@ -169,8 +169,6 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
         userListeners.forEach { it.value.remove() }
         userListeners.clear()
-
-        repoScope.coroutineContext.cancelChildren()
     }
 
     override fun registerMessageListener(conservationId: String) {
@@ -500,12 +498,15 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
     override fun clearCache() {
+        repoScope.coroutineContext.cancelChildren()
         removeConservationListener()
         userCache.clear()
         userListeners.forEach { it.value.remove() }
         userListeners.clear()
         messageCache.clear()
+        messageListeners.forEach { it.value.remove() }
+        messageListeners.clear()
         _conservations.value = emptyList()
-
+        _currentConservation.value = null
     }
 }
