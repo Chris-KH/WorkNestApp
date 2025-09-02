@@ -294,6 +294,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(name = name) else it }
             }
+            if (_currentNote.value?.docId == docId) {
+                _currentNote.update { it?.copy(name = name) }
+            }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 if (_currentNote.value?.docId == docId) _currentNote.value = null
@@ -318,6 +321,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                 _notes.update { list ->
                     list.map { if (it.docId == docId) it.copy(cover = color) else it }
                 }
+                if (_currentNote.value?.docId == docId) {
+                    _currentNote.update { it?.copy(cover = color) }
+                }
             } catch(e: FirebaseFirestoreException) {
                 if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                     if (_currentNote.value?.docId == docId) _currentNote.value = null
@@ -340,6 +346,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             noteRef.update("description", description).await()
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(description = description) else it }
+            }
+            if (_currentNote.value?.docId == docId) {
+                _currentNote.update { it?.copy(description = description) }
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
@@ -366,18 +375,24 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(completed = newState) else it }
             }
+            if (_currentNote.value?.docId == docId) {
+                _currentNote.update { it?.copy(completed = newState) }
+            }
             noteRef.update("completed", newState).await()
         } catch(e: FirebaseFirestoreException) {
+            _notes.update { list ->
+                list.filterNot { it.docId == docId }
+            }
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 if (_currentNote.value?.docId == docId) _currentNote.value = null
-                _notes.update { list ->
-                    list.filterNot { it.docId == docId }
-                }
             }
             throw e
         } catch(e: Exception) {
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(completed = previousState) else it }
+            }
+            if (_currentNote.value?.docId == docId) {
+                _currentNote.update { it?.copy(completed = previousState) }
             }
             throw e
         }
@@ -398,18 +413,22 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(archived = newState) else it }
             }
+
             noteRef.update("archived", newState).await()
         } catch(e: FirebaseFirestoreException) {
+            _notes.update { list ->
+                list.filterNot { it.docId == docId }
+            }
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 if (_currentNote.value?.docId == docId) _currentNote.value = null
-                _notes.update { list ->
-                    list.filterNot { it.docId == docId }
-                }
             }
             throw e
         } catch(e: Exception) {
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(archived = previousState) else it }
+            }
+            if (_currentNote.value?.docId == docId) {
+                _currentNote.update { it?.copy(archived = previousState) }
             }
             throw e
         }
@@ -426,6 +445,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             noteRef.update("startDate", dateTime).await()
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(startDate = dateTime) else it }
+            }
+            if (_currentNote.value?.docId == docId) {
+                _currentNote.update { it?.copy(startDate = dateTime) }
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
@@ -448,6 +470,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             noteRef.update("endDate", dateTime).await()
             _notes.update { list ->
                 list.map { if (it.docId == docId) it.copy(endDate = dateTime) else it }
+            }
+            if (_currentNote.value?.docId == docId) {
+                _currentNote.update { it?.copy(endDate = dateTime) }
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {

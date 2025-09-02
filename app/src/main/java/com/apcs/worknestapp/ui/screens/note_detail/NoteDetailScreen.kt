@@ -86,15 +86,11 @@ import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 import com.apcs.worknestapp.utils.ColorUtils
-import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 enum class NoteModalBottomType {
-    COVER,
-    DESCRIPTION,
-    START_DATE,
-    END_DATE,
+    COVER, DESCRIPTION, START_DATE, END_DATE,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,20 +111,12 @@ fun NoteDetailScreen(
     //NoteState
     val note = noteViewModel.currentNote.collectAsState()
     var noteName by remember { mutableStateOf("") }
-    var noteNameInitial by remember { mutableStateOf("") }
-    var noteCover by remember { mutableStateOf<Int?>(null) }
-    val noteCoverColor = if (noteCover != null) ColorUtils.safeParse(noteCover!!) else null
-    var noteCompleted by remember { mutableStateOf(false) }
-    var noteArchived by remember { mutableStateOf(false) }
-    var noteDescription by remember { mutableStateOf("") }
-    var noteStartDate by remember { mutableStateOf<Timestamp?>(null) }
-    var noteEndDate by remember { mutableStateOf<Timestamp?>(null) }
+    val noteCoverColor = note.value?.cover?.let { ColorUtils.safeParse(it) }
 
     var workList by remember { mutableStateOf(emptyList<WorklistItem>()) }
-    var history by remember { mutableStateOf(emptyList<String>()) }
-
-    var currentBoard by remember { mutableStateOf<String?>("inbox") }
-    var quickMenu by remember { mutableStateOf(false) }
+//    var history by remember { mutableStateOf(emptyList<String>()) }
+//    var currentBoard by remember { mutableStateOf<String?>("inbox") }
+//    var quickMenu by remember { mutableStateOf(false) }
 
     var commentInputFocused by remember { mutableStateOf(false) }
     var commentText by remember { mutableStateOf("") }
@@ -145,25 +133,16 @@ fun NoteDetailScreen(
 
     LaunchedEffect(Unit) {
         isFirstLoading = true
-        val note = noteViewModel.getNote(noteId)
-        if (note == null) {
+        val noteRemote = noteViewModel.getNote(noteId)
+        if (noteRemote == null) {
             navController.popBackStack()
             snackbarHost.showSnackbar(
                 message = "Load note failed. Note not founded",
                 withDismissAction = true,
             )
         } else {
-            noteName = note.name ?: ""
-            noteNameInitial = noteName
-            noteCover = note.cover
-            noteCover?.let { topBarBackground = surfaceColorOverlay }
-            noteCompleted = note.completed ?: false
-            noteArchived = note.archived ?: false
-            noteDescription = note.description ?: ""
-            noteStartDate = note.startDate
-            noteEndDate = note.endDate
+            noteName = noteRemote.name ?: ""
         }
-
         isFirstLoading = false
     }
 
@@ -214,13 +193,12 @@ fun NoteDetailScreen(
                                 .rotate(-90f)
                         )
                     }
-                }
-            )
+                })
         },
         modifier = modifier.clickable(
             onClick = { focusManager.clearFocus() },
-            indication = null, interactionSource = remember { MutableInteractionSource() }
-        ),
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }),
     ) { innerPadding ->
         if (isFirstLoading) LoadingScreen(modifier = Modifier.padding(innerPadding))
         else {
@@ -240,17 +218,15 @@ fun NoteDetailScreen(
                 when(modalBottomType) {
                     NoteModalBottomType.COVER -> {
                         CoverPickerModal(
-                            currentColor = noteCover?.let { ColorUtils.safeParse(it) },
+                            currentColor = noteCoverColor,
                             onSave = {
                                 coroutineScope.launch {
                                     val newCoverColor = it?.toArgb()
 
                                     val isSuccess = noteViewModel.updateNoteCover(
-                                        docId = noteId,
-                                        color = newCoverColor
+                                        docId = noteId, color = newCoverColor
                                     )
-                                    if (isSuccess) noteCover = newCoverColor
-                                    else {
+                                    if (!isSuccess) {
                                         snackbarHost.showSnackbar(
                                             message = "Change cover failed",
                                             withDismissAction = true,
@@ -265,45 +241,35 @@ fun NoteDetailScreen(
 
                     NoteModalBottomType.DESCRIPTION -> {
                         DescriptionEditModal(
-                            currentDescription = noteDescription,
+                            currentDescription = note.value?.description,
                             onSave = {
                                 coroutineScope.launch {
                                     val isSuccess = noteViewModel.updateNoteDescription(
-                                        docId = noteId,
-                                        description = it
+                                        docId = noteId, description = it
                                     )
-                                    if (isSuccess) noteDescription = it
-                                    else {
-                                        snackbarHost.showSnackbar(
-                                            message = "Update note description failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
+                                    if (!isSuccess) snackbarHost.showSnackbar(
+                                        message = "Update note description failed",
+                                        withDismissAction = true,
+                                    )
                                     modalBottomType = null
                                 }
-                            },
-                            onDismissRequest = { modalBottomType = null }
-                        )
+                            }, onDismissRequest = { modalBottomType = null })
                     }
 
                     NoteModalBottomType.START_DATE -> {
                         DateTimePickerModal(
                             title = "Start Date",
-                            currentDate = noteStartDate,
+                            currentDate = note.value?.startDate,
                             onSave = {
                                 coroutineScope.launch {
                                     val isSuccess = noteViewModel.updateNoteStartDate(
-                                        docId = noteId,
-                                        dateTime = it
+                                        docId = noteId, dateTime = it
                                     )
 
-                                    if (isSuccess) noteStartDate = it
-                                    else {
-                                        snackbarHost.showSnackbar(
-                                            message = "Update note start date failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
+                                    if (!isSuccess) snackbarHost.showSnackbar(
+                                        message = "Update note start date failed",
+                                        withDismissAction = true,
+                                    )
                                     modalBottomType = null
                                 }
                             },
@@ -315,21 +281,17 @@ fun NoteDetailScreen(
                     NoteModalBottomType.END_DATE -> {
                         DateTimePickerModal(
                             title = "Due Date",
-                            currentDate = noteEndDate,
+                            currentDate = note.value?.endDate,
                             onSave = {
                                 coroutineScope.launch {
                                     val isSuccess = noteViewModel.updateNoteEndDate(
-                                        docId = noteId,
-                                        dateTime = it
+                                        docId = noteId, dateTime = it
                                     )
 
-                                    if (isSuccess) noteEndDate = it
-                                    else {
-                                        snackbarHost.showSnackbar(
-                                            message = "Update note end date failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
+                                    if (!isSuccess) snackbarHost.showSnackbar(
+                                        message = "Update note end date failed",
+                                        withDismissAction = true,
+                                    )
                                     modalBottomType = null
                                 }
                             },
@@ -341,12 +303,10 @@ fun NoteDetailScreen(
                     null -> null
                 }
                 LazyColumn(
-                    state = lazyListState,
-                    modifier = Modifier
+                    state = lazyListState, modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                )
-                {
+                ) {
                     val spacerWidth = 12.dp
                     val fontFamily = Roboto
                     val smallLabelTextStyle = TextStyle(
@@ -366,7 +326,7 @@ fun NoteDetailScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(innerPadding.calculateTopPadding() * 2)
+                                    .height(innerPadding.calculateTopPadding())
                                     .background(noteCoverColor)
                             )
                         } else Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding()))
@@ -381,8 +341,7 @@ fun NoteDetailScreen(
                                     if (noteCoverColor == null) return@let temp
                                     return@let temp.background(noteCoverColor)
                                 }
-                                .padding(horizontal = horizontalPadding / 2, vertical = 8.dp)
-                        ) {
+                                .padding(horizontal = horizontalPadding / 2, vertical = 8.dp)) {
                             val shape = RoundedCornerShape(15f)
                             Row(
                                 modifier = Modifier
@@ -417,7 +376,7 @@ fun NoteDetailScreen(
                         }
                     }
 
-                    if (noteArchived) {
+                    if (note.value?.archived == true) {
                         item(key = "Archive-Status") {
                             val shape = RoundedCornerShape(15f)
                             Spacer(modifier = Modifier.height(16.dp))
@@ -426,8 +385,7 @@ fun NoteDetailScreen(
                                     .clip(shape)
                                     .padding(horizontal = horizontalPadding)
                                     .background(
-                                        color = MaterialTheme.colorScheme.error,
-                                        shape = shape
+                                        color = MaterialTheme.colorScheme.error, shape = shape
                                     )
                                     .padding(vertical = 6.dp, horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -461,36 +419,32 @@ fun NoteDetailScreen(
                             val iconSize = with(density) { fontSize.toDp() + 2.dp }
                             Icon(
                                 painter = painterResource(
-                                    if (!noteCompleted) R.drawable.outline_circle
-                                    else R.drawable.fill_checkbox
+                                    if (note.value?.completed == true) R.drawable.fill_checkbox
+                                    else R.drawable.outline_circle
                                 ),
-                                tint = if (!noteCompleted) MaterialTheme.colorScheme.onSurface
-                                else MaterialTheme.colorScheme.success,
+                                tint = if (note.value?.completed == true) MaterialTheme.colorScheme.success
+                                else MaterialTheme.colorScheme.onSurface,
                                 contentDescription = null,
-                                modifier = Modifier
-                                    .size(iconSize)
-                                    .clip(CircleShape)
+                                modifier = Modifier.size(iconSize).clip(CircleShape)
                                     .clickable(onClick = {
                                         coroutineScope.launch {
-                                            noteCompleted = !noteCompleted
                                             val isSuccess = noteViewModel.updateNoteComplete(
                                                 docId = noteId,
-                                                newState = noteCompleted,
+                                                newState = note.value?.completed != true,
                                             )
                                             if (!isSuccess) {
-                                                noteCompleted = !noteCompleted
                                                 snackbarHost.showSnackbar(
                                                     message = "Mark note completed failed",
                                                     withDismissAction = true,
                                                 )
                                             }
                                         }
-                                    })
-                                    .let {
-                                        if (noteCompleted) return@let it.background(MaterialTheme.colorScheme.onSurface)
+                                    }).let {
+                                        if (note.value?.completed == true) return@let it.background(
+                                            MaterialTheme.colorScheme.onSurface
+                                        )
                                         return@let it
-                                    }
-                            )
+                                    })
                             Spacer(modifier = Modifier.width(8.dp))
                             CustomTextField(
                                 value = noteName,
@@ -518,11 +472,11 @@ fun NoteDetailScreen(
                                 modifier = Modifier
                                     .focusRequester(focusRequester)
                                     .onFocusChanged { state ->
+                                        val noteNameInitial = note.value?.name ?: ""
                                         if (!state.isFocused && noteName != noteNameInitial) {
                                             coroutineScope.launch {
                                                 if (noteName.isBlank()) noteName = noteNameInitial
                                                 else {
-                                                    noteNameInitial = noteName
                                                     val isSuccess = noteViewModel.updateNoteName(
                                                         docId = noteId,
                                                         name = noteName,
@@ -536,8 +490,7 @@ fun NoteDetailScreen(
                                                 }
                                             }
                                         }
-                                    }
-                            )
+                                    })
                         }
                     }
                     item(key = "Description") {
@@ -550,8 +503,7 @@ fun NoteDetailScreen(
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                 .padding(
-                                    horizontal = horizontalPadding,
-                                    vertical = verticalPadding
+                                    horizontal = horizontalPadding, vertical = verticalPadding
                                 ),
                         ) {
                             Icon(
@@ -561,9 +513,10 @@ fun NoteDetailScreen(
                             )
                             Spacer(modifier = Modifier.width(spacerWidth))
                             Text(
-                                text = noteDescription.ifEmpty { "Add a description" },
+                                text = if (note.value?.description.isNullOrEmpty()) "Add description"
+                                else note.value?.description ?: "",
                                 style = mediumLabelTextStyle,
-                                color = if (noteDescription.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (note.value?.description.isNullOrEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
                                 else MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -593,13 +546,13 @@ fun NoteDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.width(spacerWidth))
                                 Text(
-                                    text = if (noteStartDate == null) "Start date"
+                                    text = if (note.value?.startDate == null) "Start date"
                                     else DateFormater.format(
-                                        timestamp = noteStartDate!!,
+                                        timestamp = note.value!!.startDate!!,
                                         formatString = "'Starts' dd MMMM, yyyy 'at' HH:mm"
                                     ),
                                     style = mediumLabelTextStyle,
-                                    color = if (noteStartDate == null) MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (note.value?.startDate == null) MaterialTheme.colorScheme.onSurfaceVariant
                                     else MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.weight(1f),
                                 )
@@ -620,23 +573,23 @@ fun NoteDetailScreen(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        if (noteCompleted) R.drawable.outline_checkmark
+                                        if (note.value?.completed == true) R.drawable.outline_checkmark
                                         else R.drawable.outline_square
                                     ),
                                     contentDescription = "End date",
-                                    tint = if (noteEndDate == null) Color.Transparent
+                                    tint = if (note.value?.endDate == null) Color.Transparent
                                     else MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(leadingIconSize),
                                 )
                                 Spacer(modifier = Modifier.width(spacerWidth))
                                 Text(
-                                    text = if (noteEndDate == null) "End date"
+                                    text = if (note.value?.endDate == null) "End date"
                                     else DateFormater.format(
-                                        timestamp = noteEndDate!!,
+                                        timestamp = note.value!!.endDate!!,
                                         formatString = "'Due' dd MMMM, yyyy 'at' HH:mm"
                                     ),
                                     style = mediumLabelTextStyle,
-                                    color = if (noteEndDate == null) MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (note.value?.endDate == null) MaterialTheme.colorScheme.onSurfaceVariant
                                     else MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.weight(1f),
                                 )
@@ -685,17 +638,13 @@ fun NoteDetailScreen(
                         }
                     }
                     itemsIndexed(items = workList, key = { _, item -> item.id }) { idx, item ->
-                        WorklistItemUI(
-                            worklistItem = item,
-                            onWorklistItemChange = { updatedItem ->
-                                val newList = workList.toMutableList()
-                                newList[idx] = updatedItem
-                                workList = newList
-                            },
-                            onDeleteWorklistItem = {
-                                workList = workList.filterNot { it.id == item.id }
-                            }
-                        )
+                        WorklistItemUI(worklistItem = item, onWorklistItemChange = { updatedItem ->
+                            val newList = workList.toMutableList()
+                            newList[idx] = updatedItem
+                            workList = newList
+                        }, onDeleteWorklistItem = {
+                            workList = workList.filterNot { it.id == item.id }
+                        })
                         if (idx + 1 < workList.size) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(vertical = 8.dp),
@@ -730,9 +679,7 @@ fun NoteDetailScreen(
                                 IconButton(
                                     colors = IconButtonDefaults.iconButtonColors(
                                         contentColor = MaterialTheme.colorScheme.primary
-                                    ),
-                                    onClick = { showAttachmentMenu = true }
-                                ) {
+                                    ), onClick = { showAttachmentMenu = true }) {
                                     Icon(
                                         Icons.Filled.Add,
                                         contentDescription = "Add new task list",
@@ -750,22 +697,20 @@ fun NoteDetailScreen(
                                             AttachmentOption.UPLOAD_FILE -> {
                                                 println("Option Selected: Upload File")
                                                 // TODO: Placeholder Attach File
-                                                attachmentsList =
-                                                    (attachmentsList + Attachment(
-                                                        UUID.randomUUID().toString(),
-                                                        "Placeholder File",
-                                                        "File"
-                                                    ))
+                                                attachmentsList = (attachmentsList + Attachment(
+                                                    UUID.randomUUID().toString(),
+                                                    "Placeholder File",
+                                                    "File"
+                                                ))
                                             }
 
                                             AttachmentOption.ADD_LINK -> {
                                                 println("Option Selected: Add Link")
-                                                attachmentsList =
-                                                    (attachmentsList + Attachment(
-                                                        UUID.randomUUID().toString(),
-                                                        "Placeholder Link",
-                                                        "Link"
-                                                    ))
+                                                attachmentsList = (attachmentsList + Attachment(
+                                                    UUID.randomUUID().toString(),
+                                                    "Placeholder Link",
+                                                    "Link"
+                                                ))
                                             }
 
                                             AttachmentOption.ADD_IMAGE_FROM_GALLERY -> {
@@ -786,8 +731,7 @@ fun NoteDetailScreen(
                                                 )
                                             }
                                         }
-                                    }
-                                )
+                                    })
                             }
                         }
 
@@ -803,8 +747,7 @@ fun NoteDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(
-                                    horizontal = horizontalPadding,
-                                    vertical = verticalPadding
+                                    horizontal = horizontalPadding, vertical = verticalPadding
                                 ),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -841,15 +784,11 @@ fun NoteDetailScreen(
                     commentText = commentText,
                     onCommentTextChange = { commentText = it },
                     onPostComment = { },
-                    modifier = Modifier
-                        .onFocusChanged { commentInputFocused = it.isFocused }
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
-                        .let {
+                    modifier = Modifier.onFocusChanged { commentInputFocused = it.isFocused }
+                        .fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer).let {
                             if (commentInputFocused) return@let it
                             return@let it.padding(bottom = innerPadding.calculateBottomPadding())
-                        }
-                )
+                        })
             }
         }
     }
