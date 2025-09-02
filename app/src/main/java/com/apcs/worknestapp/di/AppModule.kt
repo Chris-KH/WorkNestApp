@@ -15,6 +15,8 @@ import com.apcs.worknestapp.data.remote.notification.NotificationRepository
 import com.apcs.worknestapp.data.remote.notification.NotificationRepositoryImpl
 import com.apcs.worknestapp.data.remote.user.UserRepository
 import com.apcs.worknestapp.data.remote.user.UserRepositoryImpl
+import com.apcs.worknestapp.data.remote.board.BoardRepository
+import com.apcs.worknestapp.data.remote.board.BoardRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -73,4 +75,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideMessageRepository(): MessageRepository = MessageRepositoryImpl()
+    @Provides
+    @Singleton
+    fun provideBoardRepository(): BoardRepository = BoardRepositoryImpl()
 }
