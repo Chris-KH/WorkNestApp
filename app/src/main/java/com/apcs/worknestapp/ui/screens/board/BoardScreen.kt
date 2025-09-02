@@ -56,7 +56,7 @@ fun BoardScreen(
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
 
     val currentBoardState by boardViewModel.boards.collectAsState()
-    val board = remember(currentBoardState, boardId) { 
+    val board = remember(currentBoardState, boardId) {
         currentBoardState.find { it.docId == boardId }
     }
 
@@ -290,7 +290,7 @@ fun BoardScreen(
                         notelist = notelist,
                         onAddNoteClick = { listId, newNoteName ->
                             coroutineScope.launch {
-                                val newNote = Note(name = newNoteName)
+                                val newNote = Note(name = newNoteName, createdAt = com.google.firebase.Timestamp.now())
                                 boardViewModel.addNoteToList(listId, newNote)
                             }
                         },

@@ -108,7 +108,6 @@ fun NoteListCard(
                             ) {
                                 onUpdateNotelistName(notelist.boardId.toString(), notelist.docId, editableNotelistName)
                             } else if (notelist.docId != null && editableNotelistName.isBlank() && notelist.name?.isNotBlank() == true) {
-                                // If cleared, revert to original non-blank name
                                 editableNotelistName = notelist.name!!
                             }
                             isEditingListName = false
