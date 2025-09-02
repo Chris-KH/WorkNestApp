@@ -38,6 +38,7 @@ enum class NoteSortBy {
 @Composable
 fun NoteDropdownActions(
     expanded: Boolean,
+    isNoteEmpty: Boolean,
     onDismissRequest: () -> Unit,
     onChangeBackground: () -> Unit,
     onSort: (NoteSortBy) -> Unit,
@@ -83,21 +84,24 @@ fun NoteDropdownActions(
                         },
                         contentPadding = PaddingValues(horizontal = horizontalPadding)
                     )
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "Sort", style = dropdownTextStyle)
-                        },
-                        onClick = { showSortDropdown = true },
-                        trailingIcon = {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_sort),
-                                contentDescription = "Sort notes by",
-                                modifier = Modifier.size(iconSize),
-                            )
-                        },
-                        contentPadding = PaddingValues(horizontal = horizontalPadding)
-                    )
+                    if (!isNoteEmpty) {
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = "Sort", style = dropdownTextStyle)
+                            },
+                            onClick = { showSortDropdown = true },
+                            trailingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.outline_sort),
+                                    contentDescription = "Sort notes by",
+                                    modifier = Modifier.size(iconSize),
+                                )
+                            },
+                            contentPadding = PaddingValues(horizontal = horizontalPadding)
+                        )
+                    }
+
                     HorizontalDivider(
                         thickness = 8.dp,
                         color = MaterialTheme.colorScheme.surfaceContainer
@@ -118,46 +122,51 @@ fun NoteDropdownActions(
                         onClick = onViewArchive,
                         contentPadding = PaddingValues(horizontal = horizontalPadding)
                     )
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "Archive completed", style = dropdownTextStyle)
-                        },
-                        onClick = onArchiveCompletedNotes,
-                        contentPadding = PaddingValues(horizontal = horizontalPadding)
-                    )
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "Archive all notes", style = dropdownTextStyle)
-                        },
-                        onClick = onArchiveAllNotes,
-                        contentPadding = PaddingValues(horizontal = horizontalPadding)
-                    )
-                    HorizontalDivider(
-                        thickness = 8.dp,
-                        color = MaterialTheme.colorScheme.surfaceContainer
-                    )
+                    if (!isNoteEmpty) {
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = "Archive completed", style = dropdownTextStyle)
+                            },
+                            onClick = onArchiveCompletedNotes,
+                            contentPadding = PaddingValues(horizontal = horizontalPadding)
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = "Archive all notes", style = dropdownTextStyle)
+                            },
+                            onClick = onArchiveAllNotes,
+                            contentPadding = PaddingValues(horizontal = horizontalPadding)
+                        )
+                    }
 
-                    // GROUP 3
-                    DropdownMenuItem(
-                        colors = MenuDefaults.itemColors(
-                            textColor = MaterialTheme.colorScheme.error,
-                            trailingIconColor = MaterialTheme.colorScheme.error,
-                        ),
-                        text = {
-                            Text(text = "Delete all notes", style = dropdownTextStyle)
-                        },
-                        onClick = onDeleteAllNotes,
-                        trailingIcon = {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_trash),
-                                contentDescription = "Delete all",
-                                modifier = Modifier.size(iconSize),
-                            )
-                        },
-                        contentPadding = PaddingValues(horizontal = horizontalPadding)
-                    )
+                    if (!isNoteEmpty) {
+                        HorizontalDivider(
+                            thickness = 8.dp,
+                            color = MaterialTheme.colorScheme.surfaceContainer
+                        )
+
+                        // GROUP 3
+                        DropdownMenuItem(
+                            colors = MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.error,
+                                trailingIconColor = MaterialTheme.colorScheme.error,
+                            ),
+                            text = {
+                                Text(text = "Delete all notes", style = dropdownTextStyle)
+                            },
+                            onClick = onDeleteAllNotes,
+                            trailingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.outline_trash),
+                                    contentDescription = "Delete all",
+                                    modifier = Modifier.size(iconSize),
+                                )
+                            },
+                            contentPadding = PaddingValues(horizontal = horizontalPadding)
+                        )
+                    }
                 } else {
                     DropdownMenuItem(
                         text = {

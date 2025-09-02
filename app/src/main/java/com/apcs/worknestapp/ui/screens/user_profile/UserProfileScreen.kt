@@ -60,7 +60,6 @@ import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -236,7 +235,7 @@ fun UserProfileScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 val textStyle = TextStyle(
-                                    fontSize = 16.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
+                                    fontSize = 14.sp, lineHeight = 14.sp, letterSpacing = 0.sp,
                                     fontWeight = FontWeight.SemiBold, fontFamily = Roboto,
                                 )
 

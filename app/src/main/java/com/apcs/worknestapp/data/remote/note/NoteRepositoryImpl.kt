@@ -6,15 +6,22 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     override val notes: StateFlow<List<Note>> = _notes
@@ -49,10 +56,13 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             }
 
             if (snapshot != null) {
-                val noteList = snapshot.documents.mapNotNull {
+                val remoteNotes = snapshot.documents.mapNotNull {
                     it.toObject(Note::class.java)
                 }
-                _notes.value = noteList
+                val pendingNotes = _notes.value.filter { local ->
+                    local.isLoading == true && remoteNotes.none { it.docId == local.docId }
+                }
+                _notes.value = remoteNotes + pendingNotes
             }
         }
     }
@@ -72,27 +82,28 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         _notes.value = noteList
     }
 
-    override suspend fun addNote(note: Note) {
+    override fun addNote(note: Note) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        val noteRef = firestore.collection("users")
-            .document(authUser.uid)
-            .collection("notes")
-            .document()
+        repoScope.launch {
+            val noteRef = firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notes")
+                .document()
 
-        val noteId = noteRef.id
+            val noteId = noteRef.id
 
-        _notes.value = _notes.value + note.copy(docId = noteId, isLoading = true)
+            _notes.value = _notes.value + note.copy(docId = noteId, isLoading = true)
 
-        noteRef.set(note.copy(docId = noteId, isLoading = null)).await()
-        val snapshot = noteRef.get().await()
-        val newNote = snapshot.toObject(Note::class.java)
+            noteRef.set(note.copy(docId = noteId, isLoading = null)).await()
+            val snapshot = noteRef.get().await()
+            val newNote = snapshot.toObject(Note::class.java)
 
-        newNote?.let {
-            _notes.update { list ->
-                list.filterNot { it.docId == noteId }
+            newNote?.let {
+                _notes.update { list ->
+                    list.filterNot { it.docId == noteId } + newNote
+                }
             }
-            _notes.value = _notes.value + newNote
         }
     }
 
@@ -109,10 +120,10 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         return noteDoc.toObject(Note::class.java) ?: throw Exception("Invalid note format")
     }
 
-    override suspend fun deleteNote(docId: String) {
+    override fun deleteNote(docId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        try {
+        repoScope.launch {
             firestore.collection("users")
                 .document(authUser.uid)
                 .collection("notes")
@@ -123,46 +134,88 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             _notes.update { list ->
                 list.filterNot { it.docId == docId }
             }
-        } catch(_: Exception) {
-            _notes.update { list ->
-                list.filterNot { it.docId == docId }
-            }
         }
     }
 
-    override suspend fun deleteAllNotes() {
+    override fun deleteNotes(noteIds: List<String>) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
-        val noteRef = firestore.collection("users")
-            .document(authUser.uid)
-            .collection("notes")
+        repoScope.launch {
+            val noteRef = firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notes")
 
-        val previousState = _notes.value
+            val batch = firestore.batch()
+            noteIds.forEach { id ->
+                val docRef = noteRef.document(id)
+                batch.delete(docRef)
+            }
+            batch.commit().await()
 
-        try {
-            _notes.value = emptyList()
+            _notes.value = _notes.value.filterNot { it.docId in noteIds }
+        }
+    }
+
+    override fun deleteAllNotes() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        repoScope.launch {
+            val noteRef = firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notes")
 
             val snapshot = noteRef.get().await()
             val batch = firestore.batch()
             snapshot.documents.forEach { batch.delete(it.reference) }
             batch.commit().await()
-        } catch(e: Exception) {
-            _notes.value = previousState
-            throw e
+
+            _notes.value = emptyList()
         }
     }
 
-    override suspend fun archiveAllNotes() {
+    override fun deleteAllArchivedNotes(archived: Boolean) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
-        val noteRef = firestore.collection("users")
-            .document(authUser.uid)
-            .collection("notes")
+        repoScope.launch {
+            val noteRef = firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notes")
+                .whereEqualTo("archived", archived)
 
-        val previousState = _notes.value
+            val snapshot = noteRef.get().await()
+            val batch = firestore.batch()
+            snapshot.documents.forEach { batch.delete(it.reference) }
+            batch.commit().await()
 
-        try {
             _notes.update { list ->
-                list.map { it.copy(archived = true) }
+                list.filterNot { it.archived == archived }
             }
+        }
+    }
+
+    override fun archiveNotes(noteIds: List<String>) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        repoScope.launch {
+            val noteRef = firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notes")
+
+            val batch = firestore.batch()
+            noteIds.forEach { id ->
+                val docRef = noteRef.document(id)
+                batch.update(docRef, "archived", true)
+            }
+            batch.commit().await()
+
+            _notes.update { list ->
+                list.map { if (it.docId in noteIds) it.copy(archived = true) else it }
+            }
+        }
+    }
+
+    override fun archiveAllNotes() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        repoScope.launch {
+            val noteRef = firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notes")
 
             val snapshot = noteRef
                 .whereNotEqualTo("archived", true)
@@ -173,24 +226,19 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                 batch.update(it.reference, "archived", true)
             }
             batch.commit().await()
-        } catch(e: Exception) {
-            _notes.value = previousState
-            throw e
+
+            _notes.update { list ->
+                list.map { it.copy(archived = true) }
+            }
         }
     }
 
-    override suspend fun archiveCompletedNotes() {
+    override fun archiveCompletedNotes() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
-        val noteRef = firestore.collection("users")
-            .document(authUser.uid)
-            .collection("notes")
-
-        val previousState = _notes.value
-
-        try {
-            _notes.update { list ->
-                list.map { if (it.completed == true) it.copy(archived = true) else it }
-            }
+        repoScope.launch {
+            val noteRef = firestore.collection("users")
+                .document(authUser.uid)
+                .collection("notes")
 
             val snapshot = noteRef
                 .whereEqualTo("completed", true)
@@ -202,9 +250,10 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                 batch.update(it.reference, "archived", true)
             }
             batch.commit().await()
-        } catch(e: Exception) {
-            _notes.value = previousState
-            throw e
+
+            _notes.update { list ->
+                list.map { if (it.completed == true) it.copy(archived = true) else it }
+            }
         }
     }
 
@@ -326,6 +375,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     }
 
     override fun clearCache() {
+        repoScope.coroutineContext.cancelChildren()
         removeListener()
         _notes.value = emptyList()
     }

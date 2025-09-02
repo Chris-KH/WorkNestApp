@@ -39,7 +39,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    suspend fun addNote(note: Note): Boolean {
+    fun addNote(note: Note): Boolean {
         return try {
             noteRepo.addNote(note)
             true
@@ -49,7 +49,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    suspend fun deleteNote(docId: String): Boolean {
+    fun deleteNote(docId: String): Boolean {
         return try {
             noteRepo.deleteNote(docId)
             true
@@ -59,7 +59,17 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    suspend fun deleteAllNotes(): Boolean {
+    fun deleteNotes(noteIds: List<String>): Boolean {
+        return try {
+            noteRepo.deleteNotes(noteIds)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Delete list of note failed", e)
+            false
+        }
+    }
+
+    fun deleteAllNotes(): Boolean {
         return try {
             noteRepo.deleteAllNotes()
             true
@@ -69,7 +79,27 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    suspend fun archiveAllNotes(): Boolean {
+    fun deleteAllArchivedNotes(archived: Boolean): Boolean {
+        return try {
+            noteRepo.deleteAllArchivedNotes(archived)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Delete all archived=$archived notes failed", e)
+            false
+        }
+    }
+
+    fun archiveNotes(noteIds: List<String>): Boolean {
+        return try {
+            noteRepo.archiveNotes(noteIds)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Archive list of note failed", e)
+            false
+        }
+    }
+
+    fun archiveAllNotes(): Boolean {
         return try {
             noteRepo.archiveAllNotes()
             true
@@ -79,7 +109,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    suspend fun archiveCompletedNotes(): Boolean {
+    fun archiveCompletedNotes(): Boolean {
         return try {
             noteRepo.archiveCompletedNotes()
             true

@@ -1,24 +1,28 @@
 package com.apcs.worknestapp.ui.screens.note
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,22 +30,28 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -49,6 +59,7 @@ import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
+import com.apcs.worknestapp.ui.components.ConfirmDialog
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
@@ -56,7 +67,7 @@ import com.apcs.worknestapp.ui.screens.Screen
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NoteScreen(
     navController: NavHostController,
@@ -69,8 +80,11 @@ fun NoteScreen(
 
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
     var isInSelectMode by remember { mutableStateOf(false) }
+    val selectedNotes = remember { mutableStateListOf<String>() }
+
     var showActionMenu by remember { mutableStateOf(false) }
-    var shouldShowNoteItemDialog by remember { mutableStateOf<Note?>(null) }
+    var showNoteItemDialog by remember { mutableStateOf<Note?>(null) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     val notes = noteViewModel.notes.collectAsState()
     var notesSortBy by rememberSaveable { mutableStateOf(NoteSortBy.NEWEST) }
@@ -85,10 +99,22 @@ fun NoteScreen(
         }
 
     LaunchedEffect(Unit) {
-        if (isFirstLoad && notes.value.isEmpty()) {
-            noteViewModel.refreshNotesIfEmpty()
+        if (isFirstLoad) {
+            val isSuccess = noteViewModel.refreshNotesIfEmpty()
+            if (isSuccess) isFirstLoad = false
         }
-        isFirstLoad = false
+    }
+
+    LaunchedEffect(isInSelectMode) {
+        if (!isInSelectMode) selectedNotes.clear()
+    }
+
+    LaunchedEffect(displayNotes) {
+        if (isInSelectMode) {
+            selectedNotes.removeAll { noteId ->
+                displayNotes.find { it.docId == noteId } == null
+            }
+        }
     }
 
     LifecycleResumeEffect(Unit) {
@@ -103,7 +129,9 @@ fun NoteScreen(
                 actions = {
                     if (displayNotes.isNotEmpty()) {
                         IconButton(
-                            onClick = { isInSelectMode = !isInSelectMode },
+                            onClick = {
+                                isInSelectMode = !isInSelectMode
+                            },
                             colors = IconButtonDefaults.iconButtonColors(
                                 contentColor = if (isInSelectMode) MaterialTheme.colorScheme.surface
                                 else MaterialTheme.colorScheme.primary,
@@ -142,45 +170,22 @@ fun NoteScreen(
                         )
                         NoteDropdownActions(
                             expanded = showActionMenu,
+                            isNoteEmpty = displayNotes.isEmpty(),
                             onDismissRequest = { showActionMenu = false },
                             onChangeBackground = {},
                             onSort = { notesSortBy = it },
                             onViewArchive = {},
                             onArchiveCompletedNotes = {
-                                coroutineScope.launch {
-                                    val isSuccess = noteViewModel.archiveCompletedNotes()
-                                    if (!isSuccess) {
-                                        snackbarHost.showSnackbar(
-                                            message = "Archive completed notes failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
-                                    showActionMenu = false
-                                }
+                                noteViewModel.archiveCompletedNotes()
+                                showActionMenu = false
                             },
                             onArchiveAllNotes = {
-                                coroutineScope.launch {
-                                    val isSuccess = noteViewModel.archiveAllNotes()
-                                    if (!isSuccess) {
-                                        snackbarHost.showSnackbar(
-                                            message = "Archive all notes failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
-                                    showActionMenu = false
-                                }
+                                noteViewModel.archiveAllNotes()
+                                showActionMenu = false
                             },
                             onDeleteAllNotes = {
-                                coroutineScope.launch {
-                                    val isSuccess = noteViewModel.deleteAllNotes()
-                                    if (!isSuccess) {
-                                        snackbarHost.showSnackbar(
-                                            message = "Delete all notes failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
-                                    showActionMenu = false
-                                }
+                                showActionMenu = false
+                                showConfirmDialog = true
                             }
                         )
                     }
@@ -198,7 +203,22 @@ fun NoteScreen(
         var noteName by remember { mutableStateOf("") }
         val interactionSource = remember { MutableInteractionSource() }
         val isFocused by interactionSource.collectIsFocusedAsState()
-        val imePadding = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+        val isImeVisible = WindowInsets.isImeVisible
+
+        if (showConfirmDialog) {
+            ConfirmDialog(
+                title = "Delete all notes",
+                message = "Are you sure to delete all notes",
+                onDismissRequest = { showConfirmDialog = false },
+                confirmText = "Delete",
+                cancelText = "Cancel",
+                onConfirm = {
+                    showConfirmDialog = false
+                    noteViewModel.deleteAllArchivedNotes(archived = false)
+                },
+                onCancel = { showConfirmDialog = false }
+            )
+        }
 
         Column(
             modifier = Modifier
@@ -208,14 +228,14 @@ fun NoteScreen(
                     end = innerPadding.calculateEndPadding(LayoutDirection.Ltr)
                 )
                 .padding(
-                    bottom = if (isFocused && imePadding > 0.dp) 0.dp
+                    bottom = if (isFocused && isImeVisible) 0.dp
                     else innerPadding.calculateBottomPadding()
                 )
                 .imePadding()
                 .fillMaxSize(),
         ) {
             if (!isFirstLoad) {
-                shouldShowNoteItemDialog?.let {
+                showNoteItemDialog?.let {
                     NoteItemDialog(
                         onArchive = {
                             coroutineScope.launch {
@@ -227,20 +247,14 @@ fun NoteScreen(
                                     message = "Archive note failed",
                                     withDismissAction = true,
                                 )
-                                shouldShowNoteItemDialog = null
+                                showNoteItemDialog = null
                             }
                         },
                         onDelete = {
-                            coroutineScope.launch {
-                                val isSuccess = noteViewModel.deleteNote(it.docId!!)
-                                if (!isSuccess) snackbarHost.showSnackbar(
-                                    message = "Delete note failed",
-                                    withDismissAction = true,
-                                )
-                                shouldShowNoteItemDialog = null
-                            }
+                            noteViewModel.deleteNote(it.docId!!)
+                            showNoteItemDialog = null
                         },
-                        onDismissRequest = { shouldShowNoteItemDialog = null },
+                        onDismissRequest = { showNoteItemDialog = null },
                     )
                 }
                 Box(modifier = Modifier.weight(1f)) {
@@ -256,15 +270,26 @@ fun NoteScreen(
                                 items = displayNotes,
                                 key = { it.docId.hashCode() }
                             ) { note ->
+                                val isSelected = selectedNotes
+                                    .find { it == note.docId } != null
+
                                 NoteItem(
                                     note = note,
+                                    selectedMode = isInSelectMode,
+                                    isSelected = isSelected,
                                     onClick = {
-                                        navController.navigate(
-                                            Screen.NoteDetail.route.replace(
-                                                "{noteId}",
-                                                note.docId ?: ""
+                                        if (note.docId == null) return@NoteItem
+
+                                        if (!isInSelectMode) {
+                                            navController.navigate(
+                                                Screen.NoteDetail.route.replace(
+                                                    "{noteId}", note.docId
+                                                )
                                             )
-                                        )
+                                        } else {
+                                            if (!isSelected) selectedNotes.add(note.docId)
+                                            else selectedNotes.removeIf { it == note.docId }
+                                        }
                                     },
                                     onCompleteClick = {
                                         coroutineScope.launch {
@@ -289,34 +314,80 @@ fun NoteScreen(
                                             }
                                         }
                                     },
-                                    onLongClick = { shouldShowNoteItemDialog = note }
+                                    onLongClick = {
+                                        if (!isInSelectMode) showNoteItemDialog = note
+                                    }
                                 )
                             }
                         }
                     }
                 }
 
-                AddNoteInput(
-                    value = noteName,
-                    onValueChange = { noteName = it },
-                    onAdd = {
-                        if (noteName.isNotBlank()) {
-                            coroutineScope.launch {
-                                noteViewModel.addNote(
-                                    Note(
-                                        name = noteName, description = "", cover = null,
-                                        completed = false, archived = false, isLoading = true,
-                                        createdAt = Timestamp.now()
+                AnimatedContent(
+                    targetState = isInSelectMode,
+                ) {
+                    if (!it) {
+                        AddNoteInput(
+                            value = noteName,
+                            onValueChange = { value -> noteName = value },
+                            onAdd = {
+                                if (noteName.isNotBlank()) {
+                                    val name = noteName
+                                    noteName = ""
+                                    noteViewModel.addNote(
+                                        Note(
+                                            name = name,
+                                            description = "",
+                                            cover = null,
+                                            completed = false,
+                                            archived = false,
+                                            isLoading = true,
+                                            createdAt = Timestamp.now()
+                                        )
+                                    )
+                                }
+                            },
+                            onCancel = { focusManager.clearFocus() },
+                            isFocused = isFocused,
+                            interactionSource = interactionSource,
+                        )
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = MaterialTheme.colorScheme.surface,
+                                    shape = RoundedCornerShape(
+                                        topStartPercent = 25,
+                                        topEndPercent = 25
                                     )
                                 )
-                                noteName = ""
-                            }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        ) {
+                            TextButton(
+                                enabled = selectedNotes.isNotEmpty(),
+                                onClick = {
+                                    noteViewModel.archiveNotes(selectedNotes.toList())
+                                },
+                            ) { Text(text = "Archive") }
+                            Text(
+                                text = "${selectedNotes.size} Selected",
+                                fontSize = 16.sp,
+                                lineHeight = 16.sp,
+                                letterSpacing = (0.2).sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            TextButton(
+                                enabled = selectedNotes.isNotEmpty(),
+                                onClick = {
+                                    noteViewModel.deleteNotes(selectedNotes.toList())
+                                }
+                            ) { Text(text = "Delete") }
                         }
-                    },
-                    onCancel = { focusManager.clearFocus() },
-                    isFocused = isFocused,
-                    interactionSource = interactionSource,
-                )
+                    }
+                }
             } else LoadingScreen()
         }
     }
