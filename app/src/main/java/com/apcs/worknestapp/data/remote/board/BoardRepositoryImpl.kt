@@ -184,20 +184,22 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             throw e
         }
     }
-
-
     override suspend fun updateBoardName(docId: String, name: String) {
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
+        val currentUser = auth.currentUser ?: throw IllegalStateException("User not logged in")
         val boardRef = firestore.collection("boards").document(docId)
 
-        val boardSnapshot = boardRef.get().await()
+        val boardSnapshot = boardRef.get().await() // Suspending call
         val boardData = boardSnapshot.toObject(Board::class.java)
         if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
-            throw SecurityException("User must be a member to update the board name.")
+            throw SecurityException("User must be a member or owner to update the board name.")
         }
 
         boardRef.update("name", name).await()
-        _boards.update { list -> list.map { if (it.docId == docId) it.copy(name = name) else it } }
+
+        _boards.update { list ->
+            list.map { if (it.docId == docId) it.copy(name = name) else it }
+        }
+        Log.d("BoardRepository", "Board name updated successfully for $docId")
     }
 
     override suspend fun updateBoardCover(docId: String, color: Int?) {
@@ -409,14 +411,10 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override fun registerNotelistListener(boardId: String) {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-
-        // First, remove any existing listener to prevent duplicates.
         removeNotelistListener()
 
         val notelistsRef = firestore.collection("notelists")
             .whereEqualTo("boardId", boardId)
-
-        // Set up the real-time listener.
         notelistListener = notelistsRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("BoardRepository", "Listen notelists snapshot failed", error)
@@ -433,13 +431,114 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     }
 
     override fun removeNotelistListener() {
-        notelistListener?.remove() // Disconnects the listener from the database.
+        notelistListener?.remove()
         notelistListener = null
-        _notelists.value = emptyList() // Clear the data in the StateFlow.
+        _notelists.value = emptyList()
     }
 
     override fun clearCache() {
         removeListener()
         _boards.value = emptyList()
     }
+
+    override suspend fun updateNotelistName(boardId: String, notelistId: String, newName: String): Boolean {
+
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Log.e("BoardRepository", "User not logged in. Cannot update notelist name.")
+            return false
+        }
+
+        // Basic validation (can be expanded)
+        if (boardId.isBlank() || notelistId.isBlank() || newName.isBlank()) {
+            Log.e("BoardRepository", "Invalid parameters for updateNotelistName.")
+            return false
+        }
+
+        val notelistRef = firestore.collection("boards").document(boardId)
+            .collection("notelists").document(notelistId)
+
+        return try {
+            val boardDoc = firestore.collection("boards").document(boardId).get().await()
+            val boardData = boardDoc.toObject(Board::class.java)
+            if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
+                Log.e("BoardRepository", "Permission denied: User not a member/owner of board '$boardId'.")
+                return false
+            }
+
+            notelistRef.update("name", newName).await()
+
+            _notelists.update { currentList ->
+                currentList.map {
+                    if (it.docId == notelistId && it.boardId == boardId) { // Match by docId and boardId
+                        it.copy(name = newName)
+                    } else {
+                        it
+                    }
+                }
+            }
+            true
+        } catch (e: Exception) {
+            Log.e("BoardRepository", "Error updating notelist '$notelistId' name: ${e.message}", e)
+            false
+        }
+    }
+    override suspend fun updateNoteCheckedStatus(
+        boardId: String,
+        notelistId: String,
+        noteId: String,
+        isChecked: Boolean
+    ): Boolean {
+        Log.d(
+            "BoardRepository",
+            "Updating note '$noteId' in list '$notelistId' on board '$boardId' to checked: $isChecked"
+        )
+
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Log.e("BoardRepository", "User not logged in. Cannot update note status.")
+            return false
+        }
+        if (boardId.isBlank() || notelistId.isBlank() || noteId.isBlank()) {
+            Log.e("BoardRepository", "Invalid parameters for updateNoteCheckedStatus.")
+            return false
+        }
+
+        val noteRef = firestore.collection("boards").document(boardId)
+            .collection("notelists").document(notelistId)
+            .collection("notes").document(noteId)
+
+        return try {
+            val boardDoc = firestore.collection("boards").document(boardId).get().await()
+            val boardData = boardDoc.toObject(Board::class.java)
+            if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
+                Log.e("BoardRepository", "Permission denied: User not a member/owner of board '$boardId'.")
+                return false
+            }
+            noteRef.update("completed", isChecked).await() // Or "isChecked"
+            _notelists.update { currentNotelists ->
+                currentNotelists.map { notelist ->
+                    if (notelist.docId == notelistId && notelist.boardId == boardId) {
+                        val updatedNotes = notelist.notes.map { note ->
+                            if (note.docId == noteId) {
+                                note.copy(completed = isChecked)
+                            } else {
+                                note
+                            }
+                        }
+                        notelist.copy(notes = updatedNotes)
+                    } else {
+                        notelist
+                    }
+                }
+            }
+
+            Log.i("BoardRepository", "Note '$noteId' status updated successfully to checked: $isChecked.")
+            true
+        } catch (e: Exception) {
+            Log.e("BoardRepository", "Error updating note '$noteId' status: ${e.message}", e)
+            false
+        }
+    }
+
 }

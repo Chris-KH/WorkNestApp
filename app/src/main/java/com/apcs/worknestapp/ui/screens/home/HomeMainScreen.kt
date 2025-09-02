@@ -184,7 +184,7 @@ fun HomeMainScreen(
                     board = board,
                     onClick = onNavigateToBoard
                 )
-                HorizontalDivider()
+                Spacer(modifier = Modifier.width(10.dp))
             }
         }
     }

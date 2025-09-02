@@ -72,6 +72,8 @@ class BoardViewModel @Inject constructor(
         }
     }
 
+
+
     suspend fun deleteBoard(docId: String): Boolean {
         return try {
             boardRepo.deleteBoard(docId)
@@ -100,14 +102,15 @@ class BoardViewModel @Inject constructor(
             null
         }
     }
-
-    suspend fun updateBoardName(docId: String, name: String): Boolean {
-        return try {
-            boardRepo.updateBoardName(docId, name)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Update board name failed", e)
-            false
+    fun updateBoardName(boardId: String, newName: String) {
+        viewModelScope.launch {
+            try {
+                boardRepo.updateBoardName(boardId, newName)
+            } catch (e: SecurityException) {
+                Log.e("YourViewModel", "Permission error updating board name: ${e.message}")
+            } catch (e: Exception) {
+                Log.e("YourViewModel", "Error updating board name: ${e.message}")
+            }
         }
     }
 
@@ -191,6 +194,27 @@ class BoardViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e("BoardViewModel", "Refresh notelists failed", e)
             false
+        }
+    }
+
+    fun updateNotelistName(boardId: String, notelistId: String, newName: String) {
+        viewModelScope.launch {
+            try {
+                boardRepo.updateNotelistName(boardId, notelistId, newName)
+            } catch (e: SecurityException) {
+                Log.e("BoardViewModel", "Rename notelists failed", e)
+                false
+            }
+        }
+    }
+    fun updateUserNoteCheckedStatus(boardId: String, notelistId: String, noteId: String, isChecked: Boolean) {
+        viewModelScope.launch {
+            val success = boardRepo.updateNoteCheckedStatus(boardId, notelistId, noteId, isChecked)
+            if (success) {
+                Log.d("ViewModel", "Note checked status updated.")
+            } else {
+                Log.e("ViewModel", "Failed to update note checked status.")
+            }
         }
     }
 

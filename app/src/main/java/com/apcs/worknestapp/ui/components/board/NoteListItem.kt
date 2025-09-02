@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,29 +31,40 @@ fun NoteListItem(
     onRemoveThisNote: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Checkbox(
-            checked = note.completed == true,
-            onCheckedChange = onCheckedChange
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = note.name ?: "Untitled Note",
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        IconButton(onClick = onRemoveThisNote) {
-            Icon(
-                imageVector = Icons.Filled.Delete,
-                contentDescription = "Remove Note"
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 10.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = note.completed ?: false,
+                onCheckedChange = onCheckedChange
             )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = note.name.takeIf { it?.isNotBlank() == false } ?: "Untitled Note",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f)
+            )
+            if (note.isLoading == true) {
+                Spacer(Modifier.width(4.dp))
+                CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+            }
+            IconButton(onClick = onRemoveThisNote, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Remove Note",
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }

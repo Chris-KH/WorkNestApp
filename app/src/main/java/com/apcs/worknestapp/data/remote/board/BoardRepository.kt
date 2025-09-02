@@ -26,7 +26,9 @@ interface BoardRepository {
     suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean
     fun getNotelistsForBoard(boardId: String?): Flow<List<Notelist>>
     suspend fun refreshNotelists(boardId: String)
+    suspend fun updateNotelistName(boardId: String,notelistId: String, newName: String) : Boolean
     fun registerNotelistListener(boardId: String)
+    suspend fun  updateNoteCheckedStatus(boardId: String, notelistId: String, noteId: String, isChecked: Boolean) : Boolean
     fun removeNotelistListener()
     fun clearCache()
 }
