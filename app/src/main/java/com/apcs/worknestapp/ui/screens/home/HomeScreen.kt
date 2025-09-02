@@ -145,7 +145,10 @@ fun HomeScreen(
             when(it) {
                 HomeSubScreenState.MAIN -> HomeMainScreen(
                     modifier = Modifier.padding(innerPadding),
-                    onNavigateToWorkspace = { currentSubScreen = HomeSubScreenState.WORKSPACE }
+                    onNavigateToWorkspace = { currentSubScreen = HomeSubScreenState.WORKSPACE },
+                    onNavigateToBoard = { boardId ->
+                        navController.navigate("board/$boardId")
+                    }
                 )
 
                 HomeSubScreenState.WORKSPACE -> HomeWorkspaceScreen(

@@ -30,13 +30,9 @@ import com.apcs.worknestapp.ui.components.board.NoteListCard
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import kotlinx.coroutines.launch
 
-// Dummy data classes for placeholder UI elements
-//enum class BoardSortOption { NAME, }
-//data class BoardFilterOption(val id: String, val name: String, var isSelected: Boolean)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoardScreen2(
+fun BoardScreen(
     navController: NavHostController,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -68,7 +64,6 @@ fun BoardScreen2(
 
     LifecycleResumeEffect(Unit) {
         boardViewModel.registerListener()
-        // Assuming a listener for notelists as well
         boardViewModel.registerNotelistListener(boardId)
         onPauseOrDispose {
             boardViewModel.removeListener()
@@ -117,7 +112,6 @@ fun BoardScreen2(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            // Button to add a new notelist
             OutlinedButton(
                 onClick = {
                     coroutineScope.launch {

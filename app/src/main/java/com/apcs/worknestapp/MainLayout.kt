@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.FallbackScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.screens.add_contact.AddContractScreen
+import com.apcs.worknestapp.ui.screens.board.BoardScreen
 import com.apcs.worknestapp.ui.screens.chat.ChatScreen
 import com.apcs.worknestapp.ui.screens.contact.ContactScreen
 import com.apcs.worknestapp.ui.screens.edit_profile.EditProfileField
@@ -392,6 +394,21 @@ fun MainLayout(startDestination: String) {
                         navController = navController,
                         modifier = Modifier.padding(innerPadding)
                     )
+                }
+            }
+            composable(
+                route = "board/{boardId}",
+                arguments = listOf(navArgument("boardId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val boardId = backStackEntry.arguments?.getString("boardId")
+                if (boardId != null) {
+                    BoardScreen(
+                        navController = navController,
+                        snackbarHostState = snackbarHost,
+                        modifier = Modifier.padding(innerPadding),
+                        boardId = boardId)
+                } else {
+                    Text("Error: Board ID missing")
                 }
             }
 
