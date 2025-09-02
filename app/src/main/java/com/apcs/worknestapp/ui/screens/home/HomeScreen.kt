@@ -28,8 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
@@ -40,6 +42,7 @@ import com.apcs.worknestapp.ui.screens.Screen
 fun HomeScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    boardViewModel: BoardViewModel = hiltViewModel()
 ) {
     var currentSubScreen by rememberSaveable { mutableStateOf(HomeSubScreenState.MAIN) }
     var showModalBottom by remember { mutableStateOf(false) }
@@ -62,7 +65,9 @@ fun HomeScreen(
                                 HomeDropdownActions(
                                     expanded = menuExpanded,
                                     onDismissRequest = { menuExpanded = false },
-                                    onCreateBoard = { menuExpanded = false },
+                                    onCreateBoard = {
+                                        boardViewModel.createBoard("Untitled Board", null)
+                                        menuExpanded = false },
                                     onCreateCard = { menuExpanded = false },
                                 )
                             }
@@ -71,7 +76,7 @@ fun HomeScreen(
 
                 HomeSubScreenState.WORKSPACE ->
                     CustomTopBar(
-                        field = "Không gian của tôi",
+                        field = "My Workspace",
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                             scrolledContainerColor = MaterialTheme.colorScheme.surface,
@@ -160,3 +165,4 @@ fun HomeScreen(
         }
     }
 }
+

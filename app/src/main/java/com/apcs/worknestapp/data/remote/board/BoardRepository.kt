@@ -13,7 +13,7 @@ interface BoardRepository {
     fun registerListener()
     suspend fun refreshBoard()
     suspend fun getBoard(docId: String): Board
-    suspend fun addBoard(board: Board)
+    suspend fun addBoard(name: String, cover: Int?)
     suspend fun deleteBoard(docId: String)
     suspend fun deleteAllBoards()
     suspend fun updateBoardName(docId: String, name: String)

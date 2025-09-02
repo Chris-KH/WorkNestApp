@@ -1,10 +1,14 @@
 package com.apcs.worknestapp.data.remote.board
 
+import kotlinx.coroutines.launch
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.apcs.worknestapp.data.remote.note.Note
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 @HiltViewModel
@@ -57,13 +61,14 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    suspend fun addBoard(board: Board): Boolean {
-        return try {
-            boardRepo.addBoard(board)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Add a board failed", e)
-            false
+    fun createBoard(name: String, cover: Int?) {
+        viewModelScope.launch {
+            try {
+                boardRepo.addBoard(name, cover)
+                Log.d("BoardViewModel", "Board '$name' creation process initiated successfully via repository.")
+            } catch (e: Exception) {
+                Log.e("BoardViewModel", "Error creating board '$name'", e)
+            }
         }
     }
 

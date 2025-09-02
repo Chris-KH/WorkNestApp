@@ -110,38 +110,43 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         return board
     }
 
-    override suspend fun addBoard(board: Board) {
+    override suspend fun addBoard(name: String, cover: Int?) {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
         val userId = currentUser.uid
 
         val boardRef = firestore.collection("boards").document()
         val boardId = boardRef.id
 
-        val newBoard = board.copy(
+        val newBoard = Board(
             docId = boardId,
-            isLoading = null,
+            name = name,
+            cover = cover,
             ownerId = userId,
-            memberIds = (board.memberIds + userId).distinct(),
-            createdBy = userId
+            memberIds = listOf(userId),
+            createdBy = userId,
+            isLoading = null
         )
 
-        _boards.value = _boards.value + newBoard.copy(isLoading = true)
+        _boards.update { it + newBoard.copy(isLoading = true) }
 
         try {
             boardRef.set(newBoard).await()
-            val snapshot = boardRef.get().await()
-            val savedBoard = snapshot.toObject(Board::class.java)
 
-            savedBoard?.let {
-                _boards.update { list ->
-                    list.filterNot { it.docId == boardId || it.docId == null } + it
+            _boards.update { list ->
+                list.map {
+                    if (it.docId == boardId) {
+                        newBoard.copy(isLoading = false)
+                    } else {
+                        it
+                    }
                 }
             }
         } catch (e: Exception) {
-            _boards.update { list -> list.filterNot { it.docId == boardId && it.isLoading == true } }
+            _boards.update { list -> list.filterNot { it.docId == boardId } }
             throw e
         }
     }
+
     override suspend fun deleteBoard(docId: String) {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(docId)
