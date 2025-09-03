@@ -76,13 +76,13 @@ fun HomeMainScreen(
     }
 
     LaunchedEffect(Unit) {
-        boardViewModel.refreshBoardsIfEmpty()
+        boardViewModel.refreshBoards()
     }
 
     LifecycleResumeEffect(Unit) {
-        boardViewModel.registerListener()
+        boardViewModel.registerBoardListener()
         onPauseOrDispose {
-            boardViewModel.removeListener()
+            boardViewModel.removeBoardListener()
         }
     }
 

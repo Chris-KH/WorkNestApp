@@ -34,6 +34,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.board.Notelist
 import com.apcs.worknestapp.data.remote.note.Note
 
@@ -57,13 +59,15 @@ import com.apcs.worknestapp.data.remote.note.Note
 @Composable
 fun NoteListCard(
     notelist: Notelist,
+    boardId: String,
     onAddNoteClick: (listId: String, noteName: String) -> Unit,
     onNoteClick: (Note) -> Unit,
     onNoteCheckedChange: (Note, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     onRemoveNotelist: () -> Unit,
     onRemoveSpecificNote: (listId: String, noteId: String) -> Unit,
-    onUpdateNotelistName: (boardId: String, notelistId: String, newName: String) -> Unit
+    onUpdateNotelistName: (boardId: String, notelistId: String, newName: String) -> Unit,
+    boardViewModel: BoardViewModel
 ) {
     val focusManager = LocalFocusManager.current
     var newNoteName by rememberSaveable(notelist.docId) { mutableStateOf("") }
@@ -106,7 +110,7 @@ fun NoteListCard(
                                 editableNotelistName.isNotBlank() &&
                                 editableNotelistName != (notelist.name ?: "")
                             ) {
-                                onUpdateNotelistName(notelist.boardId.toString(), notelist.docId, editableNotelistName)
+                                onUpdateNotelistName(boardId, notelist.docId, editableNotelistName)
                             } else if (notelist.docId != null && editableNotelistName.isBlank() && notelist.name?.isNotBlank() == true) {
                                 editableNotelistName = notelist.name!!
                             }
@@ -124,7 +128,7 @@ fun NoteListCard(
                                     editableNotelistName.isNotBlank() &&
                                     editableNotelistName != (notelist.name ?: "")
                                 ) {
-                                    onUpdateNotelistName(notelist.boardId.toString(), notelist.docId, editableNotelistName)
+                                    onUpdateNotelistName(boardId, notelist.docId, editableNotelistName)
                                 } else if (notelist.docId != null && editableNotelistName.isBlank() && notelist.name?.isNotBlank() == true) {
                                     editableNotelistName = notelist.name!!
                                 }
@@ -136,7 +140,7 @@ fun NoteListCard(
                                     editableNotelistName.isNotBlank() &&
                                     editableNotelistName != (notelist.name ?: "")
                                 ) {
-                                    onUpdateNotelistName(notelist.boardId.toString(), notelist.docId, editableNotelistName)
+                                    onUpdateNotelistName(boardId, notelist.docId, editableNotelistName)
                                 } else if (notelist.docId != null && editableNotelistName.isBlank() && notelist.name?.isNotBlank() == true) {
                                     editableNotelistName = notelist.name!!
                                 }
@@ -170,7 +174,9 @@ fun NoteListCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Box(modifier = Modifier.weight(1f)) {
-                if (notelist.notes.isEmpty()) {
+                val notes by boardViewModel.notes.collectAsState()
+
+                if (notes.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -188,7 +194,7 @@ fun NoteListCard(
                         contentPadding = PaddingValues(vertical = 4.dp)
                     ) {
                         items(
-                            items = notelist.notes,
+                            items = notes,
                             key = { note -> note.docId ?: note.name.hashCode() }
                         ) { note ->
                             NoteListItem(

@@ -481,7 +481,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         notesListener = notesRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                if (error is FirebaseFirestoreException && error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                if ( error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
                 }
                 return@addSnapshotListener
             }

@@ -287,6 +287,8 @@ fun BoardScreen(
                     key = { notelist -> notelist.docId ?: notelist.name.hashCode().toString() }
                 ) { notelist ->
                     NoteListCard(
+                        boardViewModel = boardViewModel,
+                        boardId = boardId!!,
                         notelist = notelist,
                         onAddNoteClick = { listId, newNoteName ->
                             coroutineScope.launch {
