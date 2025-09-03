@@ -55,8 +55,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -72,21 +70,22 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.note.Checklist
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
+import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.components.notedetail.Attachment
 import com.apcs.worknestapp.ui.components.notedetail.AttachmentOption
 import com.apcs.worknestapp.ui.components.notedetail.AttachmentOptionsDropdownMenu
+import com.apcs.worknestapp.ui.components.notedetail.ChecklistItem
 import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
 import com.apcs.worknestapp.ui.components.notedetail.CoverPickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DateTimePickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DescriptionEditModal
-import com.apcs.worknestapp.ui.components.notedetail.WorklistItem
-import com.apcs.worknestapp.ui.components.notedetail.WorklistItemUI
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
@@ -115,10 +114,10 @@ fun NoteDetailScreen(
 
     //NoteState
     val note = noteViewModel.currentNote.collectAsState()
-    var noteName by remember { mutableStateOf("") }
+    val checklists = note.value?.checklists ?: emptyList()
+    var noteName by remember(note.value?.name) { mutableStateOf(note.value?.name ?: "") }
     val noteCoverColor = note.value?.cover?.let { ColorUtils.safeParse(it) }
 
-    var workList by remember { mutableStateOf(emptyList<WorklistItem>()) }
 //    var history by remember { mutableStateOf(emptyList<String>()) }
 //    var currentBoard by remember { mutableStateOf<String?>("inbox") }
 //    var quickMenu by remember { mutableStateOf(false) }
@@ -145,8 +144,6 @@ fun NoteDetailScreen(
                 message = "Load note failed. Note not founded",
                 withDismissAction = true,
             )
-        } else {
-            noteName = noteRemote.name ?: ""
         }
         isFirstLoading = false
     }
@@ -167,7 +164,8 @@ fun NoteDetailScreen(
     Scaffold(
         topBar = {
             CustomTopBar(
-                field = "",
+                field = if (topBarBackground == surfaceColorOverlay) ""
+                else (note.value?.name ?: ""),
                 showDivider = false,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = topBarBackground,
@@ -300,10 +298,7 @@ fun NoteDetailScreen(
                         start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
                         end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
                     )
-                    .let {
-                        if (commentInputFocused) return@let it.imePadding()
-                        return@let it
-                    }
+                    .let { if (commentInputFocused) it.imePadding() else it }
                     .fillMaxSize()
             ) {
                 when(modalBottomType) {
@@ -401,7 +396,7 @@ fun NoteDetailScreen(
                     val spacerWidth = 12.dp
                     val fontFamily = Roboto
                     val smallLabelTextStyle = TextStyle(
-                        fontSize = 14.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
+                        fontSize = 15.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
                         fontFamily = fontFamily, fontWeight = FontWeight.Normal,
                     )
                     val mediumLabelTextStyle = TextStyle(
@@ -466,9 +461,8 @@ fun NoteDetailScreen(
                             }
                         }
                     }
-
                     if (note.value?.archived == true) {
-                        item(key = "Archive-Status") {
+                        item(key = "ArchiveStatus") {
                             val shape = RoundedCornerShape(15f)
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
@@ -496,10 +490,7 @@ fun NoteDetailScreen(
                             }
                         }
                     }
-
                     item(key = "Name") {
-                        val focusRequester = remember { FocusRequester() }
-
                         Row(
                             verticalAlignment = Alignment.Top,
                             modifier = Modifier
@@ -561,7 +552,6 @@ fun NoteDetailScreen(
                                 ),
                                 containerColor = Color.Transparent,
                                 modifier = Modifier
-                                    .focusRequester(focusRequester)
                                     .onFocusChanged { state ->
                                         val noteNameInitial = note.value?.name ?: ""
                                         if (!state.isFocused && noteName != noteNameInitial) {
@@ -573,6 +563,7 @@ fun NoteDetailScreen(
                                                         name = noteName,
                                                     )
                                                     if (!isSuccess) {
+                                                        noteName = noteNameInitial
                                                         snackbarHost.showSnackbar(
                                                             message = "Update note name failed. Try again",
                                                             withDismissAction = true,
@@ -581,7 +572,8 @@ fun NoteDetailScreen(
                                                 }
                                             }
                                         }
-                                    })
+                                    }
+                            )
                         }
                     }
                     item(key = "Description") {
@@ -611,6 +603,7 @@ fun NoteDetailScreen(
                                 else MaterialTheme.colorScheme.onSurface
                             )
                         }
+                        HorizontalDivider()
                     }
                     item(key = "DateTime") {
                         Column(
@@ -685,6 +678,7 @@ fun NoteDetailScreen(
                                     modifier = Modifier.weight(1f),
                                 )
                             }
+                            HorizontalDivider()
                         }
                     }
                     item(key = "CheckLists") {
@@ -703,7 +697,7 @@ fun NoteDetailScreen(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.outline_checkmark),
-                                    contentDescription = "Attachments",
+                                    contentDescription = null,
                                     modifier = Modifier.size(leadingIconSize),
                                 )
                                 Spacer(modifier = Modifier.width(spacerWidth))
@@ -711,38 +705,84 @@ fun NoteDetailScreen(
                             }
                             Spacer(modifier = Modifier.width(spacerWidth))
                             IconButton(
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.primary
-                                ),
                                 onClick = {
-                                    val newWorklistItem =
-                                        WorklistItem(name = "New List", tasks = emptyList())
-                                    workList = workList + newWorklistItem
+                                    val newChecklist = Checklist()
+                                    val isSuccess = noteViewModel
+                                        .addNewChecklist(noteId, newChecklist)
+                                    if (!isSuccess) {
+                                        coroutineScope.launch {
+                                            snackbarHost.showSnackbar(
+                                                message = "Add new checklist failed",
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
                                 },
                             ) {
                                 Icon(
                                     Icons.Filled.Add,
-                                    contentDescription = "Add new task list",
-                                    modifier = Modifier.size(28.dp),
+                                    contentDescription = "Add new check list",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp),
                                 )
                             }
                         }
                     }
-                    itemsIndexed(items = workList, key = { _, item -> item.id }) { idx, item ->
-                        WorklistItemUI(worklistItem = item, onWorklistItemChange = { updatedItem ->
-                            val newList = workList.toMutableList()
-                            newList[idx] = updatedItem
-                            workList = newList
-                        }, onDeleteWorklistItem = {
-                            workList = workList.filterNot { it.id == item.id }
-                        })
-                        if (idx + 1 < workList.size) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                thickness = 4.dp,
-                                color = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        }
+                    itemsIndexed(
+                        items = checklists,
+                        key = { _, item -> item.docId ?: UUID.randomUUID() }
+                    ) { idx, item ->
+                        ChecklistItem(
+                            checklist = item,
+                            noteId = noteId,
+                            noteViewModel = noteViewModel,
+                            onAddNewTask = {
+                                val checklistId = item.docId ?: return@ChecklistItem
+                                val newTask = Task()
+                                val isSuccess = noteViewModel
+                                    .addNewTask(noteId, checklistId, newTask)
+                                if (!isSuccess) {
+                                    coroutineScope.launch {
+                                        snackbarHost.showSnackbar(
+                                            message = "Add task failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            },
+                            onChangeChecklistName = { newName ->
+                                val initialName = note.value?.name ?: ""
+                                val checklistId = item.docId ?: return@ChecklistItem initialName
+                                val isSuccess = noteViewModel
+                                    .updateChecklistName(noteId, checklistId, newName)
+                                if (!isSuccess) {
+                                    coroutineScope.launch {
+                                        snackbarHost.showSnackbar(
+                                            message = "Update checklist name failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                    return@ChecklistItem initialName
+                                }
+                                return@ChecklistItem newName
+                            },
+                            onDeleteChecklist = {
+                                val checklistId = item.docId ?: return@ChecklistItem
+                                val isSuccess = noteViewModel.deleteChecklist(noteId, checklistId)
+                                if (!isSuccess) {
+                                    coroutineScope.launch {
+                                        snackbarHost.showSnackbar(
+                                            message = "Delete checklist failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                .padding(horizontal = horizontalPadding)
+                        )
+
                     }
                     item(key = "Attachments") {
                         Row(
@@ -773,8 +813,8 @@ fun NoteDetailScreen(
                                     ), onClick = { showAttachmentMenu = true }) {
                                     Icon(
                                         Icons.Filled.Add,
-                                        contentDescription = "Add new task list",
-                                        modifier = Modifier.size(28.dp),
+                                        contentDescription = "Add new attachment",
+                                        modifier = Modifier.size(24.dp),
                                     )
                                 }
                                 // This is the Submenu
@@ -865,6 +905,7 @@ fun NoteDetailScreen(
                                 textAlign = TextAlign.Center,
                             )
                         }
+                        HorizontalDivider()
                     }
                     else itemsIndexed(items = commentList) { index, comment ->
                         CommentItem(comment = comment)

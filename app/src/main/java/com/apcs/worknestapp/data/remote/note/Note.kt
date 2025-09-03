@@ -12,8 +12,8 @@ data class Note(
     val description: String? = null,
     val startDate: Timestamp? = null,
     val endDate: Timestamp? = null,
-    val completed: Boolean? = null,
-    val archived: Boolean? = null,
+    val completed: Boolean? = false,
+    val archived: Boolean? = false,
     @ServerTimestamp val createdAt: Timestamp? = null,
 
     //Use-case, not fields of document Note
@@ -24,7 +24,7 @@ data class Note(
 
 data class Checklist(
     @DocumentId val docId: String? = null,
-    val name: String? = null,
+    val name: String? = "Checklist",
 
     //Use-case, not fields of document Checklists
     @get:Exclude val tasks: List<Task> = emptyList(),
@@ -32,6 +32,6 @@ data class Checklist(
 
 data class Task(
     @DocumentId val docId: String? = null,
-    val name: String? = null,
-    val done: Boolean? = null,
+    val name: String? = "Task",
+    val done: Boolean? = false,
 )

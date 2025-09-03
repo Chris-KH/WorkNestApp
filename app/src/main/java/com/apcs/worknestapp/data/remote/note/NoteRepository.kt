@@ -19,6 +19,17 @@ interface NoteRepository {
     fun archiveNotes(noteIds: List<String>, archived: Boolean)
     fun archiveAllNotes(archived: Boolean)
     fun archiveCompletedNotes()
+
+    //Checklist in note
+    fun addNewChecklist(noteId: String, checklist: Checklist)
+    fun deleteChecklist(noteId: String, checklistId: String)
+    fun updateChecklistName(noteId: String, checklistId: String, name: String)
+    fun addNewTask(noteId: String, checklistId: String, task: Task)
+    fun deleteTask(noteId: String, checklistId: String, taskId: String)
+    fun updateTaskName(noteId: String, checklistId: String, taskId: String, name: String)
+    fun updateTaskDone(noteId: String, checklistId: String, taskId: String, done: Boolean)
+
+    //Update note
     suspend fun updateNoteName(docId: String, name: String)
     suspend fun updateNoteCover(docId: String, color: Int?)
     suspend fun updateNoteDescription(docId: String, description: String)
