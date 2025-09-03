@@ -358,6 +358,40 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         }
     }
 
+    override fun updateChecklistName(noteId: String, checklistId: String, name: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(noteId)
+
+        val checklistRef = noteRef
+            .collection("checklists")
+            .document(checklistId)
+
+        repoScope.launch {
+            firestore.runTransaction { transaction ->
+                val noteSnapshot = transaction.get(noteRef)
+                if (!noteSnapshot.exists()) {
+                    if (_currentNote.value?.docId == noteId) {
+                        _currentNote.value = null
+                    }
+                    throw Exception("Note not found")
+                }
+
+                transaction.update(checklistRef, "name", name)
+                if (_currentNote.value?.docId == noteId) {
+                    _currentNote.update { note ->
+                        val currentChecklists = (note?.checklists ?: emptyList()).map {
+                            if (it.docId == checklistId) it.copy(name = name) else it
+                        }
+                        note?.copy(checklists = currentChecklists)
+                    }
+                }
+            }.await()
+        }
+    }
+
     override suspend fun updateNoteName(docId: String, name: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
         val noteRef = firestore.collection("users")

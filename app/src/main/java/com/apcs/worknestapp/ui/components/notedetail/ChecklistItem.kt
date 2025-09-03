@@ -1,10 +1,13 @@
 package com.apcs.worknestapp.ui.components.notedetail
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -17,6 +20,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
@@ -39,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Checklist
+import com.apcs.worknestapp.ui.components.ConfirmDialog
+import com.apcs.worknestapp.ui.components.ConfirmDialogState
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.theme.Roboto
 
@@ -46,17 +52,29 @@ import com.apcs.worknestapp.ui.theme.Roboto
 fun ChecklistItem(
     checklist: Checklist,
     modifier: Modifier = Modifier,
-    onChangeChecklistName: (String) -> Unit,
+    onChangeChecklistName: (String) -> String,
     onDeleteChecklist: () -> Unit,
 ) {
-    var checklistName by remember { mutableStateOf(checklist.name ?: "xxx") }
+    var checklistName by remember { mutableStateOf(checklist.name ?: "") }
     var isCollapsed by remember { mutableStateOf(false) }
     var hideCompleted by remember { mutableStateOf(false) }
+    var showConfirmDeleteDialog by remember { mutableStateOf<ConfirmDialogState?>(null) }
 
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        showConfirmDeleteDialog?.let {
+            ConfirmDialog(
+                title = it.title,
+                message = it.message,
+                onDismissRequest = { showConfirmDeleteDialog = null },
+                confirmText = it.confirmText,
+                cancelText = it.cancelText,
+                onConfirm = it.onConfirm,
+                onCancel = it.onConfirm,
+            )
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -67,7 +85,7 @@ fun ChecklistItem(
                 targetValue = if (isCollapsed) 0f else 180f, label = "arrowRotation"
             )
             val textStyle = TextStyle(
-                fontSize = 15.sp, lineHeight = 16.sp, letterSpacing = (0.25).sp,
+                fontSize = 15.sp, lineHeight = 18.sp, letterSpacing = (0.4).sp,
                 fontFamily = Roboto, fontWeight = FontWeight.Medium
             )
             CustomTextField(
@@ -97,18 +115,21 @@ fun ChecklistItem(
                         val initialName = checklist.name ?: ""
                         if (!state.isFocused && checklistName != initialName) {
                             if (checklistName.isBlank()) checklistName = initialName
-                            else onChangeChecklistName(checklistName)
+                            else {
+                                val newName = onChangeChecklistName(checklistName)
+                                checklistName = newName
+                            }
                         }
                     }
             )
-            IconButton(onClick = { isCollapsed = !isCollapsed }) {
+            IconButton(onClick = { isCollapsed = !isCollapsed }, modifier = Modifier.size(40.dp)) {
                 Icon(
                     imageVector = Icons.Filled.KeyboardArrowUp,
                     contentDescription = if (isCollapsed) "Expand" else "Collapse",
                     modifier = Modifier.rotate(rotation)
                 )
             }
-            IconButton(onClick = { showDropdownMenu = true }) {
+            IconButton(onClick = { showDropdownMenu = true }, modifier = Modifier.size(40.dp)) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "More options",
@@ -122,12 +143,28 @@ fun ChecklistItem(
                     modifier = Modifier.widthIn(min = 240.dp)
                 ) {
                     val dropdownTextStyle = TextStyle(
-                        fontSize = 15.sp, lineHeight = 16.sp,
+                        fontSize = 15.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
                         fontFamily = Roboto, fontWeight = FontWeight.Normal,
                     )
                     val horizontalPadding = 20.dp
                     val iconSize = 24.dp
 
+                    DropdownMenuItem(
+                        text = { Text(text = "New task", style = dropdownTextStyle) },
+                        onClick = {
+                            showDropdownMenu = false
+
+                        },
+                        trailingIcon = {
+                            Icon(
+                                painter = painterResource(R.drawable.outline_add_task),
+                                contentDescription = "Add new task",
+                                modifier = Modifier.size(iconSize),
+                            )
+                        },
+                        contentPadding = PaddingValues(horizontal = horizontalPadding)
+                    )
+                    HorizontalDivider()
                     DropdownMenuItem(
                         text = {
                             Text(
@@ -153,14 +190,23 @@ fun ChecklistItem(
                         },
                         contentPadding = PaddingValues(horizontal = horizontalPadding)
                     )
-                    HorizontalDivider()
+                    HorizontalDivider(
+                        thickness = 8.dp,
+                        color = MaterialTheme.colorScheme.surfaceContainer
+                    )
                     DropdownMenuItem(
-                        text = {
-                            Text(text = "Delete", style = dropdownTextStyle)
-                        },
+                        text = { Text(text = "Delete", style = dropdownTextStyle) },
                         onClick = {
                             showDropdownMenu = false
                             onDeleteChecklist()
+                            /*showConfirmDeleteDialog = ConfirmDialogState(
+                                title = "Delete checklist",
+                                message = "Are you sure?",
+                                confirmText = "Delete",
+                                cancelText = "Cancel",
+                                onConfirm = { onDeleteChecklist() },
+                                onCancel = { showConfirmDeleteDialog = null }
+                            )*/
                         },
                         trailingIcon = {
                             Icon(
@@ -178,5 +224,21 @@ fun ChecklistItem(
                 }
             }
         }
+        if (checklist.tasks.isNotEmpty()) {
+            val total = checklist.tasks.size
+            val done = checklist.tasks.count { it.done == true }
+            val progress = done.toFloat() / total.toFloat()
+
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
+    HorizontalDivider()
 }

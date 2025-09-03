@@ -166,7 +166,8 @@ fun NoteDetailScreen(
     Scaffold(
         topBar = {
             CustomTopBar(
-                field = "",
+                field = if (topBarBackground == surfaceColorOverlay) ""
+                else (note.value?.name ?: ""),
                 showDivider = false,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = topBarBackground,
@@ -465,7 +466,6 @@ fun NoteDetailScreen(
                             }
                         }
                     }
-
                     if (note.value?.archived == true) {
                         item(key = "ArchiveStatus") {
                             val shape = RoundedCornerShape(15f)
@@ -495,7 +495,6 @@ fun NoteDetailScreen(
                             }
                         }
                     }
-
                     item(key = "Name") {
                         val focusRequester = remember { FocusRequester() }
 
@@ -572,6 +571,7 @@ fun NoteDetailScreen(
                                                         name = noteName,
                                                     )
                                                     if (!isSuccess) {
+                                                        noteName = noteNameInitial
                                                         snackbarHost.showSnackbar(
                                                             message = "Update note name failed. Try again",
                                                             withDismissAction = true,
@@ -611,6 +611,7 @@ fun NoteDetailScreen(
                                 else MaterialTheme.colorScheme.onSurface
                             )
                         }
+                        HorizontalDivider()
                     }
                     item(key = "DateTime") {
                         Column(
@@ -685,6 +686,7 @@ fun NoteDetailScreen(
                                     modifier = Modifier.weight(1f),
                                 )
                             }
+                            HorizontalDivider()
                         }
                     }
                     item(key = "CheckLists") {
@@ -740,8 +742,21 @@ fun NoteDetailScreen(
                     ) { idx, item ->
                         ChecklistItem(
                             checklist = item,
-                            onChangeChecklistName = {
-                                
+                            onChangeChecklistName = { newName ->
+                                val initialName = note.value?.name ?: ""
+                                val checklistId = item.docId ?: return@ChecklistItem initialName
+                                val isSuccess = noteViewModel
+                                    .updateChecklistName(noteId, checklistId, newName)
+                                if (!isSuccess) {
+                                    coroutineScope.launch {
+                                        snackbarHost.showSnackbar(
+                                            message = "Update checklist name failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                    return@ChecklistItem initialName
+                                }
+                                return@ChecklistItem newName
                             },
                             onDeleteChecklist = {
                                 val checklistId = item.docId ?: return@ChecklistItem
@@ -884,6 +899,7 @@ fun NoteDetailScreen(
                                 textAlign = TextAlign.Center,
                             )
                         }
+                        HorizontalDivider()
                     }
                     else itemsIndexed(items = commentList) { index, comment ->
                         CommentItem(comment = comment)
