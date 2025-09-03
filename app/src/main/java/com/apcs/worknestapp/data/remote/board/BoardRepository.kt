@@ -8,27 +8,40 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface BoardRepository {
     val board: StateFlow<List<Board>>
-
-    fun removeListener()
-    fun registerListener()
+    val notelists: StateFlow<List<Notelist>>
+    val notes: StateFlow<List<Note>>
+    fun removeBoardListener()
+    fun registerBoardListener()
     suspend fun refreshBoard()
     suspend fun getBoard(docId: String): Board
     suspend fun addBoard(name: String, cover: Int?)
-    suspend fun deleteBoard(docId: String)
+    suspend fun deleteBoard(docId: String) : Boolean
     suspend fun deleteAllBoards()
     suspend fun updateBoardName(docId: String, name: String)
     suspend fun updateBoardCover(docId: String, color: Int?)
-    suspend fun addNotelist(boardId: String, notelist: Notelist)
-    suspend fun addNoteToList(notelistId: String, note: Note)
-    suspend fun removeNotelist(notelistId: String)
-    suspend fun removeNoteFromNotelist(notelistId: String, noteId: String)
     suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean
     suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean
+
+    suspend fun addNotelist(boardId: String, notelist: Notelist)
+    suspend fun addNoteToList(boardId: String, notelistId: String, note: Note)
+    suspend fun removeNotelist(boardId: String, notelistId: String)
     fun getNotelistsForBoard(boardId: String?): Flow<List<Notelist>>
     suspend fun refreshNotelists(boardId: String)
     suspend fun updateNotelistName(boardId: String,notelistId: String, newName: String) : Boolean
     fun registerNotelistListener(boardId: String)
     suspend fun  updateNoteCheckedStatus(boardId: String, notelistId: String, noteId: String, isChecked: Boolean) : Boolean
     fun removeNotelistListener()
+
+    fun removeNoteListener()
+    fun registerNoteListener(boardId: String, notelistId: String)
+    suspend fun refreshNotes(boardId: String, notelistId: String)
+    suspend fun removeNoteFromNotelist(boardId: String, notelistId: String, noteId: String)
+    suspend fun updateNoteName(boardId: String, notelistId: String, docId: String, name: String): Boolean
+    suspend fun updateNoteCover(boardId: String, notelistId: String, docId: String, color: Int?): Boolean
+    suspend fun updateNoteDescription(boardId: String, notelistId: String, docId: String, description: String): Boolean
+    suspend fun updateNoteComplete(boardId: String, notelistId: String, docId: String, newState: Boolean): Boolean
+    suspend fun updateNoteArchive(boardId: String, notelistId: String, docId: String, newState: Boolean): Boolean
+    suspend fun updateNoteStartDate(boardId: String, notelistId: String, docId: String, dateTime: Timestamp?): Boolean
+    suspend fun updateNoteEndDate(boardId: String, notelistId: String, docId: String, dateTime: Timestamp?): Boolean
     fun clearCache()
 }

@@ -13,14 +13,12 @@ data class Board(
     val isLoading: Boolean? = null,
     val ownerId: String? = null,
     val memberIds: List<String> = emptyList(),
-    val createdBy: String? = null
 )
+
 data class Notelist(
     @DocumentId val docId: String? = null,
     val name: String? = null,
     val cover: Int? = null,
     val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
-    val boardId: String? = null,
-    val notes: List<Note> = emptyList()
 )

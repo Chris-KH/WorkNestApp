@@ -85,12 +85,12 @@ fun BoardScreen(
     }
 
     LifecycleResumeEffect(key1 = boardId) {
-        boardViewModel.registerListener()
+        boardViewModel.registerBoardListener()
         if (boardId != null) {
             boardViewModel.registerNotelistListener(boardId)
         }
         onPauseOrDispose {
-            boardViewModel.removeListener()
+            boardViewModel.removeBoardListener()
             if (boardId != null) {
                 boardViewModel.removeNotelistListener()
             }
@@ -291,7 +291,7 @@ fun BoardScreen(
                         onAddNoteClick = { listId, newNoteName ->
                             coroutineScope.launch {
                                 val newNote = Note(name = newNoteName, createdAt = com.google.firebase.Timestamp.now())
-                                boardViewModel.addNoteToList(listId, newNote)
+                                boardViewModel.addNoteToList(boardId!!,listId, newNote)
                             }
                         },
                         onNoteClick = { note ->
@@ -312,16 +312,16 @@ fun BoardScreen(
                             }
                         },
                         onNoteCheckedChange = { note, isChecked ->
-                            boardViewModel.updateUserNoteCheckedStatus(boardId!!, notelist.docId!!, note.docId!!, isChecked)
+                            boardViewModel.updateNoteCheckedStatus(boardId!!, notelist.docId!!, note.docId!!, isChecked)
                         },
                         onRemoveNotelist = {
                             coroutineScope.launch {
-                                boardViewModel.removeNotelist(notelist.docId!!)
+                                boardViewModel.removeNotelist(boardId!!,notelist.docId!!)
                             }
                         },
                         onRemoveSpecificNote = { listId, noteId ->
                             coroutineScope.launch {
-                                boardViewModel.removeNoteFromNotelist(listId, noteId)
+                                boardViewModel.removeNoteFromNotelist(boardId!!,listId, noteId)
                             }
                         },
                         onUpdateNotelistName = { boardId, notelistId, newName ->

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apcs.worknestapp.data.remote.note.Note
+import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,28 +18,16 @@ class BoardViewModel @Inject constructor(
 ) : ViewModel() {
 
     val boards = boardRepo.board
+    val notelistsForBoard = boardRepo.notelists
+    val notes = boardRepo.notes
 
-    fun removeListener() {
-        boardRepo.removeListener()
+    fun removeBoardListener() {
+        boardRepo.removeBoardListener()
     }
 
-    fun registerListener() {
-        try {
-            boardRepo.registerListener()
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Register listener for boards failed", e)
-        }
-    }
-
-    fun registerNotelistListener(boardId: String?) {
-        if (boardId == null) {
-            Log.w("BoardViewModel", "Board ID is null, cannot register notelist listener.")
-            return
-        }
-        try {
-            boardRepo.registerNotelistListener(boardId)
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Register listener for notelists failed", e)
+    fun registerBoardListener() {
+        viewModelScope.launch {
+            boardRepo.registerBoardListener()
         }
     }
 
@@ -46,180 +35,178 @@ class BoardViewModel @Inject constructor(
         boardRepo.removeNotelistListener()
     }
 
-    suspend fun refreshBoardsIfEmpty(): Boolean {
-        if (boards.value.isEmpty()) return refreshBoards()
-        return true
+    fun registerNotelistListener(boardId: String?) {
+        if (boardId == null) {
+            return
+        }
+        viewModelScope.launch {
+            boardRepo.registerNotelistListener(boardId)
+        }
     }
 
-    suspend fun refreshBoards(): Boolean {
-        return try {
+    fun removeNoteListener() {
+        boardRepo.removeNoteListener()
+    }
+
+    fun registerNoteListener(boardId: String, notelistId: String) {
+        viewModelScope.launch {
+            boardRepo.registerNoteListener(boardId, notelistId)
+        }
+    }
+
+    fun refreshBoards() {
+        viewModelScope.launch {
             boardRepo.refreshBoard()
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Refresh boards failed", e)
-            false
         }
     }
 
     fun createBoard(name: String, cover: Int?) {
         viewModelScope.launch {
-            try {
-                boardRepo.addBoard(name, cover)
-                Log.d("BoardViewModel", "Board '$name' creation process initiated successfully via repository.")
-            } catch (e: Exception) {
-                Log.e("BoardViewModel", "Error creating board '$name'", e)
-            }
+            boardRepo.addBoard(name, cover)
         }
     }
 
-
-
-    suspend fun deleteBoard(docId: String): Boolean {
-        return try {
-            boardRepo.deleteBoard(docId)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Delete board $docId failed", e)
-            false
+    fun deleteBoard(docId: String) : Boolean {
+        var deleted : Boolean = false
+        viewModelScope.launch {
+            if (boardRepo.deleteBoard(docId))
+            deleted = true
         }
+        return deleted
     }
 
-    suspend fun deleteAllBoards(): Boolean {
-        return try {
+    fun deleteAllBoards() {
+        viewModelScope.launch {
             boardRepo.deleteAllBoards()
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Delete all boards failed", e)
-            false
         }
     }
 
-    suspend fun getBoard(docId: String): Board? {
-        return try {
+    fun getBoard(docId: String) {
+        viewModelScope.launch {
             boardRepo.getBoard(docId)
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Get board $docId failed", e)
-            null
         }
     }
+
     fun updateBoardName(boardId: String, newName: String) {
         viewModelScope.launch {
-            try {
-                boardRepo.updateBoardName(boardId, newName)
-            } catch (e: SecurityException) {
-                Log.e("YourViewModel", "Permission error updating board name: ${e.message}")
-            } catch (e: Exception) {
-                Log.e("YourViewModel", "Error updating board name: ${e.message}")
-            }
+            boardRepo.updateBoardName(boardId, newName)
         }
     }
 
-    suspend fun updateBoardCover(docId: String, color: Int?): Boolean {
-        return try {
+    fun updateBoardCover(docId: String, color: Int?) {
+        viewModelScope.launch {
             boardRepo.updateBoardCover(docId, color)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Update board cover failed", e)
-            false
         }
     }
 
-    suspend fun addNotelist(boardId: String, notelist: Notelist): Boolean {
-        return try {
+    fun addNotelist(boardId: String, notelist: Notelist) {
+        viewModelScope.launch {
             boardRepo.addNotelist(boardId, notelist)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Add notelist failed", e)
-            false
         }
     }
 
-    suspend fun addNoteToList(notelistId: String, note: Note): Boolean {
-        return try {
-            boardRepo.addNoteToList(notelistId, note)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Add note to notelist $notelistId failed", e)
-            false
+    fun addNoteToList(boardId: String, notelistId: String, note: Note) {
+        viewModelScope.launch {
+            boardRepo.addNoteToList(boardId, notelistId, note)
         }
     }
 
-    suspend fun removeNotelist(notelistId: String): Boolean {
-        return try {
-            boardRepo.removeNotelist(notelistId)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Remove notelist $notelistId failed", e)
-            false
+    fun removeNotelist(boardId: String, notelistId: String) {
+        viewModelScope.launch {
+            boardRepo.removeNotelist(boardId, notelistId)
         }
     }
 
-    suspend fun removeNoteFromNotelist(notelistId: String, noteId: String): Boolean {
-        return try {
-            boardRepo.removeNoteFromNotelist(notelistId, noteId)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Remove note $noteId from notelist $notelistId failed", e)
-            false
+    fun removeNoteFromNotelist(boardId: String, notelistId: String, noteId: String) {
+        viewModelScope.launch {
+            boardRepo.removeNoteFromNotelist(boardId, notelistId, noteId)
         }
     }
 
-    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean {
-        return try {
+    fun addMemberToBoard(boardId: String, userIdToAdd: String) {
+        viewModelScope.launch {
             (boardRepo as? BoardRepositoryImpl)?.addMemberToBoard(boardId, userIdToAdd)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Add member $userIdToAdd to board $boardId failed", e)
-            false
         }
     }
 
-    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean {
-        return try {
+    fun removeMemberFromBoard(boardId: String, userIdToRemove: String) {
+        viewModelScope.launch {
             (boardRepo as? BoardRepositoryImpl)?.removeMemberFromBoard(boardId, userIdToRemove)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Remove member $userIdToRemove from board $boardId failed", e)
-            false
         }
     }
+
     fun getNotelistsForBoard(boardId: String?): Flow<List<Notelist>> {
         return boardRepo.getNotelistsForBoard(boardId)
     }
 
-    suspend fun refreshNotelists(boardId: String): Boolean {
-        return try {
+    fun refreshNotelists(boardId: String) {
+        viewModelScope.launch {
             boardRepo.refreshNotelists(boardId)
-            true
-        } catch (e: Exception) {
-            Log.e("BoardViewModel", "Refresh notelists failed", e)
-            false
+        }
+    }
+
+    fun refreshNotes(boardId: String, notelistId: String) {
+        viewModelScope.launch {
+            boardRepo.refreshNotes(boardId, notelistId)
         }
     }
 
     fun updateNotelistName(boardId: String, notelistId: String, newName: String) {
         viewModelScope.launch {
-            try {
-                boardRepo.updateNotelistName(boardId, notelistId, newName)
-            } catch (e: SecurityException) {
-                Log.e("BoardViewModel", "Rename notelists failed", e)
-                false
-            }
-        }
-    }
-    fun updateUserNoteCheckedStatus(boardId: String, notelistId: String, noteId: String, isChecked: Boolean) {
-        viewModelScope.launch {
-            val success = boardRepo.updateNoteCheckedStatus(boardId, notelistId, noteId, isChecked)
-            if (success) {
-                Log.d("ViewModel", "Note checked status updated.")
-            } else {
-                Log.e("ViewModel", "Failed to update note checked status.")
-            }
+            boardRepo.updateNotelistName(boardId, notelistId, newName)
         }
     }
 
+    fun updateNoteName(boardId: String, notelistId: String, docId: String, name: String) {
+        viewModelScope.launch {
+            boardRepo.updateNoteName(boardId, notelistId, docId, name)
+        }
+    }
+
+    fun updateNoteCover(boardId: String, notelistId: String, docId: String, color: Int?) {
+        viewModelScope.launch {
+            boardRepo.updateNoteCover(boardId, notelistId, docId, color)
+        }
+    }
+
+    fun updateNoteDescription(boardId: String, notelistId: String, docId: String, description: String) {
+        viewModelScope.launch {
+            boardRepo.updateNoteDescription(boardId, notelistId, docId, description)
+        }
+    }
+
+    fun updateNoteComplete(boardId: String, notelistId: String, docId: String, newState: Boolean) {
+        viewModelScope.launch {
+            boardRepo.updateNoteComplete(boardId, notelistId, docId, newState)
+        }
+    }
+
+    fun updateNoteArchive(boardId: String, notelistId: String, docId: String, newState: Boolean) {
+        viewModelScope.launch {
+            boardRepo.updateNoteArchive(boardId, notelistId, docId, newState)
+        }
+    }
+
+    fun updateNoteStartDate(boardId: String, notelistId: String, docId: String, dateTime: Timestamp?) {
+        viewModelScope.launch {
+            boardRepo.updateNoteStartDate(boardId, notelistId, docId, dateTime)
+        }
+    }
+
+    fun updateNoteEndDate(boardId: String, notelistId: String, docId: String, dateTime: Timestamp?) {
+        viewModelScope.launch {
+            boardRepo.updateNoteEndDate(boardId, notelistId, docId, dateTime)
+        }
+    }
+
+    fun updateNoteCheckedStatus(boardId: String, notelistId: String, noteId: String, isChecked: Boolean) {
+        viewModelScope.launch {
+            boardRepo.updateNoteCheckedStatus(boardId, notelistId, noteId, isChecked)
+        }
+    }
 
     fun clearCache() {
         boardRepo.clearCache()
     }
 }
+
