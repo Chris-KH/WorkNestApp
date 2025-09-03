@@ -55,8 +55,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -74,6 +72,7 @@ import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Checklist
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
+import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
@@ -115,7 +114,8 @@ fun NoteDetailScreen(
 
     //NoteState
     val note = noteViewModel.currentNote.collectAsState()
-    var noteName by remember { mutableStateOf("") }
+    val checklists = note.value?.checklists ?: emptyList()
+    var noteName by remember(note.value?.name) { mutableStateOf(note.value?.name ?: "") }
     val noteCoverColor = note.value?.cover?.let { ColorUtils.safeParse(it) }
 
 //    var history by remember { mutableStateOf(emptyList<String>()) }
@@ -144,8 +144,6 @@ fun NoteDetailScreen(
                 message = "Load note failed. Note not founded",
                 withDismissAction = true,
             )
-        } else {
-            noteName = noteRemote.name ?: ""
         }
         isFirstLoading = false
     }
@@ -300,10 +298,7 @@ fun NoteDetailScreen(
                         start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
                         end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
                     )
-                    .let {
-                        if (commentInputFocused) return@let it.imePadding()
-                        return@let it
-                    }
+                    .let { if (commentInputFocused) it.imePadding() else it }
                     .fillMaxSize()
             ) {
                 when(modalBottomType) {
@@ -496,8 +491,6 @@ fun NoteDetailScreen(
                         }
                     }
                     item(key = "Name") {
-                        val focusRequester = remember { FocusRequester() }
-
                         Row(
                             verticalAlignment = Alignment.Top,
                             modifier = Modifier
@@ -559,7 +552,6 @@ fun NoteDetailScreen(
                                 ),
                                 containerColor = Color.Transparent,
                                 modifier = Modifier
-                                    .focusRequester(focusRequester)
                                     .onFocusChanged { state ->
                                         val noteNameInitial = note.value?.name ?: ""
                                         if (!state.isFocused && noteName != noteNameInitial) {
@@ -737,11 +729,27 @@ fun NoteDetailScreen(
                         }
                     }
                     itemsIndexed(
-                        items = note.value?.checklists ?: emptyList(),
+                        items = checklists,
                         key = { _, item -> item.docId ?: UUID.randomUUID() }
                     ) { idx, item ->
                         ChecklistItem(
                             checklist = item,
+                            noteId = noteId,
+                            noteViewModel = noteViewModel,
+                            onAddNewTask = {
+                                val checklistId = item.docId ?: return@ChecklistItem
+                                val newTask = Task()
+                                val isSuccess = noteViewModel
+                                    .addNewTask(noteId, checklistId, newTask)
+                                if (!isSuccess) {
+                                    coroutineScope.launch {
+                                        snackbarHost.showSnackbar(
+                                            message = "Add task failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            },
                             onChangeChecklistName = { newName ->
                                 val initialName = note.value?.name ?: ""
                                 val checklistId = item.docId ?: return@ChecklistItem initialName
@@ -774,9 +782,7 @@ fun NoteDetailScreen(
                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                 .padding(horizontal = horizontalPadding)
                         )
-                        if (idx + 1 < (note.value?.checklists?.size ?: 0)) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
+
                     }
                     item(key = "Attachments") {
                         Row(

@@ -159,6 +159,51 @@ class NoteViewModel @Inject constructor(
         }
     }
 
+    fun addNewTask(noteId: String, checklistId: String, task: Task): Boolean {
+        return try {
+            noteRepo.addNewTask(noteId, checklistId, task)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Add new failed", e)
+            false
+        }
+    }
+
+    fun deleteTask(noteId: String, checklistId: String, taskId: String): Boolean {
+        return try {
+            noteRepo.deleteTask(noteId, checklistId, taskId)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Delete task failed", e)
+            false
+        }
+    }
+
+    fun updateTaskName(noteId: String, checklistId: String, taskId: String, name: String): Boolean {
+        return try {
+            noteRepo.updateTaskName(noteId, checklistId, taskId, name)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Update task name failed", e)
+            false
+        }
+    }
+
+    fun updateTaskDone(
+        noteId: String,
+        checklistId: String,
+        taskId: String,
+        done: Boolean,
+    ): Boolean {
+        return try {
+            noteRepo.updateTaskDone(noteId, checklistId, taskId, done)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Update task done failed", e)
+            false
+        }
+    }
+
     suspend fun updateNoteName(docId: String, name: String): Boolean {
         return try {
             noteRepo.updateNoteName(docId, name)
