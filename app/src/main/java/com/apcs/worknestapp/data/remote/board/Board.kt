@@ -22,3 +22,10 @@ data class Notelist(
     val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 )
+
+data class ChecklistBoard(
+    @DocumentId val docId: String? = null,
+    val name: String? = null,
+    val completed: Boolean? = null,
+    val ownerId: String? = null,
+)

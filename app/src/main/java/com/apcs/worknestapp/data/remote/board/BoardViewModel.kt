@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,6 +21,29 @@ class BoardViewModel @Inject constructor(
     val boards = boardRepo.board
     val notelistsForBoard = boardRepo.notelists
     val notes = boardRepo.notes
+
+    private val _selectedNote = MutableStateFlow<Note?>(null)
+    val selectedNote: StateFlow<Note?> = _selectedNote.asStateFlow()
+
+    private val _currentChecklist = MutableStateFlow<ChecklistBoard?>(null)
+    val currentChecklist: StateFlow<ChecklistBoard?> = _currentChecklist
+
+    private val _checklists = MutableStateFlow<List<ChecklistBoard>>(emptyList())
+    val checklists: StateFlow<List<ChecklistBoard>> = _checklists
+
+    fun getChecklists(boardId: String, notelistId: String, noteId: String) {
+        viewModelScope.launch {
+            try {
+                (boardRepo as? BoardRepositoryImpl)?.getChecklists(boardId, notelistId, noteId)
+                    ?.collect { checklistList ->
+                        _checklists.value = checklistList
+                    }
+            } catch (e: Exception) {
+                Log.e("BoardViewModel", "Error fetching checklists: ${e.message}")
+                _checklists.value = emptyList()
+            }
+        }
+    }
 
     fun removeBoardListener() {
         boardRepo.removeBoardListener()
@@ -117,10 +141,13 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun removeNoteFromNotelist(boardId: String, notelistId: String, noteId: String) {
+    fun removeNoteFromNotelist(boardId: String, notelistId: String, noteId: String): Boolean {
+        var deleted : Boolean = false
         viewModelScope.launch {
             boardRepo.removeNoteFromNotelist(boardId, notelistId, noteId)
+            deleted = true
         }
+        return deleted
     }
 
     fun addMemberToBoard(boardId: String, userIdToAdd: String) {
@@ -157,52 +184,128 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun updateNoteName(boardId: String, notelistId: String, docId: String, name: String) {
+    fun getNotelist(boardId: String, notelistId: String) {
         viewModelScope.launch {
-            boardRepo.updateNoteName(boardId, notelistId, docId, name)
+            boardRepo.getNotelist(boardId, notelistId)
         }
     }
 
-    fun updateNoteCover(boardId: String, notelistId: String, docId: String, color: Int?) {
+
+
+    fun getNote(boardId: String, notelistId: String, noteId: String) {
+        viewModelScope.launch {
+            val note = boardRepo.getNote(boardId, notelistId, noteId)
+            _selectedNote.value = note
+        }
+    }
+
+    fun updateNoteName(boardId: String, notelistId: String, docId: String, name: String): Boolean {
+        var success = false
+        viewModelScope.launch {
+            if (boardRepo.updateNoteName(boardId, notelistId, docId, name))
+                success = true
+        }
+        return success
+    }
+
+    fun updateNoteCover(boardId: String, notelistId: String, docId: String, color: Int?) : Boolean {
         viewModelScope.launch {
             boardRepo.updateNoteCover(boardId, notelistId, docId, color)
         }
+        return true
     }
 
-    fun updateNoteDescription(boardId: String, notelistId: String, docId: String, description: String) {
+    fun updateNoteDescription(boardId: String, notelistId: String, docId: String, description: String): Boolean {
         viewModelScope.launch {
             boardRepo.updateNoteDescription(boardId, notelistId, docId, description)
         }
+        return true
     }
 
-    fun updateNoteComplete(boardId: String, notelistId: String, docId: String, newState: Boolean) {
+    fun updateNoteComplete(boardId: String, notelistId: String, docId: String, newState: Boolean) : Boolean {
+        var success = false
         viewModelScope.launch {
-            boardRepo.updateNoteComplete(boardId, notelistId, docId, newState)
+            if (boardRepo.updateNoteComplete(boardId, notelistId, docId, newState))
+                success = true
+        }
+        return success
+    }
+
+    fun updateNoteArchive(boardId: String, notelistId: String, docId: String, newState: Boolean): Boolean {
+        var success = false
+        viewModelScope.launch {
+            if (boardRepo.updateNoteArchive(boardId, notelistId, docId, newState))
+                success = true
+        }
+        return success
+    }
+
+    fun updateNoteStartDate(boardId: String, notelistId: String, docId: String, dateTime: Timestamp?): Boolean {
+        var success = false
+        viewModelScope.launch {
+            if (boardRepo.updateNoteStartDate(boardId, notelistId, docId, dateTime))
+                success = true
+        }
+        return success
+    }
+
+    fun updateNoteEndDate(boardId: String, notelistId: String, docId: String, dateTime: Timestamp?): Boolean {
+        var success = false
+
+        viewModelScope.launch {
+            if (boardRepo.updateNoteEndDate(boardId, notelistId, docId, dateTime))
+                success = true
+        }
+        return success
+    }
+
+    fun updateNoteCheckedStatus(boardId: String, notelistId: String, noteId: String, isChecked: Boolean) : Boolean {
+        var success = false
+        viewModelScope.launch {
+            if (boardRepo.updateNoteCheckedStatus(boardId, notelistId, noteId, isChecked))
+                success = true
+        }
+        return success
+    }
+
+    fun getChecklist(boardId: String, notelistId: String, noteId: String, checklistId: String) {
+        viewModelScope.launch {
+            try {
+                val checklist = (boardRepo as? BoardRepositoryImpl)?.getChecklist(boardId, notelistId, noteId, checklistId)
+                _currentChecklist.value = checklist
+            } catch (e: Exception) {
+                Log.e("BoardViewModel", "Error fetching checklist: ${e.message}")
+                _currentChecklist.value = null
+            }
         }
     }
 
-    fun updateNoteArchive(boardId: String, notelistId: String, docId: String, newState: Boolean) {
+    fun addNewChecklist (boardId: String, notelistId: String, noteId: String) : Boolean
+    {
+        var success = false
         viewModelScope.launch {
-            boardRepo.updateNoteArchive(boardId, notelistId, docId, newState)
+            if (boardRepo.addNewChecklistBoard(boardId, notelistId, noteId))
+                success = true
         }
+        return success
     }
 
-    fun updateNoteStartDate(boardId: String, notelistId: String, docId: String, dateTime: Timestamp?) {
+    fun updateChecklistName (boardId: String, notelistId: String, noteId: String, checklistId: String?, newName: String) : Boolean{
+        var success = false
         viewModelScope.launch {
-            boardRepo.updateNoteStartDate(boardId, notelistId, docId, dateTime)
+            if (boardRepo.updateChecklistBoardName(boardId, notelistId, noteId, checklistId, newName))
+                success = true
         }
+        return success
     }
 
-    fun updateNoteEndDate(boardId: String, notelistId: String, docId: String, dateTime: Timestamp?) {
+    fun removeChecklist (boardId: String, notelistId: String, noteId: String, checklistId: String?) : Boolean{
+        var success = false
         viewModelScope.launch {
-            boardRepo.updateNoteEndDate(boardId, notelistId, docId, dateTime)
+            if (boardRepo.deleteChecklistBoard(boardId, notelistId, noteId, checklistId))
+                success = true
         }
-    }
-
-    fun updateNoteCheckedStatus(boardId: String, notelistId: String, noteId: String, isChecked: Boolean) {
-        viewModelScope.launch {
-            boardRepo.updateNoteCheckedStatus(boardId, notelistId, noteId, isChecked)
-        }
+        return success
     }
 
     fun clearCache() {
