@@ -8,16 +8,23 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface BoardRepository {
     val boards: StateFlow<List<Board>>
+    val currentBoard: StateFlow<Board?>
     val noteLists: StateFlow<List<NoteList>>
     val notes: StateFlow<List<Note>>
 
-    fun removeBoardListener()
+    //Listener
     fun registerBoardListener()
+    fun removeBoardListener()
+    fun registerNoteListener(boardId: String, noteListId: String)
+    fun removeNoteListener()
+    fun registerNoteListListener(boardId: String)
+    fun removeNoteListListener()
+
     suspend fun refreshBoard()
     suspend fun getBoard(docId: String): Board
-    suspend fun addBoard(name: String, cover: Int?)
-    suspend fun deleteBoard(docId: String): Boolean
-    suspend fun deleteAllBoards()
+    fun addBoard(board: Board)
+    fun deleteBoard(docId: String)
+    fun deleteAllBoards()
     suspend fun updateBoardName(docId: String, name: String)
     suspend fun updateBoardCover(docId: String, color: Int?)
     suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean
@@ -31,7 +38,6 @@ interface BoardRepository {
 
     suspend fun refreshNoteLists(boardId: String)
     suspend fun updateNoteListName(boardId: String, noteListId: String, newName: String): Boolean
-    fun registerNoteListListener(boardId: String)
     suspend fun updateNoteCheckedStatus(
         boardId: String,
         noteListId: String,
@@ -39,11 +45,7 @@ interface BoardRepository {
         isChecked: Boolean,
     ): Boolean
 
-    fun removeNoteListListener()
-
     suspend fun getNote(boardId: String, noteListId: String, noteId: String): Note?
-    fun removeNoteListener()
-    fun registerNoteListener(boardId: String, noteListId: String)
     suspend fun refreshNotes(boardId: String, noteListId: String)
     suspend fun removeNoteFromNoteList(boardId: String, noteListId: String, noteId: String): Boolean
     suspend fun updateNoteName(
@@ -111,7 +113,6 @@ interface BoardRepository {
         checklistId: String?,
     ): Boolean
 
-    fun clearCache()
     suspend fun getChecklist(
         boardId: String,
         noteListId: String,
@@ -126,4 +127,5 @@ interface BoardRepository {
     ): Flow<List<ChecklistBoard>>
 
     fun getNoteForNoteList(boardId: String, noteListId: String): Flow<List<Note>>
+    fun clearCache()
 }

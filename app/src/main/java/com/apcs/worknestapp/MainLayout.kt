@@ -91,6 +91,7 @@ fun MainLayout(startDestination: String) {
             composable(route = Screen.Home.route) {
                 HomeScreen(
                     navController = navController,
+                    snackbarHost = snackbarHost,
                     modifier = Modifier,
                 )
             }
@@ -422,7 +423,7 @@ fun MainLayout(startDestination: String) {
                         noteId = noteId,
                         snackbarHost = snackbarHost,
                         navController = navController,
-                        modifier = Modifier.padding(innerPadding),
+                        modifier = Modifier,
                     )
                 }
             }

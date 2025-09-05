@@ -16,11 +16,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,16 +38,21 @@ import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
+    snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
-    boardViewModel: BoardViewModel = hiltViewModel()
+    boardViewModel: BoardViewModel = hiltViewModel(),
 ) {
+    val isFirstLoad = rememberSaveable { mutableStateOf(true) }
     var currentSubScreen by rememberSaveable { mutableStateOf(HomeSubScreenState.MAIN) }
     var showModalBottom by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -66,8 +73,17 @@ fun HomeScreen(
                                     expanded = menuExpanded,
                                     onDismissRequest = { menuExpanded = false },
                                     onCreateBoard = {
-                                        boardViewModel.createBoard("Untitled Board", null)
-                                        menuExpanded = false },
+                                        menuExpanded = false
+                                        coroutineScope.launch {
+                                            val isSuccess = boardViewModel.createBoard()
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Create board failed.",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        }
+                                    },
                                     onCreateCard = { menuExpanded = false },
                                 )
                             }
@@ -149,14 +165,19 @@ fun HomeScreen(
         ) {
             when(it) {
                 HomeSubScreenState.MAIN -> HomeMainScreen(
+                    isFirstLoad = isFirstLoad.value,
+                    onFirstLoadDone = { isFirstLoad.value = false },
+                    navController = navController,
+                    snackbarHost = snackbarHost,
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToWorkspace = { currentSubScreen = HomeSubScreenState.WORKSPACE },
-                    onNavigateToBoard = { boardId ->
-                        navController.navigate("board/$boardId")
-                    }
                 )
 
                 HomeSubScreenState.WORKSPACE -> HomeWorkspaceScreen(
+                    isFirstLoad = isFirstLoad.value,
+                    onFirstLoadDone = { isFirstLoad.value = false },
+                    navController = navController,
+                    snackbarHost = snackbarHost,
                     modifier = Modifier.padding(innerPadding),
                     showModalBottom = showModalBottom,
                     onHideModal = { showModalBottom = false }
@@ -165,4 +186,3 @@ fun HomeScreen(
         }
     }
 }
-

@@ -1,11 +1,9 @@
 package com.apcs.worknestapp.ui.screens.board
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,7 +40,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -81,27 +78,30 @@ fun BoardScreen(
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
     val topAppBarColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
 
-    val currentBoardState by boardViewModel.boards.collectAsState()
-    val board = remember(currentBoardState, boardId) {
-        currentBoardState.find { it.docId == boardId }
-    }
-    val boardCoverColor = board?.cover?.let { ColorUtils.safeParse(it) }
+    val board = boardViewModel.currentBoard.collectAsState()
+    val boardCoverColor = board.value?.cover?.let { ColorUtils.safeParse(it) }
 
     val noteLists by remember(boardId) {
         boardViewModel.getNoteListsForBoard(boardId)
     }.collectAsState(initial = emptyList())
+    var editableBoardName by remember(board.value?.name) { mutableStateOf(board.value?.name ?: "") }
 
-    var editableBoardName by remember(board?.name) { mutableStateOf(board?.name ?: "") }
-    LaunchedEffect(board?.name) {
-        if (board?.name != editableBoardName) {
-            editableBoardName = board?.name ?: ""
+    LaunchedEffect(Unit) {
+        isFirstLoad = true
+        val remoteBoard = boardViewModel.getBoard(boardId)
+        if (remoteBoard == null) {
+            navController.popBackStack()
+            snackbarHost.showSnackbar(
+                message = "Load board failed. Board not founded",
+                withDismissAction = true,
+            )
         }
+        isFirstLoad = false
     }
 
-    LaunchedEffect(boardId) {
-        if (isFirstLoad) {
-            boardViewModel.refreshNoteLists(boardId)
-            isFirstLoad = false
+    LaunchedEffect(board.value) {
+        if (board.value == null && !isFirstLoad) {
+            navController.popBackStack()
         }
     }
 
@@ -118,7 +118,7 @@ fun BoardScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    if (board != null) {
+                    if (!isFirstLoad) {
                         CustomTextField(
                             value = editableBoardName,
                             onValueChange = { editableBoardName = it },
@@ -135,36 +135,25 @@ fun BoardScreen(
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(
                                 onDone = {
-                                    if (editableBoardName.isNotBlank() && editableBoardName != board.name) {
-                                        boardViewModel.updateBoardName(
-                                            board.docId!!, editableBoardName
-                                        )
+                                    val initialName = board.value?.name ?: ""
+                                    if (editableBoardName.isNotBlank() && editableBoardName != initialName) {
+                                        boardViewModel.updateBoardName(boardId, editableBoardName)
                                     }
                                     focusManager.clearFocus()
                                 }
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(end = 8.dp)
-                                .onFocusChanged { focusState ->
-                                    if (!focusState.isFocused && editableBoardName.isNotBlank() && editableBoardName != board.name) {
-                                    } else if (!focusState.isFocused && editableBoardName.isNotBlank() && editableBoardName == board.name) {
-                                    } else if (!focusState.isFocused && editableBoardName.isBlank()) {
-                                        editableBoardName = board.name ?: ""
-                                    }
-                                },
+                                .padding(end = 8.dp),
                         )
                     } else {
                         Text(
                             text = "Loading Board...",
-                            fontWeight = FontWeight.SemiBold,
-                            fontFamily = Roboto,
                             fontSize = 16.sp,
                             lineHeight = 16.sp,
                             letterSpacing = (0.25).sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier,
                         )
                     }
                 },
@@ -174,7 +163,7 @@ fun BoardScreen(
                     }
                 },
                 actions = {
-                    if (board != null) { // Only show actions if board is loaded
+                    if (board.value != null) { // Only show actions if board is loaded
                         var menuExpanded by remember { mutableStateOf(false) }
                         IconButton(onClick = { menuExpanded = !menuExpanded }) {
                             Icon(
@@ -195,37 +184,11 @@ fun BoardScreen(
                             },
                             onDeleteBoard = {
                                 menuExpanded = false
-                                if (board.docId != null) {
-                                    coroutineScope.launch {
-                                        try {
-                                            val success = boardViewModel.deleteBoard(board.docId)
-                                            if (success) {
-                                                navController.popBackStack()
-                                            } else {
-                                                snackbarHost.showSnackbar(
-                                                    message = "Failed to delete board. Please try again.",
-                                                    withDismissAction = true
-                                                )
-                                            }
-                                        } catch(e: Exception) {
-                                            Log.e(
-                                                "BoardScreen",
-                                                "Error deleting board: ${board.docId}",
-                                                e
-                                            )
-                                            snackbarHost.showSnackbar(
-                                                message = "An error occurred while deleting the board.",
-                                                withDismissAction = true
-                                            )
-                                        }
-                                    }
-                                } else {
-                                    Log.w(
-                                        "BoardScreen", "Attempted to delete a board with a null ID."
-                                    )
+                                val isSuccess = boardViewModel.deleteBoard(boardId)
+                                if (!isSuccess) {
                                     coroutineScope.launch {
                                         snackbarHost.showSnackbar(
-                                            message = "Cannot delete board: Board ID is missing.",
+                                            message = "Failed to delete board. Please try again.",
                                             withDismissAction = true
                                         )
                                     }
@@ -252,109 +215,104 @@ fun BoardScreen(
         containerColor = boardCoverColor ?: Color.Gray,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
-        if (board == null) {
-            LoadingScreen()
-            return@Scaffold
-        }
-
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            LazyRow(
+        if (isFirstLoad) LoadingScreen(modifier = Modifier.padding(innerPadding))
+        else {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp)
+                    .padding(innerPadding)
+                    .fillMaxSize()
             ) {
-                items(
-                    items = noteLists,
-                    key = { it.docId ?: UUID.randomUUID() }
-                ) { noteList ->
-                    NoteListCard(
-                        boardViewModel = boardViewModel,
-                        boardId = boardId,
-                        noteList = noteList,
-                        onAddNoteClick = { listId, newNoteName ->
-                            coroutineScope.launch {
-                                val newNote = Note(
-                                    name = newNoteName,
-                                    createdAt = com.google.firebase.Timestamp.now()
-                                )
-                                boardViewModel.addNoteToList(boardId, listId, newNote)
-                            }
-                        },
-                        onNoteClick = { note ->
-                            if (note.docId != null) {
-                                navController.navigate(
-                                    "board_note_detail/${boardId}/${noteList.docId}/${note.docId}"
-                                )
-                            } else {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    items(
+                        items = noteLists,
+                        key = { it.docId ?: UUID.randomUUID() }
+                    ) { noteList ->
+                        NoteListCard(
+                            boardViewModel = boardViewModel,
+                            boardId = boardId,
+                            noteList = noteList,
+                            onAddNoteClick = { listId, newNoteName ->
                                 coroutineScope.launch {
-                                    snackbarHost.showSnackbar(
-                                        message = "Cannot open note: Note ID is missing.",
-                                        withDismissAction = true
+                                    val newNote = Note(
+                                        name = newNoteName,
+                                        createdAt = com.google.firebase.Timestamp.now()
                                     )
+                                    boardViewModel.addNoteToList(boardId, listId, newNote)
                                 }
-                            }
-                        },
-                        onNoteCheckedChange = { note, isChecked ->
-                            boardViewModel.updateNoteCheckedStatus(
-                                boardId, noteList.docId!!, note.docId!!, isChecked
-                            )
-                        },
-                        onRemoveNoteList = {
-                            coroutineScope.launch {
-                                boardViewModel.removeNoteList(boardId, noteList.docId!!)
-                            }
-                        },
-                        onRemoveSpecificNote = { listId, noteId ->
-                            coroutineScope.launch {
-                                boardViewModel.removeNoteFromNoteList(boardId, listId, noteId)
-                            }
-                        },
-                        onUpdateNoteListName = { boardId, noteListId, newName ->
-                            coroutineScope.launch {
-                                boardViewModel.updateNoteListName(boardId, noteListId, newName)
-                            }
-                        },
-                        modifier = Modifier
-                            .width(300.dp)
-                            .fillMaxHeight()
-                    )
-                }
-                item(key = "Add note list button") {
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                board.docId?.let { currentBoardDocId ->
+                            },
+                            onNoteClick = { note ->
+                                if (note.docId != null) {
+                                    navController.navigate(
+                                        "board_note_detail/${boardId}/${noteList.docId}/${note.docId}"
+                                    )
+                                } else {
+                                    coroutineScope.launch {
+                                        snackbarHost.showSnackbar(
+                                            message = "Cannot open note: Note ID is missing.",
+                                            withDismissAction = true
+                                        )
+                                    }
+                                }
+                            },
+                            onNoteCheckedChange = { note, isChecked ->
+                                boardViewModel.updateNoteCheckedStatus(
+                                    boardId, noteList.docId!!, note.docId!!, isChecked
+                                )
+                            },
+                            onRemoveNoteList = {
+                                coroutineScope.launch {
+                                    boardViewModel.removeNoteList(boardId, noteList.docId!!)
+                                }
+                            },
+                            onRemoveSpecificNote = { listId, noteId ->
+                                coroutineScope.launch {
+                                    boardViewModel.removeNoteFromNoteList(boardId, listId, noteId)
+                                }
+                            },
+                            onUpdateNoteListName = { boardId, noteListId, newName ->
+                                coroutineScope.launch {
+                                    boardViewModel.updateNoteListName(boardId, noteListId, newName)
+                                }
+                            },
+                            modifier = Modifier
+                                .width(300.dp)
+                        )
+                    }
+                    item(key = "Add note list button") {
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
                                     val newNoteList = NoteList(name = "New List")
-                                    boardViewModel.addNoteList(currentBoardDocId, newNoteList)
+                                    boardViewModel.addNoteList(boardId, newNoteList)
                                 }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = topAppBarColor,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(vertical = 0.dp, horizontal = 20.dp),
-                        modifier = Modifier.width(300.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add Note List",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "Add new list",
-                            fontSize = 14.sp,
-                            lineHeight = 14.sp,
-                            fontWeight = FontWeight.Normal
-                        )
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = topAppBarColor,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(vertical = 0.dp, horizontal = 20.dp),
+                            modifier = Modifier.width(300.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Add Note List",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Add new list",
+                                fontSize = 14.sp,
+                                lineHeight = 14.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
                     }
                 }
             }

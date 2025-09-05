@@ -18,6 +18,7 @@ class BoardViewModel @Inject constructor(
     private val boardRepo: BoardRepository,
 ) : ViewModel() {
     val boards = boardRepo.boards
+    val currentBoard = boardRepo.currentBoard
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes = _notes.asStateFlow()
 
@@ -77,36 +78,57 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun refreshBoards() {
-        viewModelScope.launch {
+    suspend fun refreshBoardsIfEmpty(): Boolean {
+        if (boards.value.isEmpty()) return refreshBoards()
+        return true
+    }
+
+    suspend fun refreshBoards(): Boolean {
+        return try {
             boardRepo.refreshBoard()
+            true
+        } catch(e: Exception) {
+            Log.e("BoardViewModel", "Refresh boards failed", e)
+            false
         }
     }
 
-    fun createBoard(name: String, cover: Int?) {
-        viewModelScope.launch {
-            boardRepo.addBoard(name, cover)
+    fun createBoard(board: Board = Board()): Boolean {
+        return try {
+            boardRepo.addBoard(board)
+            true
+        } catch(e: Exception) {
+            Log.e("BoardViewModel", "Create a board failed", e)
+            false
+        }
+    }
+
+    suspend fun getBoard(docId: String): Board? {
+        return try {
+            boardRepo.getBoard(docId)
+        } catch(e: Exception) {
+            Log.e("BoardViewModel", "Get board failed", e)
+            null
         }
     }
 
     fun deleteBoard(docId: String): Boolean {
-        var deleted: Boolean = false
-        viewModelScope.launch {
-            if (boardRepo.deleteBoard(docId))
-                deleted = true
+        return try {
+            boardRepo.deleteBoard(docId)
+            true
+        } catch(e: Exception) {
+            Log.e("BoardViewModel", "Delete board failed", e)
+            false
         }
-        return deleted
     }
 
-    fun deleteAllBoards() {
-        viewModelScope.launch {
+    fun deleteAllBoards(): Boolean {
+        return try {
             boardRepo.deleteAllBoards()
-        }
-    }
-
-    fun getBoard(docId: String) {
-        viewModelScope.launch {
-            boardRepo.getBoard(docId)
+            true
+        } catch(e: Exception) {
+            Log.e("BoardViewModel", "Delete all boards failed", e)
+            false
         }
     }
 

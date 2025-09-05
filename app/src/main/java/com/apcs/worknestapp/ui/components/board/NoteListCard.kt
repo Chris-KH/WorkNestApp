@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.ui.components.board
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,16 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,17 +36,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.board.NoteList
 import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
+import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun NoteListCard(
@@ -68,6 +71,7 @@ fun NoteListCard(
     var editableNoteListName by remember(noteList.name, noteList.docId) {
         mutableStateOf(noteList.name.takeIf { it?.isNotBlank() == true } ?: "")
     }
+
     LaunchedEffect(noteList.name) {
         if (noteList.name != editableNoteListName) {
             editableNoteListName = noteList.name.takeIf { it?.isNotBlank() == true } ?: ""
@@ -75,11 +79,15 @@ fun NoteListCard(
         boardViewModel.getNotesForNoteList(boardId, noteList.docId!!)
 
     }
-    var isEditingListName by remember { mutableStateOf(false) }
-    Card(
-        modifier = modifier.fillMaxHeight(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.medium
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shape = RoundedCornerShape(8.dp)
+            ),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             modifier = Modifier
@@ -91,13 +99,19 @@ fun NoteListCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                BasicTextField(
+                CustomTextField(
                     value = editableNoteListName,
                     onValueChange = { editableNoteListName = it },
-                    textStyle = MaterialTheme.typography.titleMedium.copy(
+                    textStyle = TextStyle(
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = Roboto,
+                        fontSize = 14.sp,
+                        lineHeight = 14.sp,
+                        letterSpacing = (0.1).sp,
                         color = MaterialTheme.colorScheme.onSurface
                     ),
                     singleLine = true,
+                    containerColor = Color.Transparent,
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
                         onDone = {
@@ -107,9 +121,8 @@ fun NoteListCard(
                             ) {
                                 onUpdateNoteListName(boardId, noteList.docId, editableNoteListName)
                             } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
-                                editableNoteListName = noteList.name!!
+                                editableNoteListName = noteList.name
                             }
-                            isEditingListName = false
                             focusManager.clearFocus()
                         }
                     ),
@@ -117,7 +130,6 @@ fun NoteListCard(
                         .weight(1f)
                         .padding(end = 8.dp)
                         .onFocusChanged { focusState ->
-                            isEditingListName = focusState.isFocused
                             if (!focusState.isFocused) { // Focus lost
                                 if (noteList.docId != null &&
                                     editableNoteListName.isNotBlank() &&
@@ -129,48 +141,16 @@ fun NoteListCard(
                                         editableNoteListName
                                     )
                                 } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
-                                    editableNoteListName = noteList.name!!
+                                    editableNoteListName = noteList.name
                                 }
-                            }
-                        }
-                        .onKeyEvent { keyEvent ->
-                            if (keyEvent.key == Key.Enter) {
-                                if (noteList.docId != null &&
-                                    editableNoteListName.isNotBlank() &&
-                                    editableNoteListName != (noteList.name ?: "")
-                                ) {
-                                    onUpdateNoteListName(
-                                        boardId,
-                                        noteList.docId,
-                                        editableNoteListName
-                                    )
-                                } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
-                                    editableNoteListName = noteList.name!!
-                                }
-                                isEditingListName = false
-                                focusManager.clearFocus()
-                                true // Consume the event
-                            } else {
-                                false
                             }
                         },
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    decorationBox = { innerTextField -> // To make it look like regular text when not focused
-                        if (isEditingListName) {
-                            innerTextField()
-                        } else {
-                            Text(
-                                text = editableNoteListName.takeIf { it.isNotBlank() }
-                                    ?: "Unnamed List",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                    }
                 )
                 IconButton(onClick = onRemoveNoteList) {
                     Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Remove List"
+                        painter = painterResource(R.drawable.fill_trash),
+                        contentDescription = "Remove List",
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

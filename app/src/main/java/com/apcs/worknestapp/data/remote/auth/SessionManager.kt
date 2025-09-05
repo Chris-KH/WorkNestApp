@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.data.remote.auth
 
+import com.apcs.worknestapp.data.remote.board.BoardRepository
 import com.apcs.worknestapp.data.remote.message.MessageRepository
 import com.apcs.worknestapp.data.remote.note.NoteRepository
 import com.apcs.worknestapp.data.remote.notification.NotificationRepository
@@ -11,11 +12,13 @@ class SessionManager @Inject constructor(
     private val noteRepo: NoteRepository,
     private val notificationRepo: NotificationRepository,
     private val messageRepo: MessageRepository,
+    private val boardRepo: BoardRepository,
 ) {
     fun clearAllCache() {
         userRepo.clearCache()
         noteRepo.clearCache()
         notificationRepo.clearCache()
         messageRepo.clearCache()
+        boardRepo.clearCache()
     }
 }

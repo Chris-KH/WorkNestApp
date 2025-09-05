@@ -22,6 +22,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.delay
@@ -48,6 +50,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeWorkspaceScreen(
+    isFirstLoad: Boolean,
+    onFirstLoadDone: () -> Unit,
+    navController: NavHostController,
+    snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
     showModalBottom: Boolean,
     onHideModal: () -> Unit,

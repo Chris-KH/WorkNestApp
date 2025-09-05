@@ -112,7 +112,7 @@ fun NoteDetailScreen(
     val density = LocalDensity.current
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
-    var isFirstLoading by remember { mutableStateOf(true) }
+    var isFirstLoad by remember { mutableStateOf(true) }
     var modalBottomType by remember { mutableStateOf<NoteModalBottomType?>(null) }
 
     //NoteState
@@ -139,7 +139,7 @@ fun NoteDetailScreen(
     var topBarBackground by remember { mutableStateOf(surfaceColorOverlay) }
 
     LaunchedEffect(Unit) {
-        isFirstLoading = true
+        isFirstLoad = true
         val noteRemote = noteViewModel.getNote(noteId)
         if (noteRemote == null) {
             navController.popBackStack()
@@ -148,11 +148,11 @@ fun NoteDetailScreen(
                 withDismissAction = true,
             )
         }
-        isFirstLoading = false
+        isFirstLoad = false
     }
 
     LaunchedEffect(note.value) {
-        if (note.value == null && !isFirstLoading) {
+        if (note.value == null && !isFirstLoad) {
             navController.popBackStack()
         }
     }
@@ -293,7 +293,7 @@ fun NoteDetailScreen(
             interactionSource = remember { MutableInteractionSource() }),
     )
     { innerPadding ->
-        if (isFirstLoading) LoadingScreen(modifier = Modifier.padding(innerPadding))
+        if (isFirstLoad) LoadingScreen(modifier = Modifier.padding(innerPadding))
         else {
             Column(
                 modifier = Modifier

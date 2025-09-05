@@ -41,11 +41,13 @@ object AppModule {
         noteRepo: NoteRepository,
         notificationRepo: NotificationRepository,
         messageRepo: MessageRepository,
+        boardRepo: BoardRepository,
     ): SessionManager = SessionManager(
         userRepo = userRepo,
         noteRepo = noteRepo,
         notificationRepo = notificationRepo,
         messageRepo = messageRepo,
+        boardRepo = boardRepo,
     )
 
     @Provides
@@ -75,6 +77,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideMessageRepository(): MessageRepository = MessageRepositoryImpl()
+
     @Provides
     @Singleton
     fun provideBoardRepository(): BoardRepository = BoardRepositoryImpl()

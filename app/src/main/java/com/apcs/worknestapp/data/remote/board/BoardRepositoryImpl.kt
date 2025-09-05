@@ -1,16 +1,27 @@
 package com.apcs.worknestapp.data.remote.board
 
 import android.util.Log
+import androidx.room.util.query
 import com.apcs.worknestapp.data.remote.note.Note
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.toObject
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,217 +29,324 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.collections.sortedByDescending
 
 class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
+    private val errorHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e("BoardRepository", "Coroutine crashed", throwable)
+    }
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + errorHandler)
+
+    private var boardListener: ListenerRegistration? = null
+    private var noteListListener: ListenerRegistration? = null
+    private var notesListener: ListenerRegistration? = null
 
     private val _boards = MutableStateFlow<List<Board>>(emptyList())
-    override val boards: StateFlow<List<Board>> = _boards
-    private var boardListener: ListenerRegistration? = null
+    override val boards: StateFlow<List<Board>> = _boards.asStateFlow()
+
+    private val _currentBoard = MutableStateFlow<Board?>(null)
+    override val currentBoard: StateFlow<Board?> = _currentBoard.asStateFlow()
 
     private val _noteLists = MutableStateFlow<List<NoteList>>(emptyList())
     override val noteLists: StateFlow<List<NoteList>> = _noteLists.asStateFlow()
-    private var noteListListener: ListenerRegistration? = null
 
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     override val notes: StateFlow<List<Note>> = _notes.asStateFlow()
-    private var notesListener: ListenerRegistration? = null
 
     init {
         auth.addAuthStateListener {
             if (it.currentUser == null) {
-                removeBoardListener()
-                _boards.value = emptyList()
+                clearCache()
             }
         }
     }
 
-    override fun removeBoardListener() {
-        boardListener?.remove()
-        boardListener = null
+    private fun boardNotFound(boardId: String) {
+        if (_currentBoard.value?.docId == boardId) _currentBoard.value = null
+        _boards.update { list -> list.filterNot { it.docId == boardId } }
     }
 
+    //TODO: OK
     override fun registerBoardListener() {
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        val userId = currentUser.uid
-
-
-        val ownedBoardsQuery = firestore.collection("boards")
-            .whereEqualTo("ownerId", userId)
-
-        val memberBoardsQuery = firestore.collection("boards")
-            .whereArrayContains("memberIds", userId)
-
-        boardListener?.remove()
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val boardsRef = firestore.collection("boards")
-            .whereArrayContains("memberIds", userId)
+            .where(
+                Filter.or(
+                    Filter.equalTo("ownerId", authUser.uid),
+                    Filter.arrayContains("memberIds", authUser.uid)
+                )
+            )
 
+        boardListener?.remove()
         boardListener = boardsRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("BoardRepository", "Listen boards snapshot failed", error)
                 return@addSnapshotListener
             }
 
-            if (snapshot != null) {
-                val boardList = snapshot.documents.mapNotNull {
+            if (snapshot != null && !snapshot.metadata.isFromCache) {
+                val remoteBoards = snapshot.documents.mapNotNull {
                     it.toObject(Board::class.java)
                 }
-                _boards.value = boardList
+                val pendingBoards = _boards.value.filter { local ->
+                    local.isLoading == true && remoteBoards.none { it.docId == local.docId }
+                }
+                _boards.value = (remoteBoards + pendingBoards).sortedByDescending { it.createdAt }
             }
         }
     }
 
-    override suspend fun refreshBoard() {
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        val userId = currentUser.uid
-
-        val ownedBoardsQuery = firestore.collection("boards")
-            .whereEqualTo("ownerId", userId)
-            .get()
-            .await()
-
-        val memberBoardsQuery = firestore.collection("boards")
-            .whereArrayContains("memberIds", userId)
-            .whereNotEqualTo("ownerId", userId)
-            .get()
-            .await()
-
-        val ownedBoards = ownedBoardsQuery.documents.mapNotNull { it.toObject(Board::class.java) }
-        val memberBoards = memberBoardsQuery.documents.mapNotNull { it.toObject(Board::class.java) }
-
-        _boards.value = (ownedBoards + memberBoards).distinctBy { it.docId }
+    //TODO: OK
+    override fun removeBoardListener() {
+        boardListener?.remove()
+        boardListener = null
     }
 
-    override suspend fun getBoard(docId: String): Board {
-        Log.d("BoardRepository", "Fetching board with docId: $docId")
-        val boardDoc = firestore.collection("boards")
-            .document(docId)
+    override fun registerNoteListener(boardId: String, noteListId: String) {
+        val authUser = auth.currentUser ?: return
+
+        removeNoteListener()
+
+        val notesRef = firestore
+            .collection("boards")
+            .document(boardId)
+            .collection("notelists")
+            .document(noteListId)
+            .collection("notes")
+            .whereEqualTo("archived", false)
+
+        notesListener = notesRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                if (error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                }
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                val remoteNotes = snapshot.documents.mapNotNull {
+                    it.toObject(Note::class.java)
+                }
+                _notes.value = remoteNotes
+            }
+        }
+    }
+
+    override fun removeNoteListener() {
+        notesListener?.remove()
+        notesListener = null
+        _notes.value = emptyList()
+    }
+
+    override fun registerNoteListListener(boardId: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        removeNoteListListener()
+        val noteListsRef = firestore.collection("boards").document(boardId).collection("notelists")
+        noteListListener = noteListsRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("BoardRepository", "Listen notelists snapshot failed", error)
+                return@addSnapshotListener
+            }
+            if (snapshot != null) {
+                val noteListList = snapshot.documents.mapNotNull {
+                    it.toObject(NoteList::class.java)
+                }
+                _noteLists.value = noteListList
+            }
+        }
+    }
+
+    override fun removeNoteListListener() {
+        noteListListener?.remove()
+        noteListListener = null
+        _noteLists.value = emptyList()
+    }
+
+    //TODO: OK
+    override suspend fun refreshBoard() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val boardsSnapshot = firestore.collection("boards")
+            .where(
+                Filter.or(
+                    Filter.equalTo("ownerId", authUser.uid),
+                    Filter.arrayContains("memberIds", authUser.uid)
+                )
+            )
             .get()
             .await()
 
-        val board = boardDoc.toObject(Board::class.java)
-            ?: throw Exception("Invalid board format or board not found")
+        val boards = boardsSnapshot.documents.mapNotNull { it.toObject(Board::class.java) }
+        _boards.value = boards.sortedByDescending { it.createdAt }
+    }
 
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        if (board.ownerId != currentUser.uid && !board.memberIds.contains(currentUser.uid)) {
+    //TODO: OK
+    override suspend fun getBoard(docId: String): Board {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val boardRef = firestore.collection("boards").document(docId)
+        val boardDoc = boardRef.get().await()
+        if (!boardDoc.exists()) throw Exception("Board not found")
+
+        val board = boardDoc.toObject(Board::class.java) ?: throw Exception("Invalid board format")
+        if (board.ownerId != authUser.uid && !board.memberIds.contains(authUser.uid)) {
             throw SecurityException("User does not have access to this board.")
         }
-        return board
-    }
 
-    override suspend fun addBoard(name: String, cover: Int?) {
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        val userId = currentUser.uid
-
-        val boardRef = firestore.collection("boards").document()
-        val boardId = boardRef.id
-
-        val newBoard = Board(
-            docId = boardId,
-            name = name,
-            cover = cover,
-            ownerId = userId,
-            memberIds = listOf(userId),
-            isLoading = null
-        )
-
-        _boards.update { it + newBoard.copy(isLoading = true) }
-
-        try {
-            boardRef.set(newBoard).await()
-
-            _boards.update { list ->
-                list.map {
-                    if (it.docId == boardId) {
-                        newBoard.copy(isLoading = false)
-                    } else {
-                        it
+        val noteListsSnapshot = boardRef.collection("notelists").get().await()
+        val noteLists = coroutineScope {
+            noteListsSnapshot.documents.mapNotNull { noteListDoc ->
+                async {
+                    try {
+                        val noteList = noteListDoc.toObject(NoteList::class.java)
+                        val notesSnapshot = noteListDoc.reference.collection("notes").get().await()
+                        val notes = notesSnapshot.documents.mapNotNull {
+                            it.toObject(Note::class.java)
+                        }
+                        noteList?.copy(notes = notes)
+                    } catch(_: Exception) {
+                        null
                     }
                 }
+            }.awaitAll().filterNotNull()
+        }
+
+        val result = board.copy(noteLists = noteLists)
+        _currentBoard.value = result
+        return result
+    }
+
+    //TODO: OK
+    override fun addBoard(board: Board) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        repoScope.launch {
+            val boardRef = firestore.collection("boards").document()
+            val boardId = boardRef.id
+
+            val tempBoard = board.copy(
+                docId = boardId,
+                ownerId = authUser.uid,
+                memberIds = listOf(authUser.uid),
+                createdAt = Timestamp.now(),
+            )
+            withContext(Dispatchers.Main) {
+                _boards.update { list ->
+                    (list + tempBoard.copy(isLoading = true)).sortedByDescending { it.createdAt }
+                }
             }
-        } catch(e: Exception) {
-            _boards.update { list -> list.filterNot { it.docId == boardId } }
-            throw e
+
+            try {
+                boardRef.set(tempBoard).await()
+                withContext(Dispatchers.Main) {
+                    _boards.update { list ->
+                        (list.filterNot { it.docId == boardId } + tempBoard.copy(isLoading = false))
+                            .sortedByDescending { it.createdAt }
+                    }
+                }
+            } catch(e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _boards.update { list ->
+                        list.filterNot { it.docId == boardId }.sortedByDescending { it.createdAt }
+                    }
+                }
+                throw e
+            }
         }
     }
 
-    override suspend fun deleteBoard(docId: String): Boolean {
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        val boardRef = firestore.collection("boards").document(docId)
+    //TODO: OK
+    override fun deleteBoard(docId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
 
-        val boardSnapshot = boardRef.get().await()
-        val boardData = boardSnapshot.toObject(Board::class.java)
-        if (boardData?.ownerId != currentUser.uid) {
-            throw SecurityException("Only the board owner can delete the board.")
+        repoScope.launch {
+            firestore.collection("boards").document(docId).delete().await()
+
+            withContext(Dispatchers.Main) {
+                _boards.update { list -> list.filterNot { it.docId == docId } }
+
+                if (_currentBoard.value?.docId == docId) _currentBoard.value = null
+            }
         }
-        try {
-            boardRef.delete().await()
-            _boards.update { list -> list.filterNot { it.docId == docId } }
-            return true
-        } catch(e: Exception) {
-            throw e
-        }
-        return false
     }
 
-    override suspend fun deleteAllBoards() {
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        val userId = currentUser.uid
-
+    //TODO: OK
+    override fun deleteAllBoards() {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
         val boardsToDeleteQuery = firestore.collection("boards")
-            .whereEqualTo("ownerId", userId)
+            .whereEqualTo("ownerId", authUser.uid)
 
         val previousState = _boards.value
+        _boards.update { list -> list.filterNot { it.ownerId == authUser.uid } }
+
+        repoScope.launch {
+            try {
+                val snapshot = boardsToDeleteQuery.get().await()
+                if (snapshot.isEmpty) return@launch
+
+                val batch = firestore.batch()
+                snapshot.documents.forEach { batch.delete(it.reference) }
+                batch.commit().await()
+            } catch(e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _boards.value = previousState
+                }
+                throw e
+            }
+        }
+    }
+
+    //TODO: OK
+    override suspend fun updateBoardName(docId: String, name: String) {
+        auth.currentUser ?: throw IllegalStateException("User not logged in")
+        val boardRef = firestore.collection("boards").document(docId)
+
         try {
-            _boards.update { list -> list.filterNot { it.ownerId == userId } }
-
-            val snapshot = boardsToDeleteQuery.get().await()
-            if (snapshot.isEmpty) return
-
-            val batch = firestore.batch()
-            snapshot.documents.forEach { batch.delete(it.reference) }
-            batch.commit().await()
-
+            boardRef.update("name", name).await()
+            _boards.update { list ->
+                list.map { if (it.docId == docId) it.copy(name = name) else it }
+            }
+            if (_currentBoard.value?.docId == docId) {
+                _currentBoard.update { it?.copy(name = name) }
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
+                boardNotFound(docId)
+            }
+            throw e
         } catch(e: Exception) {
-            _boards.value = previousState
             throw e
         }
     }
 
-    override suspend fun updateBoardName(docId: String, name: String) {
-        val currentUser = auth.currentUser ?: throw IllegalStateException("User not logged in")
-        val boardRef = firestore.collection("boards").document(docId)
-
-        val boardSnapshot = boardRef.get().await() // Suspending call
-        val boardData = boardSnapshot.toObject(Board::class.java)
-        if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
-            throw SecurityException("User must be a member or owner to update the board name.")
-        }
-
-        boardRef.update("name", name).await()
-
-        _boards.update { list ->
-            list.map { if (it.docId == docId) it.copy(name = name) else it }
-        }
-        Log.d("BoardRepository", "Board name updated successfully for $docId")
-    }
-
+    //TODO: OK
     override suspend fun updateBoardCover(docId: String, color: Int?) {
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
+        auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(docId)
 
-        val boardSnapshot = boardRef.get().await()
-        val boardData = boardSnapshot.toObject(Board::class.java)
-        if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
-            throw SecurityException("User must be a member to update the board cover.")
+        try {
+            boardRef.update("cover", color).await()
+            _boards.update { list ->
+                list.map {
+                    if (it.docId == docId) it.copy(cover = color) else it
+                }
+            }
+            if (_currentBoard.value?.docId == docId) {
+                _currentBoard.update { it?.copy(cover = color) }
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
+                boardNotFound(docId)
+            }
+            throw e
+        } catch(e: Exception) {
+            throw e
         }
-
-        boardRef.update("cover", color).await()
-        _boards.update { list -> list.map { if (it.docId == docId) it.copy(cover = color) else it } }
     }
 
     override suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean {
@@ -238,15 +356,10 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         val boardSnapshot = boardRef.get().await()
         val board = boardSnapshot.toObject(Board::class.java)
         if (board == null || board.ownerId != currentUser.uid) {
-            Log.e(
-                "BoardRepository",
-                "Only the owner can add members. Current user: ${currentUser.uid}, Owner: ${board?.ownerId}"
-            )
             throw SecurityException("Only the board owner can add members.")
         }
 
         if (board.memberIds.contains(userIdToAdd)) {
-            Log.i("BoardRepository", "User $userIdToAdd is already a member of board $boardId.")
             return true
         }
 
@@ -285,11 +398,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             }
         }
         return true
-    }
-
-    override fun clearCache() {
-        removeBoardListener()
-        _boards.value = emptyList()
     }
 
     /////////////TODO : Ignore this Just a separator
@@ -442,29 +550,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
-    override fun registerNoteListListener(boardId: String) {
-        val authUser = auth.currentUser ?: throw Exception("User not logged in")
-        removeNoteListListener()
-        val noteListsRef = firestore.collection("boards").document(boardId).collection("notelists")
-        noteListListener = noteListsRef.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                Log.e("BoardRepository", "Listen notelists snapshot failed", error)
-                return@addSnapshotListener
-            }
-            if (snapshot != null) {
-                val noteListList = snapshot.documents.mapNotNull {
-                    it.toObject(NoteList::class.java)
-                }
-                _noteLists.value = noteListList
-            }
-        }
-    }
-
-    override fun removeNoteListListener() {
-        noteListListener?.remove()
-        noteListListener = null
-        _noteLists.value = emptyList()
-    }
 
     override suspend fun updateNoteListName(
         boardId: String,
@@ -549,40 +634,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
-    override fun removeNoteListener() {
-        notesListener?.remove()
-        notesListener = null
-        _notes.value = emptyList()
-    }
-
-    override fun registerNoteListener(boardId: String, noteListId: String) {
-        val authUser = auth.currentUser ?: return
-
-        removeNoteListener()
-
-        val notesRef = firestore
-            .collection("boards")
-            .document(boardId)
-            .collection("notelists")
-            .document(noteListId)
-            .collection("notes")
-            .whereEqualTo("archived", false)
-
-        notesListener = notesRef.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                if (error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
-                }
-                return@addSnapshotListener
-            }
-
-            if (snapshot != null) {
-                val remoteNotes = snapshot.documents.mapNotNull {
-                    it.toObject(Note::class.java)
-                }
-                _notes.value = remoteNotes
-            }
-        }
-    }
 
     override suspend fun refreshNotes(boardId: String, noteListId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
@@ -942,5 +993,15 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 listenerRegistration.remove()
             }
         }
+    }
+
+
+    override fun clearCache() {
+        repoScope.coroutineContext.cancelChildren()
+        removeBoardListener()
+        removeNoteListener()
+        removeNoteListListener()
+        _currentBoard.value = null
+        _boards.value = emptyList()
     }
 }

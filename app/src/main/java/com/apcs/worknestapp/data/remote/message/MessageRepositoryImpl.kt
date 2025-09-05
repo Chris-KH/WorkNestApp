@@ -10,6 +10,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,7 +29,10 @@ import javax.inject.Inject
 class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
-    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val errorHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e("MessageRepository", "Coroutine crashed", throwable)
+    }
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + errorHandler)
 
     private var conservationsListener: ListenerRegistration? = null
 

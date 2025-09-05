@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,7 +27,10 @@ import javax.inject.Inject
 class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
-    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val errorHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e("NoteRepository", "Coroutine crashed", throwable)
+    }
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + errorHandler)
 
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     override val notes: StateFlow<List<Note>> = _notes.asStateFlow()
@@ -41,6 +45,11 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             val user = it.currentUser
             if (user == null) clearCache()
         }
+    }
+
+    private fun noteNotFound(noteId: String) {
+        if (_currentNote.value?.docId == noteId) _currentNote.value = null
+        _notes.update { list -> list.filterNot { it.docId == noteId } }
     }
 
     override fun removeListener() {
@@ -101,16 +110,29 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
 
             val noteId = noteRef.id
 
-            _notes.value = _notes.value + note.copy(docId = noteId, isLoading = true)
+            withContext(Dispatchers.Main) {
+                _notes.value = _notes.value + note.copy(docId = noteId, isLoading = true)
+            }
 
-            noteRef.set(note.copy(docId = noteId, isLoading = null)).await()
-            val snapshot = noteRef.get().await()
-            val newNote = snapshot.toObject(Note::class.java)
+            try {
+                noteRef.set(note.copy(docId = noteId, isLoading = null)).await()
+                val snapshot = noteRef.get().await()
+                val newNote = snapshot.toObject(Note::class.java)
 
-            newNote?.let {
-                _notes.update { list ->
-                    list.filterNot { it.docId == noteId } + newNote
+                withContext(Dispatchers.Main) {
+                    newNote?.let { new ->
+                        _notes.update { list ->
+                            list.filterNot { it.docId == noteId } + new
+                        }
+                    }
                 }
+            } catch(e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _notes.update { list ->
+                        list.filterNot { it.docId == noteId }
+                    }
+                }
+                throw e
             }
         }
     }
@@ -163,7 +185,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                 _notes.update { list ->
                     list.filterNot { it.docId == docId }
                 }
-                if (_currentNote.value?.docId == docId) _currentNote.value = null
+                noteNotFound(docId)
             }
         }
     }
@@ -316,12 +338,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             firestore.runTransaction { transaction ->
                 val noteSnapshot = transaction.get(noteRef)
                 if (!noteSnapshot.exists()) {
-                    if (_currentNote.value?.docId == noteId) {
-                        _currentNote.value = null
-                    }
+                    noteNotFound(noteId)
                     throw Exception("Note not found")
                 }
-
                 transaction.set(checklistRef, newChecklist)
             }.await()
             withContext(Dispatchers.Main) {
@@ -337,15 +356,25 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
 
     override fun deleteChecklist(noteId: String, checklistId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(noteId)
+
+        val checklistRef = noteRef
+            .collection("checklists")
+            .document(checklistId)
+
         repoScope.launch {
-            firestore.collection("users")
-                .document(authUser.uid)
-                .collection("notes")
-                .document(noteId)
-                .collection("checklists")
-                .document(checklistId)
-                .delete()
-                .await()
+            firestore.runTransaction { transaction ->
+                val noteSnapshot = transaction.get(noteRef)
+                if (!noteSnapshot.exists()) {
+                    noteNotFound(noteId)
+                    throw Exception("Note not found")
+                }
+                transaction.delete(checklistRef)
+            }.await()
 
             withContext(Dispatchers.Main) {
                 if (_currentNote.value?.docId == noteId) {
@@ -373,12 +402,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             firestore.runTransaction { transaction ->
                 val noteSnapshot = transaction.get(noteRef)
                 if (!noteSnapshot.exists()) {
-                    if (_currentNote.value?.docId == noteId) {
-                        _currentNote.value = null
-                    }
+                    noteNotFound(noteId)
                     throw Exception("Note not found")
                 }
-
                 transaction.update(checklistRef, "name", name)
             }.await()
 
@@ -410,9 +436,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             firestore.runTransaction { transaction ->
                 val noteSnapshot = transaction.get(noteRef)
                 if (!noteSnapshot.exists()) {
-                    if (_currentNote.value?.docId == noteId) {
-                        _currentNote.value = null
-                    }
+                    noteNotFound(noteId)
                     throw Exception("Note not found when add task")
                 }
                 val checklistSnapshot = transaction.get(checklistRef)
@@ -490,9 +514,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             firestore.runTransaction { transaction ->
                 val noteSnapshot = transaction.get(noteRef)
                 if (!noteSnapshot.exists()) {
-                    if (_currentNote.value?.docId == noteId) {
-                        _currentNote.value = null
-                    }
+                    noteNotFound(noteId)
                     throw Exception("Note not found when update task name")
                 }
                 val checklistSnapshot = transaction.get(checklistRef)
@@ -550,9 +572,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             firestore.runTransaction { transaction ->
                 val noteSnapshot = transaction.get(noteRef)
                 if (!noteSnapshot.exists()) {
-                    if (_currentNote.value?.docId == noteId) {
-                        _currentNote.value = null
-                    }
+                    noteNotFound(noteId)
                     throw Exception("Note not found when update task done")
                 }
                 val checklistSnapshot = transaction.get(checklistRef)
@@ -609,7 +629,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                if (_currentNote.value?.docId == docId) _currentNote.value = null
+                noteNotFound(docId)
             }
             throw e
         } catch(e: Exception) {
@@ -636,7 +656,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                 }
             } catch(e: FirebaseFirestoreException) {
                 if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                    if (_currentNote.value?.docId == docId) _currentNote.value = null
+                    noteNotFound(docId)
                 }
                 throw e
             } catch(e: Exception) {
@@ -662,7 +682,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                if (_currentNote.value?.docId == docId) _currentNote.value = null
+                noteNotFound(docId)
             }
             throw e
         } catch(e: Exception) {
@@ -690,11 +710,8 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             }
             noteRef.update("completed", newState).await()
         } catch(e: FirebaseFirestoreException) {
-            _notes.update { list ->
-                list.filterNot { it.docId == docId }
-            }
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                if (_currentNote.value?.docId == docId) _currentNote.value = null
+                noteNotFound(docId)
             }
             throw e
         } catch(e: Exception) {
@@ -715,8 +732,8 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             .collection("notes")
             .document(docId)
 
-        val updateNote =
-            _notes.value.find { it.docId == docId } ?: throw Exception("Note not found")
+        val updateNote = _notes.value.find { it.docId == docId }
+            ?: throw Exception("Note not found")
         val previousState = updateNote.archived
 
         try {
@@ -729,11 +746,8 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
 
             noteRef.update("archived", newState).await()
         } catch(e: FirebaseFirestoreException) {
-            _notes.update { list ->
-                list.filterNot { it.docId == docId }
-            }
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                if (_currentNote.value?.docId == docId) _currentNote.value = null
+                noteNotFound(docId)
             }
             throw e
         } catch(e: Exception) {
@@ -764,7 +778,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                if (_currentNote.value?.docId == docId) _currentNote.value = null
+                noteNotFound(docId)
             }
             throw e
         } catch(e: Exception) {
@@ -789,7 +803,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                if (_currentNote.value?.docId == docId) _currentNote.value = null
+                noteNotFound(docId)
             }
             throw e
         } catch(e: Exception) {
