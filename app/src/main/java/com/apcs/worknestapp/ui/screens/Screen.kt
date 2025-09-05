@@ -20,4 +20,5 @@ sealed class Screen(
     object SettingAccount : Screen(route = "setting/account/{field}", title = "Setting Account")
     object NoteDetail : Screen(route = "note-detail/{noteId}", title = "Note Detail")
     object Chat : Screen(route = "chat/{conservationId}", title = "Chat")
+    object BoardNoteDetail : Screen("board_note_detail", "Board Note Detail")
 }

@@ -32,6 +32,7 @@ import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.FallbackScreen
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.screens.add_contact.AddContractScreen
+import com.apcs.worknestapp.ui.screens.board.BoardNoteDetailScreen
 import com.apcs.worknestapp.ui.screens.board.BoardScreen
 import com.apcs.worknestapp.ui.screens.chat.ChatScreen
 import com.apcs.worknestapp.ui.screens.contact.ContactScreen
@@ -393,6 +394,35 @@ fun MainLayout(startDestination: String) {
                         navController = navController,
                         snackbarHost = snackbarHost,
                         noteId = noteId
+                    )
+                }
+            }
+            composable(
+                route = Screen.BoardNoteDetail.route + "/{boardId}/{noteListId}/{noteId}",
+                arguments = listOf(
+                    navArgument("boardId") { type = NavType.StringType },
+                    navArgument("noteListId") { type = NavType.StringType },
+                    navArgument("noteId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val boardId = backStackEntry.arguments?.getString("boardId")
+                val notelistId = backStackEntry.arguments?.getString("noteListId")
+                val noteId = backStackEntry.arguments?.getString("noteId")
+
+                if (boardId.isNullOrBlank() || notelistId.isNullOrBlank() || noteId.isNullOrBlank()) {
+                    FallbackScreen(
+                        message = "Cannot open this note. One or more IDs are missing.",
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                } else {
+                    BoardNoteDetailScreen(
+                        boardId = boardId,
+                        noteListId = notelistId,
+                        noteId = noteId,
+                        snackbarHost = snackbarHost,
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding),
                     )
                 }
             }

@@ -299,10 +299,7 @@ fun BoardScreen(
                         onNoteClick = { note ->
                             if (note.docId != null) {
                                 navController.navigate(
-                                    Screen.NoteDetail.route.replace(
-                                        "{noteId}",
-                                        note.docId
-                                    )
+                                    "board_note_detail/${boardId}/${notelist.docId}/${note.docId}"
                                 )
                             } else {
                                 coroutineScope.launch {

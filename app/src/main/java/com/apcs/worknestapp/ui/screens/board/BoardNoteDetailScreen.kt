@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.ui.screens.board
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +43,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -102,8 +104,9 @@ fun BoardNoteDetailScreen(
     snackbarHost: SnackbarHostState,
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    boardViewModel: BoardViewModel = hiltViewModel(),
+    boardViewModel: BoardViewModel = hiltViewModel()
 ) {
+
     val density = LocalDensity.current
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -132,20 +135,20 @@ fun BoardNoteDetailScreen(
     var topBarBackground by remember { mutableStateOf(surfaceColorOverlay) }
 
     LaunchedEffect(Unit) {
+        Log.d("BoardNoteDetailScreen", "BoardNoteDetailScreen is being launched.")
         isFirstLoading = true
         boardViewModel.getNote(boardId, noteListId, noteId)
         isFirstLoading = false
     }
-    LaunchedEffect(note) {
-        if (note == null && !isFirstLoading) {
-            navController.popBackStack()
-        }
-    }
-
     LaunchedEffect(lazyListState) {
         snapshotFlow { lazyListState.firstVisibleItemIndex }.collect {
             topBarBackground = if (it != 0) surfaceColor
             else surfaceColorOverlay
+        }
+    }
+    DisposableEffect(key1 = Unit) {
+        onDispose {
+            Log.d("BoardNoteDetailScreen", "BoardNoteDetailScreen is being disposed.")
         }
     }
 
