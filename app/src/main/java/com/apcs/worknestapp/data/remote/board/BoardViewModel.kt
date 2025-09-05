@@ -18,9 +18,9 @@ class BoardViewModel @Inject constructor(
     private val boardRepo: BoardRepository,
 ) : ViewModel() {
 
-    val boards = boardRepo.board
-    val notelistsForBoard = boardRepo.notelists
-    val notes = boardRepo.notes
+    val boards = boardRepo.boards
+    private val _notes = MutableStateFlow<List<Note>>(emptyList())
+    val notes = _notes.asStateFlow()
 
     private val _selectedNote = MutableStateFlow<Note?>(null)
     val selectedNote: StateFlow<Note?> = _selectedNote.asStateFlow()
@@ -184,14 +184,28 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun getNotelist(boardId: String, notelistId: String) {
+//    fun getNotelist(boardId: String, notelistId: String) {
+//        viewModelScope.launch {
+//            boardRepo.getNotelist(boardId, notelistId)
+//        }
+//    }
+
+
+    fun getNotesForNotelist(boardId: String, notelistId: String) {
         viewModelScope.launch {
-            boardRepo.getNotelist(boardId, notelistId)
+            try {
+                boardRepo.getNoteForNotelist(boardId, notelistId)
+                    .collect { notesList ->
+                        _notes.value = notesList
+                    }
+            } catch (e: Exception) {
+                // This will catch any exceptions not handled by the Flow itself.
+                // The repository handles the PERMISSION_DENIED case.
+                Log.e("BoardViewModel", "Error fetching notes: ${e.message}")
+                _notes.value = emptyList() // Or handle the error appropriately
+            }
         }
     }
-
-
-
     fun getNote(boardId: String, notelistId: String, noteId: String) {
         viewModelScope.launch {
             val note = boardRepo.getNote(boardId, notelistId, noteId)

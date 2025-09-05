@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 
 interface BoardRepository {
-    val board: StateFlow<List<Board>>
+    val boards: StateFlow<List<Board>>
     val notelists: StateFlow<List<Notelist>>
     val notes: StateFlow<List<Note>>
     fun removeBoardListener()
@@ -53,4 +53,5 @@ interface BoardRepository {
     fun clearCache()
     suspend fun getChecklist(boardId: String, notelistId: String, noteId: String, checklistId: String): ChecklistBoard?
     fun getChecklists(boardId: String, notelistId: String, noteId: String): Flow<List<ChecklistBoard>>
+    fun getNoteForNotelist(boardId: String, notelistId: String): Flow<List<Note>>
 }

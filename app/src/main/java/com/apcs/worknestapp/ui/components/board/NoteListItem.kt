@@ -49,7 +49,7 @@ fun NoteListItem(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = note.name.takeIf { it?.isNotBlank() == false } ?: "Untitled Note",
+                text = if (note.name?.isNotBlank() == true) note.name else "Untitled Note",
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )

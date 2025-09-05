@@ -8,6 +8,8 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,8 +26,9 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
+
     private val _boards = MutableStateFlow<List<Board>>(emptyList())
-    override val board: StateFlow<List<Board>> = _boards
+    override val boards: StateFlow<List<Board>> = _boards
     private var boardListener: ListenerRegistration? = null
 
     private val _notelists = MutableStateFlow<List<Notelist>>(emptyList())
@@ -101,6 +104,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         _boards.value = (ownedBoards + memberBoards).distinctBy { it.docId }
     }
     override suspend fun getBoard(docId: String): Board {
+        Log.d("BoardRepository", "Fetching board with docId: $docId")
         val boardDoc = firestore.collection("boards")
             .document(docId)
             .get()
@@ -300,6 +304,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
 
     override suspend fun addNoteToList(boardId: String, notelistId: String, note: Note) {
+        Log.d("BoardRepositoryImpl", "Adding note to list: $notelistId")
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val notesCollectionRef = firestore.collection("boards").document(boardId)
@@ -353,18 +358,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         val notelistRef = firestore.collection("boards").document(boardId)
             .collection("notelists").document(notelistId)
 
-        val currentUser = auth.currentUser ?: throw SecurityException("User not logged in.")
-        val boardDoc = firestore.collection("boards").document(boardId).get().await()
-        val boardData = boardDoc.toObject(Board::class.java)
-
-        if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
-            throw SecurityException("User does not have access to this notelist.")
-        }
-
         return try {
             val notelistSnapshot = notelistRef.get().await()
             notelistSnapshot.toObject(Notelist::class.java)
         } catch (e: Exception) {
+            if (e is com.google.firebase.firestore.FirebaseFirestoreException && e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                Log.e("BoardRepositoryImpl", "PERMISSION_DENIED: User does not have access to this notelist.", e)
+                throw SecurityException("User does not have access to this notelist.")
+            }
             Log.e("BoardRepositoryImpl", "Error getting notelist: ${e.message}", e)
             null
         }
@@ -384,11 +385,24 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
 
         return callbackFlow {
+            // The Firestore SDK will perform the security check on the server.
+            // We do not need a redundant client-side check for permissions.
             val notelistsQuery = firestore.collection("boards").document(boardId).collection("notelists")
 
             val listenerRegistration = notelistsQuery.addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    // If a permission error occurs, we handle it here.
+                    if (error.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        Log.e("BoardRepositoryImpl", "PERMISSION_DENIED: User does not have access to this board's notelists.")
+                        // Send an empty list or a specific error state to the UI
+                        trySend(emptyList())
+                        // Optionally, close the flow to stop listening for updates
+                        close(error)
+                    } else {
+                        // For other errors, close the flow normally
+                        Log.e("BoardRepositoryImpl", "Error getting notelists: ${error.message}")
+                        close(error)
+                    }
                     return@addSnapshotListener
                 }
 
@@ -843,6 +857,41 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         } catch (e: Exception) {
             Log.e("BoardRepositoryImpl", "Failed to delete checklist board", e)
             false
+        }
+    }
+
+    override fun getNoteForNotelist(boardId: String, notelistId: String): Flow<List<Note>> {
+        return callbackFlow {
+            val notesQuery = firestore.collection("boards")
+                .document(boardId)
+                .collection("notelists")
+                .document(notelistId)
+                .collection("notes")
+                .orderBy("createdAt", Query.Direction.ASCENDING) // Order notes by creation time
+
+            val listenerRegistration = notesQuery.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    if (error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        Log.e("BoardRepositoryImpl", "PERMISSION_DENIED: User does not have access to these notes.")
+                        trySend(emptyList())
+                        close(error)
+                    } else {
+                        Log.e("BoardRepositoryImpl", "Error getting notes for notelist: ${error.message}")
+                        close(error)
+                    }
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val noteList = snapshot.documents.mapNotNull {
+                        it.toObject<Note>()
+                    }
+                    trySend(noteList)
+                }
+            }
+            awaitClose {
+                listenerRegistration.remove()
+            }
         }
     }
 }

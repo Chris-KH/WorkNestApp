@@ -79,6 +79,8 @@ fun NoteListCard(
         if (notelist.name != editableNotelistName) {
             editableNotelistName = notelist.name.takeIf { it?.isNotBlank() == true } ?: ""
         }
+        boardViewModel.getNotesForNotelist(boardId, notelist.docId!!)
+
     }
     var isEditingListName by remember { mutableStateOf(false) }
     Card(
