@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -31,6 +33,8 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.ui.theme.Roboto
@@ -62,6 +66,8 @@ fun CustomTextField(
     border: BorderStroke? = null,
     shape: Shape = RectangleShape,
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -78,6 +84,7 @@ fun CustomTextField(
             textStyle = textStyle,
             cursorBrush = cursorBrush,
             modifier = Modifier
+                .onFocusChanged { isFocused = it.isFocused }
                 .weight(1f)
                 .let {
                     if (border != null) return@let it.border(
@@ -105,7 +112,18 @@ fun CustomTextField(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    innerTextField()
+                    if (isFocused) {
+                        innerTextField()
+                    } else {
+                        Text(
+                            text = value.text,
+                            maxLines = 1,
+                            style = textStyle,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                     if (value.text.isEmpty() && placeholder != null) placeholder()
                 }
                 if (trailingIcon != null) {

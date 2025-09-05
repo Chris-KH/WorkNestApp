@@ -434,8 +434,8 @@ fun MainLayout(startDestination: String) {
                 if (boardId != null) {
                     BoardScreen(
                         navController = navController,
-                        snackbarHostState = snackbarHost,
-                        modifier = Modifier.padding(innerPadding),
+                        snackbarHost = snackbarHost,
+                        modifier = Modifier,
                         boardId = boardId
                     )
                 } else {

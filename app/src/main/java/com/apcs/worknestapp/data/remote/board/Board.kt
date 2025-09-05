@@ -1,14 +1,13 @@
 package com.apcs.worknestapp.data.remote.board
 
-import com.apcs.worknestapp.data.remote.note.Note
+import androidx.compose.ui.graphics.Color
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ServerTimestamp
 
 data class Board(
     @DocumentId val docId: String? = null,
-    val cover: Int? = null,
+    val cover: Int? = Color.Gray.value.toInt(),
     val name: String? = null,
     val isLoading: Boolean? = null,
     val ownerId: String? = null,

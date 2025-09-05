@@ -43,11 +43,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,6 +60,7 @@ import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.board.BoardActionDropdownMenu
 import com.apcs.worknestapp.ui.components.board.NoteListCard
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
+import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.utils.ColorUtils
 import kotlinx.coroutines.launch
@@ -77,6 +75,7 @@ fun BoardScreen(
     modifier: Modifier = Modifier,
     boardViewModel: BoardViewModel = hiltViewModel(),
 ) {
+    val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
 
@@ -96,9 +95,6 @@ fun BoardScreen(
             editableBoardName = board?.name ?: ""
         }
     }
-
-    val focusManager = LocalFocusManager.current
-    var isEditingBoardName by remember { mutableStateOf(false) }
 
     LaunchedEffect(boardId) {
         if (isFirstLoad) {
@@ -124,46 +120,37 @@ fun BoardScreen(
                         CustomTextField(
                             value = editableBoardName,
                             onValueChange = { editableBoardName = it },
-                            textStyle = MaterialTheme.typography.titleLarge.copy( // Or titleMedium
+                            textStyle = TextStyle(
+                                fontWeight = FontWeight.Normal,
+                                fontFamily = Roboto,
+                                fontSize = 16.sp,
+                                lineHeight = 16.sp,
+                                letterSpacing = (0).sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             ),
+                            containerColor = Color.Transparent,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = {
-                                if (editableBoardName.isNotBlank() && editableBoardName != board.name) {
-                                    boardViewModel.updateBoardName(
-                                        board.docId!!, editableBoardName
-                                    )
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    if (editableBoardName.isNotBlank() && editableBoardName != board.name) {
+                                        boardViewModel.updateBoardName(
+                                            board.docId!!, editableBoardName
+                                        )
+                                    }
+                                    focusManager.clearFocus()
                                 }
-                                isEditingBoardName = false
-                                focusManager.clearFocus()
-                            }, onNext = {}),
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(end = 8.dp)
                                 .onFocusChanged { focusState ->
-                                    isEditingBoardName = focusState.isFocused
                                     if (!focusState.isFocused && editableBoardName.isNotBlank() && editableBoardName != board.name) {
                                     } else if (!focusState.isFocused && editableBoardName.isNotBlank() && editableBoardName == board.name) {
                                     } else if (!focusState.isFocused && editableBoardName.isBlank()) {
                                         editableBoardName = board.name ?: ""
                                     }
-                                }
-                                .onKeyEvent { keyEvent ->
-                                    if (keyEvent.key == Key.Enter) {
-                                        if (editableBoardName.isNotBlank() && editableBoardName != board.name) {
-                                            boardViewModel.updateBoardName(
-                                                board.docId!!, editableBoardName
-                                            )
-                                        }
-                                        isEditingBoardName = false
-                                        focusManager.clearFocus()
-                                        true // Consume the event
-                                    } else {
-                                        false
-                                    }
                                 },
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
                         )
                     } else {
                         Text(
@@ -178,17 +165,24 @@ fun BoardScreen(
                             modifier = Modifier,
                         )
                     }
-                }, navigationIcon = {
+                },
+                navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                        )
                     }
-                }, actions = {
+                },
+                actions = {
                     if (board != null) { // Only show actions if board is loaded
                         var menuExpanded by remember { mutableStateOf(false) }
                         IconButton(onClick = { menuExpanded = !menuExpanded }) {
                             Icon(
                                 imageVector = Icons.Filled.MoreVert,
                                 contentDescription = "Board Actions",
+                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier
                                     .size(28.dp)
                                     .rotate(90f)
@@ -201,7 +195,6 @@ fun BoardScreen(
                             onRenameBoard = {
                                 menuExpanded = false
                                 // Could also trigger focus on the BasicTextField here
-                                isEditingBoardName = true // Maybe set focus to BasicTextField
                             },
                             onDeleteBoard = {
                                 menuExpanded = false
@@ -248,13 +241,15 @@ fun BoardScreen(
                                 // TODO: color picker
                             })
                     }
-                }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = if (isEditingBoardName) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent, // Change background when editing
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface // Or your preference
+                },
+                expandedHeight = TopBarDefault.expandedHeight,
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
                 )
             )
         },
-        containerColor = boardCoverColor ?: MaterialTheme.colorScheme.background,
+        containerColor = boardCoverColor ?: Color.Gray,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         if (board == null) {
@@ -267,30 +262,12 @@ fun BoardScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            OutlinedButton(
-                onClick = {
-                    coroutineScope.launch {
-                        board.docId?.let { currentBoardDocId ->
-                            val newNotelist = Notelist(name = "New List")
-                            boardViewModel.addNotelist(currentBoardDocId, newNotelist)
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .align(Alignment.End)
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Note List")
-                Spacer(Modifier.width(8.dp))
-                Text("Add New List")
-            }
-
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 items(
                     items = notelists, key = { it.docId ?: UUID.randomUUID() }) { notelist ->
@@ -345,6 +322,23 @@ fun BoardScreen(
                             .width(300.dp)
                             .fillMaxHeight()
                     )
+                }
+                item(key = "Add note list button") {
+                    OutlinedButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                board.docId?.let { currentBoardDocId ->
+                                    val newNotelist = Notelist(name = "New List")
+                                    boardViewModel.addNotelist(currentBoardDocId, newNotelist)
+                                }
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add Note List")
+                        Spacer(Modifier.width(8.dp))
+                        Text("Add New List")
+                    }
                 }
             }
         }
