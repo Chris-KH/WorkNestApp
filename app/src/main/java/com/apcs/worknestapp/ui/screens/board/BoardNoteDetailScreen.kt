@@ -91,7 +91,10 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 enum class NoteModalBottomType {
-    COVER, DESCRIPTION, START_DATE, END_DATE,
+    COVER,
+    DESCRIPTION,
+    START_DATE,
+    END_DATE,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,13 +103,11 @@ fun BoardNoteDetailScreen(
     boardId: String,
     noteListId: String,
     noteId: String,
-
     snackbarHost: SnackbarHostState,
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    boardViewModel: BoardViewModel = hiltViewModel()
+    boardViewModel: BoardViewModel = hiltViewModel(),
 ) {
-
     val density = LocalDensity.current
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -114,19 +115,16 @@ fun BoardNoteDetailScreen(
     var modalBottomType by remember { mutableStateOf<NoteModalBottomType?>(null) }
 
     val note by boardViewModel.selectedNote.collectAsState()
-
-
+    
     var noteName by remember(note?.name) { mutableStateOf(note?.name ?: "") }
     val noteCoverColor = note?.cover?.let { ColorUtils.safeParse(it) }
 
     boardViewModel.getChecklists(boardId, noteListId, noteId)
     val checklists by boardViewModel.checklists.collectAsState()
 
-
     var commentInputFocused by remember { mutableStateOf(false) }
     var commentText by remember { mutableStateOf("") }
     var commentList by remember { mutableStateOf(emptyList<Comment>()) }
-
 
     //LayoutState
     val lazyListState = rememberLazyListState()
@@ -251,7 +249,11 @@ fun BoardNoteDetailScreen(
                                 },
                                 onClick = {
                                     showDropdownMenu = false
-                                    val isSuccess = boardViewModel.removeNoteFromNotelist(boardId, noteListId, noteId)
+                                    val isSuccess = boardViewModel.removeNoteFromNotelist(
+                                        boardId,
+                                        noteListId,
+                                        noteId
+                                    )
 
                                     coroutineScope.launch {
                                         if (!isSuccess) snackbarHost.showSnackbar(
@@ -304,7 +306,7 @@ fun BoardNoteDetailScreen(
 
                                     val isSuccess = boardViewModel.updateNoteCover(
                                         boardId = boardId,
-                                        notelistId  = noteListId,
+                                        notelistId = noteListId,
                                         docId = noteId,
                                         color = newCoverColor
                                     )
@@ -328,7 +330,7 @@ fun BoardNoteDetailScreen(
                                 coroutineScope.launch {
                                     val isSuccess = boardViewModel.updateNoteDescription(
                                         boardId = boardId,
-                                        notelistId  = noteListId,
+                                        notelistId = noteListId,
                                         docId = noteId, description = it
                                     )
                                     if (!isSuccess) snackbarHost.showSnackbar(
@@ -348,7 +350,7 @@ fun BoardNoteDetailScreen(
                                 coroutineScope.launch {
                                     val isSuccess = boardViewModel.updateNoteStartDate(
                                         boardId = boardId,
-                                        notelistId  = noteListId,
+                                        notelistId = noteListId,
                                         docId = noteId, dateTime = it
                                     )
 
@@ -372,7 +374,7 @@ fun BoardNoteDetailScreen(
                                 coroutineScope.launch {
                                     val isSuccess = boardViewModel.updateNoteEndDate(
                                         boardId = boardId,
-                                        notelistId  = noteListId,
+                                        notelistId = noteListId,
                                         docId = noteId, dateTime = it
                                     )
 
@@ -514,7 +516,7 @@ fun BoardNoteDetailScreen(
                                         coroutineScope.launch {
                                             val isSuccess = boardViewModel.updateNoteComplete(
                                                 boardId = boardId,
-                                                notelistId  = noteListId,
+                                                notelistId = noteListId,
                                                 docId = noteId,
                                                 newState = note?.completed != true,
                                             )
@@ -564,7 +566,7 @@ fun BoardNoteDetailScreen(
                                                 else {
                                                     val isSuccess = boardViewModel.updateNoteName(
                                                         boardId = boardId,
-                                                        notelistId  = noteListId,
+                                                        notelistId = noteListId,
                                                         docId = noteId,
                                                         name = noteName,
                                                     )
@@ -716,7 +718,8 @@ fun BoardNoteDetailScreen(
                                     val isSuccess = boardViewModel.addNewChecklist(
                                         boardId = boardId,
                                         notelistId = noteListId,
-                                        noteId)
+                                        noteId
+                                    )
                                     if (!isSuccess) {
                                         coroutineScope.launch {
                                             snackbarHost.showSnackbar(
@@ -820,4 +823,3 @@ fun BoardNoteDetailScreen(
         }
     }
 }
-

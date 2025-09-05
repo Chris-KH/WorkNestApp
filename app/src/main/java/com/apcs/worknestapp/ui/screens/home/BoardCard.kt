@@ -17,13 +17,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.apcs.worknestapp.utils.ColorUtils
 
 @Composable
 fun BoardCard(
@@ -31,35 +31,34 @@ fun BoardCard(
     onClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    val boardCoverColor = board.cover?.let { ColorUtils.safeParse(it) }
+
+    Row(
         modifier = modifier
-            .fillMaxWidth()
             .clickable(onClick = { board.docId?.let { onClick(it) } })
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 10.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(28.dp)
-                    .aspectRatio(1.33f)
-                    .background(
-                        color = board.cover?.let { Color(it) } ?: MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(6.dp)
-                    )
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = board.name ?: "Untitled Board",
-                fontSize = 15.sp,
-                fontFamily = Roboto,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.Normal,
-            )
-        }
+                .height(28.dp)
+                .aspectRatio(1.33f)
+                .background(
+                    color = boardCoverColor ?: MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(6.dp)
+                )
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = board.name ?: "Untitled Board",
+            fontSize = 15.sp,
+            lineHeight = 15.sp,
+            fontFamily = Roboto,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            fontWeight = FontWeight.Normal,
+        )
     }
 }

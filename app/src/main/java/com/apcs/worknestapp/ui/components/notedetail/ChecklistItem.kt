@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
@@ -40,9 +42,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
@@ -64,6 +68,7 @@ fun ChecklistItem(
     onDeleteChecklist: () -> Unit,
     noteViewModel: NoteViewModel,
 ) {
+    val focusManager = LocalFocusManager.current
     var checklistName by remember(checklist.name) { mutableStateOf(checklist.name ?: "") }
     val tasks = checklist.tasks
     var isCollapsed by remember { mutableStateOf(false) }
@@ -113,6 +118,22 @@ fun ChecklistItem(
                     color = MaterialTheme.colorScheme.onBackground
                 ),
                 containerColor = Color.Transparent,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        val initialName = checklist.name ?: ""
+                        if (checklistName != initialName) {
+                            if (checklistName.isBlank()) checklistName = initialName
+                            else {
+                                val newName = onChangeChecklistName(checklistName)
+                                checklistName = newName
+                            }
+                        }
+                        focusManager.clearFocus()
+                    }
+                ),
                 modifier = Modifier
                     .weight(1f)
                     .padding(vertical = 20.dp)

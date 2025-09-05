@@ -436,9 +436,14 @@ fun MainLayout(startDestination: String) {
                         navController = navController,
                         snackbarHostState = snackbarHost,
                         modifier = Modifier.padding(innerPadding),
-                        boardId = boardId)
+                        boardId = boardId
+                    )
                 } else {
-                    Text("Error: Board ID missing")
+                    FallbackScreen(
+                        message = "Error: Board ID missing.",
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
                 }
             }
 

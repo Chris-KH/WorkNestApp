@@ -25,6 +25,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -63,6 +65,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -549,6 +552,33 @@ fun NoteDetailScreen(
                                     letterSpacing = 0.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onBackground
+                                ),
+                                keyboardOptions = KeyboardOptions.Default.copy(
+                                    imeAction = ImeAction.Done
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
+                                        val noteNameInitial = note.value?.name ?: ""
+                                        if (noteName != noteNameInitial) {
+                                            coroutineScope.launch {
+                                                if (noteName.isBlank()) noteName = noteNameInitial
+                                                else {
+                                                    val isSuccess = noteViewModel.updateNoteName(
+                                                        docId = noteId,
+                                                        name = noteName,
+                                                    )
+                                                    if (!isSuccess) {
+                                                        noteName = noteNameInitial
+                                                        snackbarHost.showSnackbar(
+                                                            message = "Update note name failed. Try again",
+                                                            withDismissAction = true,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        focusManager.clearFocus()
+                                    }
                                 ),
                                 containerColor = Color.Transparent,
                                 modifier = Modifier
