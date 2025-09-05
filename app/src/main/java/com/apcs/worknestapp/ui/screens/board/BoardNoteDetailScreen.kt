@@ -75,7 +75,6 @@ import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.note.Checklist
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.components.LoadingScreen
-import com.apcs.worknestapp.ui.components.board.ChecklistItemBoard
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
@@ -108,6 +107,8 @@ fun BoardNoteDetailScreen(
     modifier: Modifier = Modifier,
     boardViewModel: BoardViewModel = hiltViewModel(),
 ) {
+}
+/*{
     val density = LocalDensity.current
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -822,4 +823,4 @@ fun BoardNoteDetailScreen(
             }
         }
     }
-}
+}*/

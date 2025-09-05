@@ -1,7 +1,5 @@
-package com.apcs.worknestapp.ui.screens.note
+package com.apcs.worknestapp.ui.screens.board
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,13 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.ui.components.RotatingIcon
@@ -41,12 +37,10 @@ import com.apcs.worknestapp.utils.ColorUtils
 @Composable
 fun NoteItem(
     note: Note,
-    selectedMode: Boolean,
-    isSelected: Boolean,
-    modifier: Modifier = Modifier,
-    onLongClick: (() -> Unit)? = null,
-    onCompleteClick: () -> Unit,
     onClick: () -> Unit,
+    onCheckedChange: (Boolean) -> Unit,
+    onRemoveThisNote: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(12.dp)
     val coverColor = note.cover?.let { ColorUtils.safeParse(it) }
@@ -62,11 +56,10 @@ fun NoteItem(
                 .clip(shape)
                 .border(
                     width = 8.dp,
-                    color = if (isSelected && selectedMode) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surfaceVariant,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = shape
                 )
-                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .combinedClickable(onClick = onClick)
         ) {
             if (coverColor != null) {
                 Box(
@@ -87,27 +80,25 @@ fun NoteItem(
                 val lineHeight = 15.sp
                 val iconSize = with(LocalDensity.current) { fontSize.toDp() + 2.dp }
 
-                AnimatedVisibility(visible = !selectedMode) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(
-                                if (note.completed == null || !note.completed) R.drawable.outline_circle
-                                else R.drawable.fill_checkbox
-                            ),
-                            tint = if (note.completed == null || !note.completed) MaterialTheme.colorScheme.onSurface
-                            else MaterialTheme.colorScheme.success,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .clickable(onClick = onCompleteClick)
-                                .size(iconSize)
-                                .clip(CircleShape)
-                                .let {
-                                    if (note.completed == true) it.background(MaterialTheme.colorScheme.onSurface)
-                                    else it
-                                }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(
+                            if (note.completed == null || !note.completed) R.drawable.outline_circle
+                            else R.drawable.fill_checkbox
+                        ),
+                        tint = if (note.completed == null || !note.completed) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.success,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .clickable(onClick = {})
+                            .size(iconSize)
+                            .clip(CircleShape)
+                            .let {
+                                if (note.completed == true) it.background(MaterialTheme.colorScheme.onSurface)
+                                else it
+                            }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
 
                 Text(
@@ -128,40 +119,6 @@ fun NoteItem(
                             .aspectRatio(1f),
                     )
                 } else Spacer(modifier = Modifier.width(4.dp + iconSize))
-            }
-        }
-        if (isSelected && selectedMode) {
-            val boxSize = 52.dp
-            val iconSize = 20.dp
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(boxSize),
-                contentAlignment = Alignment.Center
-            ) {
-                val color = MaterialTheme.colorScheme.primary
-
-                Canvas(modifier = Modifier.matchParentSize()) {
-                    val path = Path().apply {
-                        moveTo(size.width, 0f)
-                        lineTo(size.width, size.height)
-                        lineTo(0f, 0f)
-                        close()
-                    }
-                    drawPath(path, color = color)
-                }
-
-                Icon(
-                    painter = painterResource(R.drawable.fill_check),
-                    contentDescription = "Selected",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding((boxSize / 2) - iconSize)
-                        .size(iconSize)
-                        .zIndex(10f)
-                )
             }
         }
     }

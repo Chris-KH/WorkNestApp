@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 interface BoardRepository {
     val boards: StateFlow<List<Board>>
     val currentBoard: StateFlow<Board?>
-    val noteLists: StateFlow<List<NoteList>>
     val notes: StateFlow<List<Note>>
 
     //Listener
@@ -20,21 +19,21 @@ interface BoardRepository {
     fun registerNoteListListener(boardId: String)
     fun removeNoteListListener()
 
-    suspend fun refreshBoard()
-    suspend fun getBoard(docId: String): Board
     fun addBoard(board: Board)
     fun deleteBoard(docId: String)
     fun deleteAllBoards()
+    suspend fun refreshBoard()
+    suspend fun getBoard(docId: String): Board
     suspend fun updateBoardName(docId: String, name: String)
     suspend fun updateBoardCover(docId: String, color: Int?)
-    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): Boolean
-    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): Boolean
+    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String)
+    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String)
 
-    suspend fun addNoteList(boardId: String, noteList: NoteList)
-    suspend fun addNoteToList(boardId: String, noteListId: String, note: Note)
-    suspend fun removeNoteList(boardId: String, noteListId: String)
-    fun getNoteListsForBoard(boardId: String?): Flow<List<NoteList>>
     suspend fun getNoteList(boardId: String, noteListId: String): NoteList?
+    suspend fun addNoteList(boardId: String, noteList: NoteList)
+    suspend fun removeNoteList(boardId: String, noteListId: String)
+    suspend fun addNoteToList(boardId: String, noteListId: String, note: Note)
+
 
     suspend fun refreshNoteLists(boardId: String)
     suspend fun updateNoteListName(boardId: String, noteListId: String, newName: String): Boolean

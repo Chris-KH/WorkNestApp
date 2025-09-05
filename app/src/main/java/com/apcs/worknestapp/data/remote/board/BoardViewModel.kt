@@ -6,10 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.apcs.worknestapp.data.remote.note.Note
 import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,53 +15,21 @@ class BoardViewModel @Inject constructor(
 ) : ViewModel() {
     val boards = boardRepo.boards
     val currentBoard = boardRepo.currentBoard
-    private val _notes = MutableStateFlow<List<Note>>(emptyList())
-    val notes = _notes.asStateFlow()
-
-    private val _selectedNote = MutableStateFlow<Note?>(null)
-    val selectedNote: StateFlow<Note?> = _selectedNote.asStateFlow()
-
-    private val _currentChecklist = MutableStateFlow<ChecklistBoard?>(null)
-    val currentChecklist: StateFlow<ChecklistBoard?> = _currentChecklist
-
-    private val _checklists = MutableStateFlow<List<ChecklistBoard>>(emptyList())
-    val checklists: StateFlow<List<ChecklistBoard>> = _checklists
-
-    fun getChecklists(boardId: String, noteListId: String, noteId: String) {
-        viewModelScope.launch {
-            try {
-                (boardRepo as? BoardRepositoryImpl)?.getChecklists(boardId, noteListId, noteId)
-                    ?.collect { checklistList ->
-                        _checklists.value = checklistList
-                    }
-            } catch(e: Exception) {
-                Log.e("BoardViewModel", "Error fetching checklists: ${e.message}")
-                _checklists.value = emptyList()
-            }
-        }
-    }
 
     fun removeBoardListener() {
         boardRepo.removeBoardListener()
     }
 
     fun registerBoardListener() {
-        viewModelScope.launch {
-            boardRepo.registerBoardListener()
-        }
+        boardRepo.registerBoardListener()
     }
 
     fun removeNoteListListener() {
         boardRepo.removeNoteListListener()
     }
 
-    fun registerNoteListListener(boardId: String?) {
-        if (boardId == null) {
-            return
-        }
-        viewModelScope.launch {
-            boardRepo.registerNoteListListener(boardId)
-        }
+    fun registerNoteListListener(boardId: String) {
+        boardRepo.registerNoteListListener(boardId)
     }
 
     fun removeNoteListener() {
@@ -73,9 +37,7 @@ class BoardViewModel @Inject constructor(
     }
 
     fun registerNoteListener(boardId: String, noteListId: String) {
-        viewModelScope.launch {
-            boardRepo.registerNoteListener(boardId, noteListId)
-        }
+        boardRepo.registerNoteListener(boardId, noteListId)
     }
 
     suspend fun refreshBoardsIfEmpty(): Boolean {
@@ -132,15 +94,47 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun updateBoardName(boardId: String, newName: String) {
-        viewModelScope.launch {
-            boardRepo.updateBoardName(boardId, newName)
+    suspend fun updateBoardName(docId: String, newName: String): String? {
+        return try {
+            boardRepo.updateBoardName(docId, newName)
+            null
+        } catch(e: Exception) {
+            val message = "Update board name failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
         }
     }
 
-    fun updateBoardCover(docId: String, color: Int?) {
-        viewModelScope.launch {
+    suspend fun updateBoardCover(docId: String, color: Int?): String? {
+        return try {
             boardRepo.updateBoardCover(docId, color)
+            null
+        } catch(e: Exception) {
+            val message = "Update board cover failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): String? {
+        return try {
+            boardRepo.addMemberToBoard(boardId, userIdToAdd)
+            null
+        } catch(e: Exception) {
+            val message = "Add member failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): String? {
+        return try {
+            boardRepo.removeMemberFromBoard(boardId, userIdToRemove)
+            null
+        } catch(e: Exception) {
+            val message = "Remove member failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
         }
     }
 
@@ -171,22 +165,6 @@ class BoardViewModel @Inject constructor(
         return deleted
     }
 
-    fun addMemberToBoard(boardId: String, userIdToAdd: String) {
-        viewModelScope.launch {
-            (boardRepo as? BoardRepositoryImpl)?.addMemberToBoard(boardId, userIdToAdd)
-        }
-    }
-
-    fun removeMemberFromBoard(boardId: String, userIdToRemove: String) {
-        viewModelScope.launch {
-            (boardRepo as? BoardRepositoryImpl)?.removeMemberFromBoard(boardId, userIdToRemove)
-        }
-    }
-
-    fun getNoteListsForBoard(boardId: String?): Flow<List<NoteList>> {
-        return boardRepo.getNoteListsForBoard(boardId)
-    }
-
     fun refreshNoteLists(boardId: String) {
         viewModelScope.launch {
             boardRepo.refreshNoteLists(boardId)
@@ -202,36 +180,6 @@ class BoardViewModel @Inject constructor(
     fun updateNoteListName(boardId: String, noteListId: String, newName: String) {
         viewModelScope.launch {
             boardRepo.updateNoteListName(boardId, noteListId, newName)
-        }
-    }
-
-//    fun getNoteList(boardId: String, noteListId: String) {
-//        viewModelScope.launch {
-//            boardRepo.getNoteList(boardId, noteListId)
-//        }
-//    }
-
-
-    fun getNotesForNoteList(boardId: String, noteListId: String) {
-        viewModelScope.launch {
-            try {
-                boardRepo.getNoteForNoteList(boardId, noteListId)
-                    .collect { notesList ->
-                        _notes.value = notesList
-                    }
-            } catch(e: Exception) {
-                // This will catch any exceptions not handled by the Flow itself.
-                // The repository handles the PERMISSION_DENIED case.
-                Log.e("BoardViewModel", "Error fetching notes: ${e.message}")
-                _notes.value = emptyList() // Or handle the error appropriately
-            }
-        }
-    }
-
-    fun getNote(boardId: String, noteListId: String, noteId: String) {
-        viewModelScope.launch {
-            val note = boardRepo.getNote(boardId, noteListId, noteId)
-            _selectedNote.value = note
         }
     }
 
@@ -335,20 +283,7 @@ class BoardViewModel @Inject constructor(
     }
 
     fun getChecklist(boardId: String, noteListId: String, noteId: String, checklistId: String) {
-        viewModelScope.launch {
-            try {
-                val checklist = (boardRepo as? BoardRepositoryImpl)?.getChecklist(
-                    boardId,
-                    noteListId,
-                    noteId,
-                    checklistId
-                )
-                _currentChecklist.value = checklist
-            } catch(e: Exception) {
-                Log.e("BoardViewModel", "Error fetching checklist: ${e.message}")
-                _currentChecklist.value = null
-            }
-        }
+
     }
 
     fun addNewChecklist(boardId: String, noteListId: String, noteId: String): Boolean {

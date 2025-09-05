@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.components.board
+package com.apcs.worknestapp.ui.screens.board
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

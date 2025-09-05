@@ -22,7 +22,7 @@ data class Board(
 
 data class NoteList(
     @DocumentId val docId: String? = null,
-    val name: String? = null,
+    val name: String? = "New list",
     val cover: Int? = null,
     val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,

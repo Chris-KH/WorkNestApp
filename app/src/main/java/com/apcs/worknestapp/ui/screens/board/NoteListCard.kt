@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.components.board
+package com.apcs.worknestapp.ui.screens.board
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,8 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,30 +52,23 @@ import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun NoteListCard(
-    noteList: NoteList,
     boardId: String,
+    noteList: NoteList,
     onAddNoteClick: (listId: String, noteName: String) -> Unit,
     onNoteClick: (Note) -> Unit,
-    onNoteCheckedChange: (Note, Boolean) -> Unit,
-    modifier: Modifier = Modifier,
+    onUpdateNoteListName: (String) -> Unit,
     onRemoveNoteList: () -> Unit,
+    onNoteCheckedChange: (Note, Boolean) -> Unit,
     onRemoveSpecificNote: (listId: String, noteId: String) -> Unit,
-    onUpdateNoteListName: (boardId: String, noteListId: String, newName: String) -> Unit,
+    modifier: Modifier = Modifier,
     boardViewModel: BoardViewModel,
 ) {
     val focusManager = LocalFocusManager.current
     var newNoteName by rememberSaveable(noteList.docId) { mutableStateOf("") }
+    val notes = noteList.notes
 
     var editableNoteListName by remember(noteList.name, noteList.docId) {
-        mutableStateOf(noteList.name.takeIf { it?.isNotBlank() == true } ?: "")
-    }
-
-    LaunchedEffect(noteList.name) {
-        if (noteList.name != editableNoteListName) {
-            editableNoteListName = noteList.name.takeIf { it?.isNotBlank() == true } ?: ""
-        }
-        boardViewModel.getNotesForNoteList(boardId, noteList.docId!!)
-
+        mutableStateOf(noteList.name ?: "")
     }
 
     Box(
@@ -119,7 +110,7 @@ fun NoteListCard(
                                 editableNoteListName.isNotBlank() &&
                                 editableNoteListName != (noteList.name ?: "")
                             ) {
-                                onUpdateNoteListName(boardId, noteList.docId, editableNoteListName)
+                                onUpdateNoteListName(editableNoteListName)
                             } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
                                 editableNoteListName = noteList.name
                             }
@@ -135,11 +126,7 @@ fun NoteListCard(
                                     editableNoteListName.isNotBlank() &&
                                     editableNoteListName != (noteList.name ?: "")
                                 ) {
-                                    onUpdateNoteListName(
-                                        boardId,
-                                        noteList.docId,
-                                        editableNoteListName
-                                    )
+                                    onUpdateNoteListName(editableNoteListName)
                                 } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
                                     editableNoteListName = noteList.name
                                 }
@@ -158,8 +145,6 @@ fun NoteListCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Box(modifier = Modifier.weight(1f)) {
-                val notes by boardViewModel.notes.collectAsState()
-
                 if (notes.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -181,7 +166,7 @@ fun NoteListCard(
                             items = notes,
                             key = { note -> note.docId ?: note.name.hashCode() }
                         ) { note ->
-                            NoteListItem(
+                            NoteItem(
                                 note = note,
                                 onClick = { onNoteClick(note) },
                                 onCheckedChange = { isChecked ->
