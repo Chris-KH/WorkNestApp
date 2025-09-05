@@ -276,7 +276,9 @@ fun BoardScreen(
                     item(key = "Add note list button") {
                         Button(
                             onClick = {
-                                boardViewModel.addNoteList(boardId, NoteList())
+                                coroutineScope.launch {
+                                    boardViewModel.addNoteList(boardId, NoteList())
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = topAppBarColor,

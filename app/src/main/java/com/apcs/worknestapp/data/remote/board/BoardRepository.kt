@@ -29,12 +29,10 @@ interface BoardRepository {
     suspend fun addMemberToBoard(boardId: String, userIdToAdd: String)
     suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String)
 
-    suspend fun getNoteList(boardId: String, noteListId: String): NoteList?
     suspend fun addNoteList(boardId: String, noteList: NoteList)
     suspend fun removeNoteList(boardId: String, noteListId: String)
+
     suspend fun addNoteToList(boardId: String, noteListId: String, note: Note)
-
-
     suspend fun refreshNoteLists(boardId: String)
     suspend fun updateNoteListName(boardId: String, noteListId: String, newName: String): Boolean
     suspend fun updateNoteCheckedStatus(

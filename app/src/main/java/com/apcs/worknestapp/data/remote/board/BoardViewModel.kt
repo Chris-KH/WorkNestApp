@@ -138,21 +138,31 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun addNoteList(boardId: String, noteList: NoteList) {
-        viewModelScope.launch {
+    suspend fun addNoteList(boardId: String, noteList: NoteList): String? {
+        return try {
             boardRepo.addNoteList(boardId, noteList)
+            null
+        } catch(e: Exception) {
+            val message = "Add note list failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun removeNoteList(boardId: String, noteListId: String): String? {
+        return try {
+            boardRepo.removeNoteList(boardId, noteListId)
+            null
+        } catch(e: Exception) {
+            val message = "Remove note list failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
         }
     }
 
     fun addNoteToList(boardId: String, noteListId: String, note: Note) {
         viewModelScope.launch {
             boardRepo.addNoteToList(boardId, noteListId, note)
-        }
-    }
-
-    fun removeNoteList(boardId: String, noteListId: String) {
-        viewModelScope.launch {
-            boardRepo.removeNoteList(boardId, noteListId)
         }
     }
 
