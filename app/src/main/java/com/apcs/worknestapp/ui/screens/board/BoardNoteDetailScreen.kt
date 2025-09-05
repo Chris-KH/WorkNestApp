@@ -115,7 +115,7 @@ fun BoardNoteDetailScreen(
     var modalBottomType by remember { mutableStateOf<NoteModalBottomType?>(null) }
 
     val note by boardViewModel.selectedNote.collectAsState()
-    
+
     var noteName by remember(note?.name) { mutableStateOf(note?.name ?: "") }
     val noteCoverColor = note?.cover?.let { ColorUtils.safeParse(it) }
 
@@ -210,7 +210,7 @@ fun BoardNoteDetailScreen(
                                         val isArchived = note?.archived == true
                                         val isSuccess = boardViewModel.updateNoteArchive(
                                             boardId = boardId,
-                                            notelistId = noteListId,
+                                            noteListId = noteListId,
                                             docId = noteId,
                                             newState = !isArchived
                                         )
@@ -249,7 +249,7 @@ fun BoardNoteDetailScreen(
                                 },
                                 onClick = {
                                     showDropdownMenu = false
-                                    val isSuccess = boardViewModel.removeNoteFromNotelist(
+                                    val isSuccess = boardViewModel.removeNoteFromNoteList(
                                         boardId,
                                         noteListId,
                                         noteId
@@ -306,7 +306,7 @@ fun BoardNoteDetailScreen(
 
                                     val isSuccess = boardViewModel.updateNoteCover(
                                         boardId = boardId,
-                                        notelistId = noteListId,
+                                        noteListId = noteListId,
                                         docId = noteId,
                                         color = newCoverColor
                                     )
@@ -330,7 +330,7 @@ fun BoardNoteDetailScreen(
                                 coroutineScope.launch {
                                     val isSuccess = boardViewModel.updateNoteDescription(
                                         boardId = boardId,
-                                        notelistId = noteListId,
+                                        noteListId = noteListId,
                                         docId = noteId, description = it
                                     )
                                     if (!isSuccess) snackbarHost.showSnackbar(
@@ -350,7 +350,7 @@ fun BoardNoteDetailScreen(
                                 coroutineScope.launch {
                                     val isSuccess = boardViewModel.updateNoteStartDate(
                                         boardId = boardId,
-                                        notelistId = noteListId,
+                                        noteListId = noteListId,
                                         docId = noteId, dateTime = it
                                     )
 
@@ -374,7 +374,7 @@ fun BoardNoteDetailScreen(
                                 coroutineScope.launch {
                                     val isSuccess = boardViewModel.updateNoteEndDate(
                                         boardId = boardId,
-                                        notelistId = noteListId,
+                                        noteListId = noteListId,
                                         docId = noteId, dateTime = it
                                     )
 
@@ -516,7 +516,7 @@ fun BoardNoteDetailScreen(
                                         coroutineScope.launch {
                                             val isSuccess = boardViewModel.updateNoteComplete(
                                                 boardId = boardId,
-                                                notelistId = noteListId,
+                                                noteListId = noteListId,
                                                 docId = noteId,
                                                 newState = note?.completed != true,
                                             )
@@ -566,7 +566,7 @@ fun BoardNoteDetailScreen(
                                                 else {
                                                     val isSuccess = boardViewModel.updateNoteName(
                                                         boardId = boardId,
-                                                        notelistId = noteListId,
+                                                        noteListId = noteListId,
                                                         docId = noteId,
                                                         name = noteName,
                                                     )
@@ -717,7 +717,7 @@ fun BoardNoteDetailScreen(
                                     val newChecklist = Checklist()
                                     val isSuccess = boardViewModel.addNewChecklist(
                                         boardId = boardId,
-                                        notelistId = noteListId,
+                                        noteListId = noteListId,
                                         noteId
                                     )
                                     if (!isSuccess) {
@@ -750,7 +750,7 @@ fun BoardNoteDetailScreen(
                             onChangeChecklistName = { newName ->
                                 boardViewModel.updateChecklistName(
                                     boardId = boardId,
-                                    notelistId = noteListId,
+                                    noteListId = noteListId,
                                     noteId = noteId,
                                     checklistId = item.docId,
                                     newName = newName
@@ -760,7 +760,7 @@ fun BoardNoteDetailScreen(
                             onDeleteChecklist = {
                                 boardViewModel.removeChecklist(
                                     boardId = boardId,
-                                    notelistId = noteListId,
+                                    noteListId = noteListId,
                                     noteId = noteId,
                                     checklistId = item.docId
                                 )

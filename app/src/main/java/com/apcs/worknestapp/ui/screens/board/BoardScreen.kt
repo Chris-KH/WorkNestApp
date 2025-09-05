@@ -13,18 +13,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -38,7 +40,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
@@ -54,7 +55,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
-import com.apcs.worknestapp.data.remote.board.Notelist
+import com.apcs.worknestapp.data.remote.board.NoteList
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.board.BoardActionDropdownMenu
@@ -78,6 +79,7 @@ fun BoardScreen(
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
+    val topAppBarColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
 
     val currentBoardState by boardViewModel.boards.collectAsState()
     val board = remember(currentBoardState, boardId) {
@@ -85,8 +87,8 @@ fun BoardScreen(
     }
     val boardCoverColor = board?.cover?.let { ColorUtils.safeParse(it) }
 
-    val notelists by remember(boardId) {
-        boardViewModel.getNotelistsForBoard(boardId)
+    val noteLists by remember(boardId) {
+        boardViewModel.getNoteListsForBoard(boardId)
     }.collectAsState(initial = emptyList())
 
     var editableBoardName by remember(board?.name) { mutableStateOf(board?.name ?: "") }
@@ -98,17 +100,17 @@ fun BoardScreen(
 
     LaunchedEffect(boardId) {
         if (isFirstLoad) {
-            boardViewModel.refreshNotelists(boardId)
+            boardViewModel.refreshNoteLists(boardId)
             isFirstLoad = false
         }
     }
 
     LifecycleResumeEffect(key1 = boardId) {
         boardViewModel.registerBoardListener()
-        boardViewModel.registerNotelistListener(boardId)
+        boardViewModel.registerNoteListListener(boardId)
         onPauseOrDispose {
             boardViewModel.removeBoardListener()
-            boardViewModel.removeNotelistListener()
+            boardViewModel.removeNoteListListener()
         }
     }
 
@@ -168,11 +170,7 @@ fun BoardScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -182,7 +180,6 @@ fun BoardScreen(
                             Icon(
                                 imageVector = Icons.Filled.MoreVert,
                                 contentDescription = "Board Actions",
-                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier
                                     .size(28.dp)
                                     .rotate(90f)
@@ -244,8 +241,11 @@ fun BoardScreen(
                 },
                 expandedHeight = TopBarDefault.expandedHeight,
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+                    containerColor = topAppBarColor,
+                    scrolledContainerColor = topAppBarColor,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
                 )
             )
         },
@@ -270,11 +270,13 @@ fun BoardScreen(
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 items(
-                    items = notelists, key = { it.docId ?: UUID.randomUUID() }) { notelist ->
+                    items = noteLists,
+                    key = { it.docId ?: UUID.randomUUID() }
+                ) { noteList ->
                     NoteListCard(
                         boardViewModel = boardViewModel,
                         boardId = boardId,
-                        notelist = notelist,
+                        noteList = noteList,
                         onAddNoteClick = { listId, newNoteName ->
                             coroutineScope.launch {
                                 val newNote = Note(
@@ -287,7 +289,7 @@ fun BoardScreen(
                         onNoteClick = { note ->
                             if (note.docId != null) {
                                 navController.navigate(
-                                    "board_note_detail/${boardId}/${notelist.docId}/${note.docId}"
+                                    "board_note_detail/${boardId}/${noteList.docId}/${note.docId}"
                                 )
                             } else {
                                 coroutineScope.launch {
@@ -300,22 +302,22 @@ fun BoardScreen(
                         },
                         onNoteCheckedChange = { note, isChecked ->
                             boardViewModel.updateNoteCheckedStatus(
-                                boardId, notelist.docId!!, note.docId!!, isChecked
+                                boardId, noteList.docId!!, note.docId!!, isChecked
                             )
                         },
-                        onRemoveNotelist = {
+                        onRemoveNoteList = {
                             coroutineScope.launch {
-                                boardViewModel.removeNotelist(boardId, notelist.docId!!)
+                                boardViewModel.removeNoteList(boardId, noteList.docId!!)
                             }
                         },
                         onRemoveSpecificNote = { listId, noteId ->
                             coroutineScope.launch {
-                                boardViewModel.removeNoteFromNotelist(boardId, listId, noteId)
+                                boardViewModel.removeNoteFromNoteList(boardId, listId, noteId)
                             }
                         },
-                        onUpdateNotelistName = { boardId, notelistId, newName ->
+                        onUpdateNoteListName = { boardId, noteListId, newName ->
                             coroutineScope.launch {
-                                boardViewModel.updateNotelistName(boardId, notelistId, newName)
+                                boardViewModel.updateNoteListName(boardId, noteListId, newName)
                             }
                         },
                         modifier = Modifier
@@ -324,20 +326,35 @@ fun BoardScreen(
                     )
                 }
                 item(key = "Add note list button") {
-                    OutlinedButton(
+                    Button(
                         onClick = {
                             coroutineScope.launch {
                                 board.docId?.let { currentBoardDocId ->
-                                    val newNotelist = Notelist(name = "New List")
-                                    boardViewModel.addNotelist(currentBoardDocId, newNotelist)
+                                    val newNoteList = NoteList(name = "New List")
+                                    boardViewModel.addNoteList(currentBoardDocId, newNoteList)
                                 }
                             }
                         },
-                        modifier = Modifier.align(Alignment.End)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = topAppBarColor,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(vertical = 0.dp, horizontal = 20.dp),
+                        modifier = Modifier.width(300.dp)
                     ) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add Note List")
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "Add Note List",
+                            modifier = Modifier.size(20.dp)
+                        )
                         Spacer(Modifier.width(8.dp))
-                        Text("Add New List")
+                        Text(
+                            text = "Add new list",
+                            fontSize = 14.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.Normal
+                        )
                     }
                 }
             }

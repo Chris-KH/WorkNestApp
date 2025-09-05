@@ -29,9 +29,9 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     override val boards: StateFlow<List<Board>> = _boards
     private var boardListener: ListenerRegistration? = null
 
-    private val _notelists = MutableStateFlow<List<Notelist>>(emptyList())
-    override val notelists: StateFlow<List<Notelist>> = _notelists
-    private var notelistListener: ListenerRegistration? = null
+    private val _noteLists = MutableStateFlow<List<NoteList>>(emptyList())
+    override val noteLists: StateFlow<List<NoteList>> = _noteLists.asStateFlow()
+    private var noteListListener: ListenerRegistration? = null
 
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     override val notes: StateFlow<List<Note>> = _notes.asStateFlow()
@@ -292,9 +292,9 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         _boards.value = emptyList()
     }
 
-    ////////////////////////////////////////////////////TODO : Ignore this Just a separator
+    /////////////TODO : Ignore this Just a separator
 
-    override suspend fun addNotelist(boardId: String, notelist: Notelist) {
+    override suspend fun addNoteList(boardId: String, noteList: NoteList) {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(boardId)
 
@@ -306,54 +306,54 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         val notelistCollectionRef = boardRef.collection("notelists")
 
-        val newNotelistWithId = notelist.copy()
+        val newNotelistWithId = noteList.copy()
 
         notelistCollectionRef.add(newNotelistWithId).await()
     }
 
 
-    override suspend fun addNoteToList(boardId: String, notelistId: String, note: Note) {
-        Log.d("BoardRepositoryImpl", "Adding note to list: $notelistId")
+    override suspend fun addNoteToList(boardId: String, noteListId: String, note: Note) {
+        Log.d("BoardRepositoryImpl", "Adding note to list: $noteListId")
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val notesCollectionRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes")
 
         val boardDoc = firestore.collection("boards").document(boardId).get().await()
         val boardData = boardDoc.toObject(Board::class.java)
         if (boardData == null || (!boardData.memberIds.contains(currentUser.uid) && boardData.ownerId != currentUser.uid)) {
-            throw SecurityException("User must be a member or owner to add a note to this notelist.")
+            throw SecurityException("User must be a member or owner to add a note to this note list.")
         }
 
         notesCollectionRef.add(note).await()
     }
 
-    override suspend fun removeNotelist(boardId: String, notelistId: String) {
+    override suspend fun removeNoteList(boardId: String, noteListId: String) {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(boardId)
-        val notelistRef = boardRef.collection("notelists").document(notelistId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
 
         val boardSnapshot = boardRef.get().await()
         val board = boardSnapshot.toObject(Board::class.java)
         if (board == null || (!board.memberIds.contains(currentUser.uid) && board.ownerId != currentUser.uid)) {
             throw SecurityException("User must be a member or owner to remove this notelist.")
         }
-        val notesSnapshot = notelistRef.collection("notes").get().await()
+        val notesSnapshot = noteListRef.collection("notes").get().await()
         for(noteDoc in notesSnapshot.documents) {
             noteDoc.reference.delete().await()
         }
-        notelistRef.delete().await()
+        noteListRef.delete().await()
     }
 
-    override suspend fun removeNoteFromNotelist(
+    override suspend fun removeNoteFromNoteList(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         noteId: String,
     ): Boolean {
         val currentUser = auth.currentUser ?: throw Exception("User not logged in")
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(noteId)
 
         val boardDoc = firestore.collection("boards").document(boardId).get().await()
@@ -367,13 +367,13 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         return true
     }
 
-    override suspend fun getNotelist(boardId: String, notelistId: String): Notelist? {
-        val notelistRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+    override suspend fun getNoteList(boardId: String, noteListId: String): NoteList? {
+        val noteListRef = firestore.collection("boards").document(boardId)
+            .collection("notelists").document(noteListId)
 
         return try {
-            val notelistSnapshot = notelistRef.get().await()
-            notelistSnapshot.toObject(Notelist::class.java)
+            val noteListSnapshot = noteListRef.get().await()
+            noteListSnapshot.toObject(NoteList::class.java)
         } catch(e: Exception) {
             if (e is com.google.firebase.firestore.FirebaseFirestoreException && e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) {
                 Log.e(
@@ -388,17 +388,17 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
-    override suspend fun refreshNotelists(boardId: String) {
-        val notelistsQuery =
+    override suspend fun refreshNoteLists(boardId: String) {
+        val noteListsQuery =
             firestore.collection("boards").document(boardId).collection("notelists")
                 .get()
                 .await()
-        val notelistList = notelistsQuery.documents.mapNotNull {
-            it.toObject(Notelist::class.java)
+        val noteListList = noteListsQuery.documents.mapNotNull {
+            it.toObject(NoteList::class.java)
         }
     }
 
-    override fun getNotelistsForBoard(boardId: String?): Flow<List<Notelist>> {
+    override fun getNoteListsForBoard(boardId: String?): Flow<List<NoteList>> {
         if (boardId == null) {
             return flowOf(emptyList())
         }
@@ -406,10 +406,10 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         return callbackFlow {
             // The Firestore SDK will perform the security check on the server.
             // We do not need a redundant client-side check for permissions.
-            val notelistsQuery =
+            val noteListsQuery =
                 firestore.collection("boards").document(boardId).collection("notelists")
 
-            val listenerRegistration = notelistsQuery.addSnapshotListener { snapshot, error ->
+            val listenerRegistration = noteListsQuery.addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     // If a permission error occurs, we handle it here.
                     if (error.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) {
@@ -430,10 +430,10 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 }
 
                 if (snapshot != null) {
-                    val notelistList = snapshot.documents.mapNotNull {
-                        it.toObject(Notelist::class.java)
+                    val noteListList = snapshot.documents.mapNotNull {
+                        it.toObject(NoteList::class.java)
                     }
-                    trySend(notelistList)
+                    trySend(noteListList)
                 }
             }
             awaitClose {
@@ -442,43 +442,43 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
-    override fun registerNotelistListener(boardId: String) {
-        val currentUser = auth.currentUser ?: throw Exception("User not logged in")
-        removeNotelistListener()
-        val notelistsRef = firestore.collection("boards").document(boardId).collection("notelists")
-        notelistListener = notelistsRef.addSnapshotListener { snapshot, error ->
+    override fun registerNoteListListener(boardId: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        removeNoteListListener()
+        val noteListsRef = firestore.collection("boards").document(boardId).collection("notelists")
+        noteListListener = noteListsRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("BoardRepository", "Listen notelists snapshot failed", error)
                 return@addSnapshotListener
             }
             if (snapshot != null) {
-                val notelistList = snapshot.documents.mapNotNull {
-                    it.toObject(Notelist::class.java)
+                val noteListList = snapshot.documents.mapNotNull {
+                    it.toObject(NoteList::class.java)
                 }
-                _notelists.value = notelistList
+                _noteLists.value = noteListList
             }
         }
     }
 
-    override fun removeNotelistListener() {
-        notelistListener?.remove()
-        notelistListener = null
-        _notelists.value = emptyList()
+    override fun removeNoteListListener() {
+        noteListListener?.remove()
+        noteListListener = null
+        _noteLists.value = emptyList()
     }
 
-    override suspend fun updateNotelistName(
+    override suspend fun updateNoteListName(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         newName: String,
     ): Boolean {
         val currentUser = auth.currentUser ?: return false
 
-        if (boardId.isBlank() || notelistId.isBlank() || newName.isBlank()) {
+        if (boardId.isBlank() || noteListId.isBlank() || newName.isBlank()) {
             return false
         }
 
         val boardRef = firestore.collection("boards").document(boardId)
-        val notelistRef = boardRef.collection("notelists").document(notelistId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
 
         return try {
             val boardDoc = boardRef.get().await()
@@ -488,7 +488,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 return false
             }
 
-            notelistRef.update("name", newName).await()
+            noteListRef.update("name", newName).await()
             true
         } catch(e: Exception) {
             false
@@ -497,18 +497,18 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateNoteCheckedStatus(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         noteId: String,
         isChecked: Boolean,
     ): Boolean {
         val currentUser = auth.currentUser ?: return false
 
-        if (boardId.isBlank() || notelistId.isBlank() || noteId.isBlank()) {
+        if (boardId.isBlank() || noteListId.isBlank() || noteId.isBlank()) {
             return false
         }
 
         val boardRef = firestore.collection("boards").document(boardId)
-        val noteRef = boardRef.collection("notelists").document(notelistId)
+        val noteRef = boardRef.collection("notelists").document(noteListId)
             .collection("notes").document(noteId)
 
         return try {
@@ -527,9 +527,9 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     }
     ///////////////TODO: IGNORE THIS
 
-    override suspend fun getNote(boardId: String, notelistId: String, noteId: String): Note? {
+    override suspend fun getNote(boardId: String, noteListId: String, noteId: String): Note? {
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(noteId)
 
         val currentUser = auth.currentUser ?: throw SecurityException("User not logged in.")
@@ -555,7 +555,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         _notes.value = emptyList()
     }
 
-    override fun registerNoteListener(boardId: String, notelistId: String) {
+    override fun registerNoteListener(boardId: String, noteListId: String) {
         val authUser = auth.currentUser ?: return
 
         removeNoteListener()
@@ -564,7 +564,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             .collection("boards")
             .document(boardId)
             .collection("notelists")
-            .document(notelistId)
+            .document(noteListId)
             .collection("notes")
             .whereEqualTo("archived", false)
 
@@ -584,14 +584,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
-    override suspend fun refreshNotes(boardId: String, notelistId: String) {
+    override suspend fun refreshNotes(boardId: String, noteListId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val notesRef = firestore
             .collection("boards")
             .document(boardId)
             .collection("notelists")
-            .document(notelistId)
+            .document(noteListId)
             .collection("notes")
 
         val snapshot = notesRef.get().await()
@@ -603,14 +603,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateNoteName(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         docId: String,
         name: String,
     ): Boolean {
         val currentUser = auth.currentUser ?: return false
 
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(docId)
 
         return try {
@@ -623,14 +623,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateNoteCover(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         docId: String,
         color: Int?,
     ): Boolean {
-        val currentUser = auth.currentUser ?: return false
+        val authUser = auth.currentUser ?: return false
 
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(docId)
 
         return try {
@@ -643,14 +643,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateNoteDescription(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         docId: String,
         description: String,
     ): Boolean {
         val currentUser = auth.currentUser ?: return false
 
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(docId)
 
         return try {
@@ -663,14 +663,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateNoteComplete(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         docId: String,
         newState: Boolean,
     ): Boolean {
         val currentUser = auth.currentUser ?: return false
 
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(docId)
 
         return try {
@@ -683,14 +683,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateNoteArchive(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         docId: String,
         newState: Boolean,
     ): Boolean {
         val currentUser = auth.currentUser ?: return false
 
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(docId)
 
         return try {
@@ -703,14 +703,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateNoteStartDate(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         docId: String,
         dateTime: Timestamp?,
     ): Boolean {
         val currentUser = auth.currentUser ?: return false
 
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(docId)
 
         return try {
@@ -723,13 +723,13 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun addNewChecklistBoard(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         noteId: String,
     ): Boolean {
         val currentUser = auth.currentUser ?: throw SecurityException("User not logged in")
 
         val boardRef = firestore.collection("boards").document(boardId)
-        val noteRef = boardRef.collection("notelists").document(notelistId)
+        val noteRef = boardRef.collection("notelists").document(noteListId)
             .collection("notes").document(noteId)
 
         val checklistRef = noteRef.collection("checklists").document()
@@ -759,14 +759,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateNoteEndDate(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         docId: String,
         dateTime: Timestamp?,
     ): Boolean {
         val currentUser = auth.currentUser ?: return false
 
         val noteRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(docId)
 
         return try {
@@ -779,7 +779,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun updateChecklistBoardName(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         noteId: String,
         checklistId: String?,
         newName: String,
@@ -787,7 +787,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         val currentUser = auth.currentUser ?: throw SecurityException("User not logged in")
 
         val boardRef = firestore.collection("boards").document(boardId)
-        val checklistRef = boardRef.collection("notelists").document(notelistId)
+        val checklistRef = boardRef.collection("notelists").document(noteListId)
             .collection("notes").document(noteId)
             .collection("checklists").document(checklistId!!)
 
@@ -807,14 +807,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun getChecklist(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         noteId: String,
         checklistId: String,
     ): ChecklistBoard? {
         val currentUser = auth.currentUser ?: throw SecurityException("User not logged in")
 
         val checklistRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(notelistId)
+            .collection("notelists").document(noteListId)
             .collection("notes").document(noteId)
             .collection("checklists").document(checklistId)
 
@@ -837,14 +837,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override fun getChecklists(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         noteId: String,
     ): Flow<List<ChecklistBoard>> {
         val currentUser = auth.currentUser ?: return flowOf(emptyList())
 
         return callbackFlow {
             val checklistCollectionRef = firestore.collection("boards").document(boardId)
-                .collection("notelists").document(notelistId)
+                .collection("notelists").document(noteListId)
                 .collection("notes").document(noteId)
                 .collection("checklists")
 
@@ -878,14 +878,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     override suspend fun deleteChecklistBoard(
         boardId: String,
-        notelistId: String,
+        noteListId: String,
         noteId: String,
         checklistId: String?,
     ): Boolean {
         val currentUser = auth.currentUser ?: throw SecurityException("User not logged in")
 
         val boardRef = firestore.collection("boards").document(boardId)
-        val checklistRef = boardRef.collection("notelists").document(notelistId)
+        val checklistRef = boardRef.collection("notelists").document(noteListId)
             .collection("notes").document(noteId)
             .collection("checklists").document(checklistId!!)
 
@@ -903,12 +903,12 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
-    override fun getNoteForNotelist(boardId: String, notelistId: String): Flow<List<Note>> {
+    override fun getNoteForNoteList(boardId: String, noteListId: String): Flow<List<Note>> {
         return callbackFlow {
             val notesQuery = firestore.collection("boards")
                 .document(boardId)
                 .collection("notelists")
-                .document(notelistId)
+                .document(noteListId)
                 .collection("notes")
                 .orderBy("createdAt", Query.Direction.ASCENDING) // Order notes by creation time
 

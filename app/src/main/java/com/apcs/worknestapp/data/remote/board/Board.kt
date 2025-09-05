@@ -14,7 +14,7 @@ data class Board(
     val memberIds: List<String> = emptyList(),
 )
 
-data class Notelist(
+data class NoteList(
     @DocumentId val docId: String? = null,
     val name: String? = null,
     val cover: Int? = null,

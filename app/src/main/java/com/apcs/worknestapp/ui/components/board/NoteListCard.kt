@@ -1,7 +1,5 @@
 package com.apcs.worknestapp.ui.components.board
 
-import androidx.compose.animation.core.copy
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
@@ -25,8 +21,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,34 +46,33 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
-import com.apcs.worknestapp.data.remote.board.Notelist
+import com.apcs.worknestapp.data.remote.board.NoteList
 import com.apcs.worknestapp.data.remote.note.Note
-
 
 @Composable
 fun NoteListCard(
-    notelist: Notelist,
+    noteList: NoteList,
     boardId: String,
     onAddNoteClick: (listId: String, noteName: String) -> Unit,
     onNoteClick: (Note) -> Unit,
     onNoteCheckedChange: (Note, Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    onRemoveNotelist: () -> Unit,
+    onRemoveNoteList: () -> Unit,
     onRemoveSpecificNote: (listId: String, noteId: String) -> Unit,
-    onUpdateNotelistName: (boardId: String, notelistId: String, newName: String) -> Unit,
-    boardViewModel: BoardViewModel
+    onUpdateNoteListName: (boardId: String, noteListId: String, newName: String) -> Unit,
+    boardViewModel: BoardViewModel,
 ) {
     val focusManager = LocalFocusManager.current
-    var newNoteName by rememberSaveable(notelist.docId) { mutableStateOf("") }
+    var newNoteName by rememberSaveable(noteList.docId) { mutableStateOf("") }
 
-    var editableNotelistName by remember(notelist.name, notelist.docId) {
-        mutableStateOf(notelist.name.takeIf { it?.isNotBlank() == true } ?: "")
+    var editableNoteListName by remember(noteList.name, noteList.docId) {
+        mutableStateOf(noteList.name.takeIf { it?.isNotBlank() == true } ?: "")
     }
-    LaunchedEffect(notelist.name) {
-        if (notelist.name != editableNotelistName) {
-            editableNotelistName = notelist.name.takeIf { it?.isNotBlank() == true } ?: ""
+    LaunchedEffect(noteList.name) {
+        if (noteList.name != editableNoteListName) {
+            editableNoteListName = noteList.name.takeIf { it?.isNotBlank() == true } ?: ""
         }
-        boardViewModel.getNotesForNotelist(boardId, notelist.docId!!)
+        boardViewModel.getNotesForNoteList(boardId, noteList.docId!!)
 
     }
     var isEditingListName by remember { mutableStateOf(false) }
@@ -99,8 +92,8 @@ fun NoteListCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 BasicTextField(
-                    value = editableNotelistName,
-                    onValueChange = { editableNotelistName = it },
+                    value = editableNoteListName,
+                    onValueChange = { editableNoteListName = it },
                     textStyle = MaterialTheme.typography.titleMedium.copy(
                         color = MaterialTheme.colorScheme.onSurface
                     ),
@@ -108,13 +101,13 @@ fun NoteListCard(
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            if (notelist.docId != null &&
-                                editableNotelistName.isNotBlank() &&
-                                editableNotelistName != (notelist.name ?: "")
+                            if (noteList.docId != null &&
+                                editableNoteListName.isNotBlank() &&
+                                editableNoteListName != (noteList.name ?: "")
                             ) {
-                                onUpdateNotelistName(boardId, notelist.docId, editableNotelistName)
-                            } else if (notelist.docId != null && editableNotelistName.isBlank() && notelist.name?.isNotBlank() == true) {
-                                editableNotelistName = notelist.name!!
+                                onUpdateNoteListName(boardId, noteList.docId, editableNoteListName)
+                            } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
+                                editableNoteListName = noteList.name!!
                             }
                             isEditingListName = false
                             focusManager.clearFocus()
@@ -126,25 +119,33 @@ fun NoteListCard(
                         .onFocusChanged { focusState ->
                             isEditingListName = focusState.isFocused
                             if (!focusState.isFocused) { // Focus lost
-                                if (notelist.docId != null &&
-                                    editableNotelistName.isNotBlank() &&
-                                    editableNotelistName != (notelist.name ?: "")
+                                if (noteList.docId != null &&
+                                    editableNoteListName.isNotBlank() &&
+                                    editableNoteListName != (noteList.name ?: "")
                                 ) {
-                                    onUpdateNotelistName(boardId, notelist.docId, editableNotelistName)
-                                } else if (notelist.docId != null && editableNotelistName.isBlank() && notelist.name?.isNotBlank() == true) {
-                                    editableNotelistName = notelist.name!!
+                                    onUpdateNoteListName(
+                                        boardId,
+                                        noteList.docId,
+                                        editableNoteListName
+                                    )
+                                } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
+                                    editableNoteListName = noteList.name!!
                                 }
                             }
                         }
                         .onKeyEvent { keyEvent ->
                             if (keyEvent.key == Key.Enter) {
-                                if (notelist.docId != null &&
-                                    editableNotelistName.isNotBlank() &&
-                                    editableNotelistName != (notelist.name ?: "")
+                                if (noteList.docId != null &&
+                                    editableNoteListName.isNotBlank() &&
+                                    editableNoteListName != (noteList.name ?: "")
                                 ) {
-                                    onUpdateNotelistName(boardId, notelist.docId, editableNotelistName)
-                                } else if (notelist.docId != null && editableNotelistName.isBlank() && notelist.name?.isNotBlank() == true) {
-                                    editableNotelistName = notelist.name!!
+                                    onUpdateNoteListName(
+                                        boardId,
+                                        noteList.docId,
+                                        editableNoteListName
+                                    )
+                                } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
+                                    editableNoteListName = noteList.name!!
                                 }
                                 isEditingListName = false
                                 focusManager.clearFocus()
@@ -159,13 +160,14 @@ fun NoteListCard(
                             innerTextField()
                         } else {
                             Text(
-                                text = editableNotelistName.takeIf { it.isNotBlank() } ?: "Unnamed List",
+                                text = editableNoteListName.takeIf { it.isNotBlank() }
+                                    ?: "Unnamed List",
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
                     }
                 )
-                IconButton(onClick = onRemoveNotelist) {
+                IconButton(onClick = onRemoveNoteList) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
                         contentDescription = "Remove List"
@@ -206,8 +208,8 @@ fun NoteListCard(
                                     onNoteCheckedChange(note, isChecked)
                                 },
                                 onRemoveThisNote = {
-                                    if (notelist.docId != null && note.docId != null) {
-                                        onRemoveSpecificNote(notelist.docId, note.docId)
+                                    if (noteList.docId != null && note.docId != null) {
+                                        onRemoveSpecificNote(noteList.docId, note.docId)
                                     }
                                 }
                             )
@@ -227,8 +229,8 @@ fun NoteListCard(
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = {
-                        if (newNoteName.isNotBlank() && notelist.docId != null) {
-                            onAddNoteClick(notelist.docId, newNoteName)
+                        if (newNoteName.isNotBlank() && noteList.docId != null) {
+                            onAddNoteClick(noteList.docId, newNoteName)
                             newNoteName = ""
                             focusManager.clearFocus()
                         }
@@ -237,8 +239,8 @@ fun NoteListCard(
                 trailingIcon = {
                     IconButton(
                         onClick = {
-                            if (newNoteName.isNotBlank() && notelist.docId != null) {
-                                onAddNoteClick(notelist.docId, newNoteName)
+                            if (newNoteName.isNotBlank() && noteList.docId != null) {
+                                onAddNoteClick(noteList.docId, newNoteName)
                                 newNoteName = ""
                             }
                         },
@@ -251,4 +253,3 @@ fun NoteListCard(
         }
     }
 }
-
