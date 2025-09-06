@@ -4,7 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,10 +42,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -54,6 +55,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -72,6 +74,7 @@ import com.google.firebase.Timestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,6 +90,7 @@ fun BoardScreen(
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
     val topAppBarColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
     val topAppBarContent = MaterialTheme.colorScheme.onSurface
+    var isZoomIn by remember { mutableStateOf(false) }
 
     val board = boardViewModel.currentBoard.collectAsState()
     val boardCoverColor = board.value?.cover?.let { ColorUtils.safeParse(it) }
@@ -202,36 +206,109 @@ fun BoardScreen(
                     navigationIconContentColor = topAppBarContent,
                 )
             )
-        }, containerColor = if (!isFirstLoad && board.value != null) boardCoverColor ?: Color.Gray
-        else MaterialTheme.colorScheme.background, modifier = modifier.fillMaxSize()
+        },
+        floatingActionButton = {
+            Button(
+                onClick = { isZoomIn = !isZoomIn },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                ),
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    painter = painterResource(
+                        if (isZoomIn) R.drawable.outline_zoom_out
+                        else R.drawable.outline_zoom_in
+                    ),
+                    contentDescription = "Zoom", modifier = Modifier.size(24.dp)
+                )
+            }
+        },
+        containerColor = if (!isFirstLoad && board.value != null) boardCoverColor ?: Color.Gray
+        else MaterialTheme.colorScheme.background,
+        modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
         if (isFirstLoad || board.value == null) {
             LoadingScreen(modifier = Modifier.padding(innerPadding))
         } else {
-            Column(
+            val listState = rememberLazyListState()
+            val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+            val windowInfo = LocalWindowInfo.current
+            val screenWidth = with(LocalDensity.current) {
+                windowInfo.containerSize.width.toDp()
+            }
+            val scale by animateFloatAsState(
+                targetValue = if (isZoomIn) 1f else 0.5f, label = "cardScale"
+            )
+            val horizontalPadding = 20.dp
+            val cardWith = (screenWidth - horizontalPadding * 4)
+
+            Box(
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
-            ) {
-                val listState = rememberLazyListState()
-                val windowInfo = LocalWindowInfo.current
-                val screenWidth =
-                    with(LocalDensity.current) { windowInfo.containerSize.width.toDp() }
-                val horizontalPadding = 16.dp
-                var isZoomIn by remember { mutableStateOf(false) }
-                val scale by animateFloatAsState(
-                    targetValue = if (isZoomIn) 1.0f else 0.7f, label = "cardScale"
-                )
+                    .layout { measurable, constraints ->
+                        val s = scale.coerceAtLeast(0.0001f)
 
+                        if (s == 1f) {
+                            val placeable = measurable.measure(constraints)
+                            layout(placeable.width, placeable.height) {
+                                placeable.placeRelative(0, 0)
+                            }
+                        } else {
+                            fun Int.divByScale(): Int {
+                                val v = this.toDouble() / s
+                                return if (v > Int.MAX_VALUE) Int.MAX_VALUE else v.roundToInt()
+                            }
+
+                            val scaledMinW = constraints.minWidth.divByScale().coerceAtLeast(0)
+                            val scaledMaxW =
+                                constraints.maxWidth.divByScale().coerceAtLeast(scaledMinW)
+                            val scaledMinH = constraints.minHeight.divByScale().coerceAtLeast(0)
+                            val scaledMaxH =
+                                constraints.maxHeight.divByScale().coerceAtLeast(scaledMinH)
+
+                            val scaledConstraints = Constraints(
+                                minWidth = scaledMinW,
+                                maxWidth = scaledMaxW,
+                                minHeight = scaledMinH,
+                                maxHeight = scaledMaxH
+                            )
+
+                            val placeable = measurable.measure(scaledConstraints)
+                            val finalWidth = (placeable.width * s).roundToInt()
+                            val finalHeight = (placeable.height * s).roundToInt()
+                            val width =
+                                finalWidth.coerceIn(constraints.minWidth, constraints.maxWidth)
+                            val height =
+                                finalHeight.coerceIn(constraints.minHeight, constraints.maxHeight)
+
+                            layout(width, height) {
+                                val dx = (width - finalWidth) / 2
+                                val dy = (height - finalHeight) / 2
+
+                                placeable.placeRelativeWithLayer(dx, dy) {
+                                    scaleX = s
+                                    scaleY = s
+                                    transformOrigin = TransformOrigin(0f, 0f)
+                                }
+                            }
+                        }
+                    }
+            ) {
                 LazyRow(
                     state = listState,
-                    flingBehavior = if (isZoomIn) rememberSnapFlingBehavior(lazyListState = listState)
+                    flingBehavior = if (isZoomIn) flingBehavior
                     else ScrollableDefaults.flingBehavior(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(horizontal = horizontalPadding, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        horizontal = horizontalPadding,
+                        vertical = 12.dp
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(horizontalPadding),
                 ) {
                     items(
                         items = board.value?.noteLists ?: emptyList(),
@@ -293,8 +370,7 @@ fun BoardScreen(
                             onRemoveSpecificNote = { listId, noteId ->
 
                             },
-
-                            modifier = Modifier.width(screenWidth - horizontalPadding * 4)
+                            modifier = Modifier.width(cardWith)
                         )
                     }
                     item(key = "Add note list button") {
@@ -310,7 +386,7 @@ fun BoardScreen(
                             ),
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(vertical = 0.dp, horizontal = 20.dp),
-                            modifier = Modifier.width(screenWidth - horizontalPadding * 4)
+                            modifier = Modifier.width(cardWith)
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Add,
@@ -326,25 +402,6 @@ fun BoardScreen(
                             )
                         }
                     }
-                }
-                Button(
-                    onClick = { isZoomIn = !isZoomIn },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = topAppBarColor, contentColor = topAppBarContent
-                    ),
-                    shape = RoundedCornerShape(2.dp),
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(horizontal = horizontalPadding)
-                        .size(40.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (isZoomIn) R.drawable.outline_zoom_out
-                            else R.drawable.outline_zoom_in
-                        ), contentDescription = "Zoom", modifier = Modifier.size(22.dp)
-                    )
                 }
             }
         }
