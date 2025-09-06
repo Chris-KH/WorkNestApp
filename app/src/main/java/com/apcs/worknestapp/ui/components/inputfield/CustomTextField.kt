@@ -112,7 +112,7 @@ fun CustomTextField(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    if (isFocused) {
+                    if (isFocused || !singleLine) {
                         innerTextField()
                     } else {
                         Text(

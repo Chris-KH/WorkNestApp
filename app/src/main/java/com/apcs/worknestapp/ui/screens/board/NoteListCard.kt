@@ -6,11 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,18 +31,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.board.NoteList
 import com.apcs.worknestapp.data.remote.note.Note
@@ -76,16 +71,18 @@ fun NoteListCard(
         modifier = modifier
             .background(
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             ),
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp)
+            modifier = Modifier
+                .padding(vertical = 8.dp, horizontal = 10.dp)
+                .fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 CustomTextField(
@@ -94,12 +91,11 @@ fun NoteListCard(
                     textStyle = TextStyle(
                         fontWeight = FontWeight.Medium,
                         fontFamily = Roboto,
-                        fontSize = 14.sp,
-                        lineHeight = 14.sp,
-                        letterSpacing = (0.1).sp,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontSize = 16.sp,
+                        lineHeight = 20.sp,
+                        letterSpacing = (0.25).sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
-                    singleLine = true,
                     containerColor = Color.Transparent,
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
@@ -117,71 +113,55 @@ fun NoteListCard(
                     ),
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 40.dp)
                         .padding(end = 8.dp)
+                        .padding(vertical = 8.dp)
                         .onFocusChanged { focusState ->
-                            if (!focusState.isFocused) { // Focus lost
-                                if (noteList.docId != null &&
-                                    editableNoteListName.isNotBlank() &&
-                                    editableNoteListName != (noteList.name ?: "")
-                                ) {
+                            if (!focusState.isFocused) {
+                                val initialName = noteList.name ?: ""
+                                if (editableNoteListName.isNotBlank() && editableNoteListName != initialName) {
                                     onUpdateNoteListName(editableNoteListName)
-                                } else if (noteList.docId != null && editableNoteListName.isBlank() && noteList.name?.isNotBlank() == true) {
-                                    editableNoteListName = noteList.name
+                                } else {
+                                    editableNoteListName = initialName
                                 }
                             }
                         },
                 )
-                IconButton(onClick = onRemoveNoteList) {
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
-                        painter = painterResource(R.drawable.fill_trash),
-                        contentDescription = "Remove List",
-                        modifier = Modifier.size(24.dp)
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Note list options",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.rotate(90f)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Box(modifier = Modifier) {
-                if (notes.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "No notes in this list yet.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(vertical = 4.dp)
-                    ) {
-                        items(
-                            items = notes,
-                            key = { note -> note.docId ?: note.name.hashCode() }
-                        ) { note ->
-                            NoteItem(
-                                note = note,
-                                onClick = { onNoteClick(note) },
-                                onCheckedChange = { isChecked ->
-                                    onNoteCheckedChange(note, isChecked)
-                                },
-                                onRemoveThisNote = {
-                                    if (noteList.docId != null && note.docId != null) {
-                                        onRemoveSpecificNote(noteList.docId, note.docId)
-                                    }
-                                }
-                            )
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = 6.dp)
+            ) {
+                items(
+                    items = notes,
+                    key = { note -> note.docId ?: note.name.hashCode() }
+                ) { note ->
+                    NoteItem(
+                        note = note,
+                        onClick = { onNoteClick(note) },
+                        onCheckedChange = { isChecked ->
+                            onNoteCheckedChange(note, isChecked)
+                        },
+                        onRemoveThisNote = {
+                            if (noteList.docId != null && note.docId != null) {
+                                onRemoveSpecificNote(noteList.docId, note.docId)
+                            }
                         }
-                    }
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = newNoteName,

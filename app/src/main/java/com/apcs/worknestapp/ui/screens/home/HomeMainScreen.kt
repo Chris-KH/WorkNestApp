@@ -201,7 +201,11 @@ fun HomeMainScreen(
                     board = board,
                     onClick = {
                         val boardId = board.docId
-                        boardId?.let { navController.navigate("board/$it") }
+                        boardId?.let {
+                            navController.navigate("board/$it") {
+                                restoreState = true
+                            }
+                        }
                     }
                 )
                 Spacer(modifier = Modifier.width(10.dp))

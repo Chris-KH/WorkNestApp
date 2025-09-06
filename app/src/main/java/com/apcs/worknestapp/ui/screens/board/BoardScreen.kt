@@ -87,10 +87,10 @@ fun BoardScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
-    var isFirstLoad by rememberSaveable { mutableStateOf(true) }
+    var isFirstLoad by remember { mutableStateOf(true) }
     val topAppBarColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
     val topAppBarContent = MaterialTheme.colorScheme.onSurface
-    var isZoomIn by remember { mutableStateOf(false) }
+    var isZoomIn by rememberSaveable { mutableStateOf(false) }
 
     val board = boardViewModel.currentBoard.collectAsState()
     val boardCoverColor = board.value?.cover?.let { ColorUtils.safeParse(it) }
@@ -243,8 +243,23 @@ fun BoardScreen(
             val scale by animateFloatAsState(
                 targetValue = if (isZoomIn) 1f else 0.5f, label = "cardScale"
             )
-            val horizontalPadding = 20.dp
-            val cardWith = (screenWidth - horizontalPadding * 4)
+            val horizontalPadding = 28.dp
+            val cardWith = (screenWidth - horizontalPadding * 2)
+
+            LaunchedEffect(isZoomIn) {
+                if (isZoomIn) {
+                    val layout = listState.layoutInfo
+                    val visibleItems = layout.visibleItemsInfo
+                    if (visibleItems.isNotEmpty()) {
+                        val viewportCenter =
+                            layout.viewportStartOffset + layout.viewportSize.width / 2
+                        val nearest = visibleItems.minByOrNull {
+                            kotlin.math.abs(it.offset + it.size - viewportCenter)
+                        }
+                        nearest?.let { listState.animateScrollToItem(it.index, 0) }
+                    }
+                }
+            }
 
             Box(
                 modifier = Modifier
@@ -308,7 +323,7 @@ fun BoardScreen(
                         horizontal = horizontalPadding,
                         vertical = 12.dp
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(horizontalPadding),
+                    horizontalArrangement = Arrangement.spacedBy(horizontalPadding / 2),
                 ) {
                     items(
                         items = board.value?.noteLists ?: emptyList(),
