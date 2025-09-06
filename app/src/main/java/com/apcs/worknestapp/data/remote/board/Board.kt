@@ -3,6 +3,7 @@ package com.apcs.worknestapp.data.remote.board
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
@@ -17,13 +18,13 @@ data class Board(
     @ServerTimestamp val createdAt: Timestamp? = null,
 
     @get:Exclude val noteLists: List<NoteList> = emptyList(),
+    @get:Exclude val members: List<User> = emptyList(),
     @get:Exclude val isLoading: Boolean? = null,
 )
 
 data class NoteList(
     @DocumentId val docId: String? = null,
     val name: String? = "New list",
-    val cover: Int? = null,
     val archived: Boolean? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 

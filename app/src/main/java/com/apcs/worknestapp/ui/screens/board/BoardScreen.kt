@@ -1,5 +1,8 @@
 package com.apcs.worknestapp.ui.screens.board
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -38,10 +42,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -51,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
+import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.board.NoteList
 import com.apcs.worknestapp.data.remote.note.Note
@@ -77,6 +86,7 @@ fun BoardScreen(
     val coroutineScope = rememberCoroutineScope()
     var isFirstLoad by rememberSaveable { mutableStateOf(true) }
     val topAppBarColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+    val topAppBarContent = MaterialTheme.colorScheme.onSurface
 
     val board = boardViewModel.currentBoard.collectAsState()
     val boardCoverColor = board.value?.cover?.let { ColorUtils.safeParse(it) }
@@ -104,7 +114,11 @@ fun BoardScreen(
 
     LifecycleResumeEffect(boardId) {
         boardViewModel.registerNoteListListener(boardId)
+        board.value?.noteLists?.forEach { noteList ->
+            noteList.docId?.let { boardViewModel.registerNoteListener(boardId, it) }
+        }
         onPauseOrDispose {
+            boardViewModel.removeNoteListener()
             boardViewModel.removeNoteListListener()
         }
     }
@@ -134,8 +148,7 @@ fun BoardScreen(
                                         val initialName = board.value?.name ?: ""
                                         if (editableBoardName.isNotBlank() && editableBoardName != initialName) {
                                             val message = boardViewModel.updateBoardName(
-                                                boardId,
-                                                editableBoardName
+                                                boardId, editableBoardName
                                             )
                                             if (message != null) {
                                                 focusManager.clearFocus()
@@ -147,8 +160,7 @@ fun BoardScreen(
                                             } else focusManager.clearFocus()
                                         } else focusManager.clearFocus()
                                     }
-                                }
-                            ),
+                                }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(end = 8.dp),
@@ -185,15 +197,13 @@ fun BoardScreen(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = topAppBarColor,
                     scrolledContainerColor = topAppBarColor,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    titleContentColor = topAppBarContent,
+                    actionIconContentColor = topAppBarContent,
+                    navigationIconContentColor = topAppBarContent,
                 )
             )
-        },
-        containerColor = if (!isFirstLoad && board.value != null) boardCoverColor ?: Color.Gray
-        else MaterialTheme.colorScheme.background,
-        modifier = modifier.fillMaxSize()
+        }, containerColor = if (!isFirstLoad && board.value != null) boardCoverColor ?: Color.Gray
+        else MaterialTheme.colorScheme.background, modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         if (isFirstLoad || board.value == null) {
             LoadingScreen(modifier = Modifier.padding(innerPadding))
@@ -203,17 +213,29 @@ fun BoardScreen(
                     .padding(innerPadding)
                     .fillMaxSize()
             ) {
+                val listState = rememberLazyListState()
+                val windowInfo = LocalWindowInfo.current
+                val screenWidth =
+                    with(LocalDensity.current) { windowInfo.containerSize.width.toDp() }
+                val horizontalPadding = 16.dp
+                var isZoomIn by remember { mutableStateOf(false) }
+                val scale by animateFloatAsState(
+                    targetValue = if (isZoomIn) 1.0f else 0.7f, label = "cardScale"
+                )
+
                 LazyRow(
+                    state = listState,
+                    flingBehavior = if (isZoomIn) rememberSnapFlingBehavior(lazyListState = listState)
+                    else ScrollableDefaults.flingBehavior(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    contentPadding = PaddingValues(horizontal = horizontalPadding, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     items(
                         items = board.value?.noteLists ?: emptyList(),
-                        key = { it.docId ?: UUID.randomUUID() }
-                    ) { noteList ->
+                        key = { it.docId ?: UUID.randomUUID() }) { noteList ->
                         NoteListCard(
                             boardId = boardId,
                             noteList = noteList,
@@ -221,8 +243,7 @@ fun BoardScreen(
                             onAddNoteClick = { listId, newNoteName ->
                                 coroutineScope.launch {
                                     val newNote = Note(
-                                        name = newNoteName,
-                                        createdAt = Timestamp.now()
+                                        name = newNoteName, createdAt = Timestamp.now()
                                     )
                                     boardViewModel.addNoteToList(boardId, listId, newNote)
                                 }
@@ -246,31 +267,34 @@ fun BoardScreen(
                                 if (noteListId != null) {
                                     coroutineScope.launch {
                                         boardViewModel.updateNoteListName(
-                                            boardId,
-                                            noteListId,
-                                            newName
+                                            boardId, noteListId, newName
                                         )
                                     }
                                 }
                             },
                             onNoteCheckedChange = { note, isChecked ->
-                                boardViewModel.updateNoteCheckedStatus(
-                                    boardId, noteList.docId!!, note.docId!!, isChecked
-                                )
+
                             },
                             onRemoveNoteList = {
-                                coroutineScope.launch {
-                                    boardViewModel.removeNoteList(boardId, noteList.docId!!)
+                                val noteListId = noteList.docId
+                                if (noteListId != null) {
+                                    coroutineScope.launch {
+                                        val message =
+                                            boardViewModel.removeNoteList(boardId, noteListId)
+                                        if (message != null) {
+                                            snackbarHost.showSnackbar(
+                                                message = message,
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
                                 }
                             },
                             onRemoveSpecificNote = { listId, noteId ->
-                                coroutineScope.launch {
-                                    boardViewModel.removeNoteFromNoteList(boardId, listId, noteId)
-                                }
+
                             },
 
-                            modifier = Modifier
-                                .width(300.dp)
+                            modifier = Modifier.width(screenWidth - horizontalPadding * 4)
                         )
                     }
                     item(key = "Add note list button") {
@@ -282,11 +306,11 @@ fun BoardScreen(
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = topAppBarColor,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                contentColor = topAppBarContent,
                             ),
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(vertical = 0.dp, horizontal = 20.dp),
-                            modifier = Modifier.width(300.dp)
+                            modifier = Modifier.width(screenWidth - horizontalPadding * 4)
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Add,
@@ -302,6 +326,25 @@ fun BoardScreen(
                             )
                         }
                     }
+                }
+                Button(
+                    onClick = { isZoomIn = !isZoomIn },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = topAppBarColor, contentColor = topAppBarContent
+                    ),
+                    shape = RoundedCornerShape(2.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(horizontal = horizontalPadding)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (isZoomIn) R.drawable.outline_zoom_out
+                            else R.drawable.outline_zoom_in
+                        ), contentDescription = "Zoom", modifier = Modifier.size(22.dp)
+                    )
                 }
             }
         }

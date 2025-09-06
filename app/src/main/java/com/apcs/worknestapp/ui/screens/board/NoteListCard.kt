@@ -73,7 +73,6 @@ fun NoteListCard(
 
     Box(
         modifier = modifier
-            .fillMaxHeight()
             .background(
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 shape = RoundedCornerShape(8.dp)

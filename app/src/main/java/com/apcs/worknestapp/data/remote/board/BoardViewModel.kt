@@ -32,12 +32,12 @@ class BoardViewModel @Inject constructor(
         boardRepo.registerNoteListListener(boardId)
     }
 
-    fun removeNoteListener() {
-        boardRepo.removeNoteListener()
-    }
-
     fun registerNoteListener(boardId: String, noteListId: String) {
         boardRepo.registerNoteListener(boardId, noteListId)
+    }
+
+    fun removeNoteListener() {
+        boardRepo.removeNoteListener()
     }
 
     suspend fun refreshBoardsIfEmpty(): Boolean {
@@ -169,17 +169,12 @@ class BoardViewModel @Inject constructor(
     fun removeNoteFromNoteList(boardId: String, noteListId: String, noteId: String): Boolean {
         var deleted: Boolean = false
         viewModelScope.launch {
-            boardRepo.removeNoteFromNoteList(boardId, noteListId, noteId)
+            boardRepo.removeNoteFromList(boardId, noteListId, noteId)
             deleted = true
         }
         return deleted
     }
 
-    fun refreshNoteLists(boardId: String) {
-        viewModelScope.launch {
-            boardRepo.refreshNoteLists(boardId)
-        }
-    }
 
     fun refreshNotes(boardId: String, noteListId: String) {
         viewModelScope.launch {
@@ -210,10 +205,7 @@ class BoardViewModel @Inject constructor(
     }
 
     fun updateNoteDescription(
-        boardId: String,
-        noteListId: String,
-        docId: String,
-        description: String,
+        boardId: String, noteListId: String, docId: String, description: String,
     ): Boolean {
         viewModelScope.launch {
             boardRepo.updateNoteDescription(boardId, noteListId, docId, description)
@@ -284,12 +276,7 @@ class BoardViewModel @Inject constructor(
         noteId: String,
         isChecked: Boolean,
     ): Boolean {
-        var success = false
-        viewModelScope.launch {
-            if (boardRepo.updateNoteCheckedStatus(boardId, noteListId, noteId, isChecked))
-                success = true
-        }
-        return success
+        return false
     }
 
     fun getChecklist(boardId: String, noteListId: String, noteId: String, checklistId: String) {

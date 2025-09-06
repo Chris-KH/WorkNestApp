@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 interface BoardRepository {
     val boards: StateFlow<List<Board>>
     val currentBoard: StateFlow<Board?>
-    val notes: StateFlow<List<Note>>
 
     //Listener
     fun registerBoardListener()
@@ -31,20 +30,20 @@ interface BoardRepository {
 
     suspend fun addNoteList(boardId: String, noteList: NoteList)
     suspend fun removeNoteList(boardId: String, noteListId: String)
+    suspend fun updateNoteListName(boardId: String, noteListId: String, name: String)
 
     suspend fun addNoteToList(boardId: String, noteListId: String, note: Note)
-    suspend fun refreshNoteLists(boardId: String)
-    suspend fun updateNoteListName(boardId: String, noteListId: String, newName: String): Boolean
+    suspend fun removeNoteFromList(boardId: String, noteListId: String, noteId: String)
     suspend fun updateNoteCheckedStatus(
         boardId: String,
         noteListId: String,
         noteId: String,
         isChecked: Boolean,
-    ): Boolean
+    )
 
     suspend fun getNote(boardId: String, noteListId: String, noteId: String): Note?
     suspend fun refreshNotes(boardId: String, noteListId: String)
-    suspend fun removeNoteFromNoteList(boardId: String, noteListId: String, noteId: String): Boolean
+
     suspend fun updateNoteName(
         boardId: String,
         noteListId: String,
@@ -110,19 +109,5 @@ interface BoardRepository {
         checklistId: String?,
     ): Boolean
 
-    suspend fun getChecklist(
-        boardId: String,
-        noteListId: String,
-        noteId: String,
-        checklistId: String,
-    ): ChecklistBoard?
-
-    fun getChecklists(
-        boardId: String,
-        noteListId: String,
-        noteId: String,
-    ): Flow<List<ChecklistBoard>>
-
-    fun getNoteForNoteList(boardId: String, noteListId: String): Flow<List<Note>>
     fun clearCache()
 }

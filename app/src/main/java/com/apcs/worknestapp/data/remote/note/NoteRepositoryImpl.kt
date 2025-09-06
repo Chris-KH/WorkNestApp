@@ -58,14 +58,18 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     }
 
     override fun registerListener() {
-        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val authUser = auth.currentUser
+        if (authUser == null) {
+            removeListener()
+            throw Exception("User not logged in")
+        }
+        if (notesListener != null) return
 
         val notesRef = firestore
             .collection("users")
             .document(authUser.uid)
             .collection("notes")
 
-        notesListener?.remove() //Remove old listener
         notesListener = notesRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("NoteRepository", "Listen notes snapshot failed", error)
