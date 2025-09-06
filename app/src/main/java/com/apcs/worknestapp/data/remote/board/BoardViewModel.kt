@@ -160,9 +160,25 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun addNoteToList(boardId: String, noteListId: String, note: Note) {
-        viewModelScope.launch {
+    suspend fun updateNoteListName(boardId: String, noteListId: String, newName: String): String? {
+        return try {
+            boardRepo.updateNoteListName(boardId, noteListId, newName)
+            null
+        } catch(e: Exception) {
+            val message = "Update note list name failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun addNoteToList(boardId: String, noteListId: String, note: Note): String? {
+        return try {
             boardRepo.addNoteToList(boardId, noteListId, note)
+            null
+        } catch(e: Exception) {
+            val message = "Add note failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
         }
     }
 
@@ -182,11 +198,6 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun updateNoteListName(boardId: String, noteListId: String, newName: String) {
-        viewModelScope.launch {
-            boardRepo.updateNoteListName(boardId, noteListId, newName)
-        }
-    }
 
     fun updateNoteName(boardId: String, noteListId: String, docId: String, name: String): Boolean {
         var success = false

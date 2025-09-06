@@ -44,6 +44,7 @@ fun CustomTextField(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     textStyle: TextStyle = TextStyle(
         fontFamily = Roboto,
         fontSize = 16.sp,
@@ -75,6 +76,7 @@ fun CustomTextField(
         BasicTextField(
             value = value,
             onValueChange = { onValueChange(it) },
+            enabled = enabled,
             interactionSource = interactionSource,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
@@ -141,6 +143,7 @@ fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     textStyle: TextStyle = TextStyle(
         fontFamily = Roboto,
         fontSize = 16.sp,
@@ -174,6 +177,7 @@ fun CustomTextField(
             onValueChange(it.text)
         },
         modifier = modifier,
+        enabled = enabled,
         textStyle = textStyle,
         placeholder = placeholder,
         leadingIcon = leadingIcon,

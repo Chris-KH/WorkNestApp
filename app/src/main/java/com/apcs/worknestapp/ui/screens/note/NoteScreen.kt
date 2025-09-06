@@ -60,6 +60,7 @@ import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
+import com.apcs.worknestapp.domain.logic.SortBy
 import com.apcs.worknestapp.ui.components.ConfirmDialog
 import com.apcs.worknestapp.ui.components.ConfirmDialogState
 import com.apcs.worknestapp.ui.components.LoadingScreen
@@ -94,14 +95,14 @@ fun NoteScreen(
     var showArchiveModal by rememberSaveable { mutableStateOf(false) }
 
     val notes = noteViewModel.notes.collectAsState()
-    var notesSortBy by rememberSaveable { mutableStateOf(NoteSortBy.NEWEST) }
+    var notesSortBy by rememberSaveable { mutableStateOf(SortBy.NEWEST) }
     val displayNotes = notes.value
         .filterNot { it.archived == true }
         .let { list ->
             when(notesSortBy) {
-                NoteSortBy.NEWEST -> list.sortedByDescending { it.createdAt }
-                NoteSortBy.OLDEST -> list.sortedBy { it.createdAt }
-                NoteSortBy.ALPHABETICAL -> list.sortedBy { it.name }
+                SortBy.NEWEST -> list.sortedByDescending { it.createdAt }
+                SortBy.OLDEST -> list.sortedBy { it.createdAt }
+                SortBy.ALPHABETICAL -> list.sortedBy { it.name }
             }
         }
     val archiveNotes = notes.value.filter { it.archived == true }
@@ -136,7 +137,7 @@ fun NoteScreen(
                 title = if (isInSelectMode) "Select notes" else Screen.Note.title,
                 actions = {
                     var showActionMenu by remember { mutableStateOf(false) }
-                    
+
                     if (displayNotes.isNotEmpty()) {
                         IconButton(
                             onClick = { isInSelectMode = !isInSelectMode },

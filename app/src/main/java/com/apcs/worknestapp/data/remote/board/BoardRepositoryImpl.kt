@@ -60,6 +60,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         _boards.update { list -> list.filterNot { it.docId == boardId } }
     }
 
+    private fun noteListNotFound(boardId: String, noteListId: String) {
+        if (_currentBoard.value?.docId == boardId) {
+            _currentBoard.update { board ->
+                board?.copy(noteLists = board.noteLists.filterNot { it.docId == noteListId })
+            }
+        }
+    }
+
     // *OK
     override fun registerBoardListener() {
         val authUser = auth.currentUser
@@ -391,11 +399,11 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         try {
             boardRef.update("name", name).await()
-            _boards.update { list ->
-                list.map { if (it.docId == docId) it.copy(name = name) else it }
-            }
             if (_currentBoard.value?.docId == docId) {
                 _currentBoard.update { it?.copy(name = name) }
+            }
+            _boards.update { list ->
+                list.map { if (it.docId == docId) it.copy(name = name) else it }
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
@@ -416,13 +424,13 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         try {
             boardRef.update("cover", color).await()
+            if (_currentBoard.value?.docId == docId) {
+                _currentBoard.update { it?.copy(cover = color) }
+            }
             _boards.update { list ->
                 list.map {
                     if (it.docId == docId) it.copy(cover = color) else it
                 }
-            }
-            if (_currentBoard.value?.docId == docId) {
-                _currentBoard.update { it?.copy(cover = color) }
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
@@ -443,14 +451,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         try {
             boardRef.update("memberIds", FieldValue.arrayUnion(userIdToAdd)).await()
+            if (_currentBoard.value?.docId == boardId) {
+                _currentBoard.update { it?.copy(memberIds = (it.memberIds + userIdToAdd).distinct()) }
+            }
             _boards.update { list ->
                 list.map {
                     if (it.docId == boardId) it.copy(memberIds = (it.memberIds + userIdToAdd).distinct())
                     else it
                 }
-            }
-            if (_currentBoard.value?.docId == boardId) {
-                _currentBoard.update { it?.copy(memberIds = (it.memberIds + userIdToAdd).distinct()) }
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
@@ -469,13 +477,13 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         try {
             boardRef.update("memberIds", FieldValue.arrayRemove(userIdToRemove)).await()
+            if (_currentBoard.value?.docId == boardId) {
+                _currentBoard.update { it?.copy(memberIds = (it.memberIds - userIdToRemove).distinct()) }
+            }
             _boards.update { list ->
                 list.map {
                     if (it.docId == boardId) it.copy(memberIds = it.memberIds - userIdToRemove) else it
                 }
-            }
-            if (_currentBoard.value?.docId == boardId) {
-                _currentBoard.update { it?.copy(memberIds = (it.memberIds - userIdToRemove).distinct()) }
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
@@ -507,14 +515,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                     createdAt = Timestamp.now()
                 )
                 transaction.set(noteListRef, newNoteList)
-                _boards.update { list ->
-                    list.map { board ->
-                        if (board.docId == boardId) board.copy(
-                            noteLists = board.noteLists + newNoteList
-                        )
-                        else board
-                    }
-                }
                 if (_currentBoard.value?.docId == boardId) {
                     _currentBoard.update { board ->
                         if (board?.docId == boardId) board.copy(
@@ -523,6 +523,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                         else board
                     }
                     registerNoteListener(boardId, noteListId)
+                }
+                _boards.update { list ->
+                    list.map { board ->
+                        if (board.docId == boardId) board.copy(
+                            noteLists = board.noteLists + newNoteList
+                        )
+                        else board
+                    }
                 }
             }.await()
         } catch(e: FirebaseFirestoreException) {
@@ -554,17 +562,17 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 transaction.delete(noteListRef)
                 notesListener[noteListId]?.remove()
                 notesListener.remove(noteListId)
-                _boards.update { list ->
-                    list.map { board ->
-                        if (board.docId == boardId) board.copy(
+                if (_currentBoard.value?.docId == boardId) {
+                    _currentBoard.update { board ->
+                        if (board?.docId == boardId) board.copy(
                             noteLists = board.noteLists.filterNot { it.docId == noteListId }
                         )
                         else board
                     }
                 }
-                if (_currentBoard.value?.docId == boardId) {
-                    _currentBoard.update { board ->
-                        if (board?.docId == boardId) board.copy(
+                _boards.update { list ->
+                    list.map { board ->
+                        if (board.docId == boardId) board.copy(
                             noteLists = board.noteLists.filterNot { it.docId == noteListId }
                         )
                         else board
@@ -585,19 +593,11 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
+    // *OK
     override suspend fun updateNoteListName(boardId: String, noteListId: String, name: String) {
-        val authUser = auth.currentUser
-
-        val boardRef = firestore.collection("boards").document(boardId)
-        val noteListRef = boardRef.collection("notelists").document(noteListId)
-
-    }
-
-    override suspend fun addNoteToList(boardId: String, noteListId: String, note: Note) {
         auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(boardId)
         val noteListRef = boardRef.collection("notelists").document(noteListId)
-        val noteRef = noteListRef.collection("notes").document()
 
         try {
             firestore.runTransaction { transaction ->
@@ -606,23 +606,26 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                     boardNotFound(boardId)
                     throw Exception("Board not found")
                 }
-                val noteListSnapshot = transaction.get(noteListRef)
-                if (!noteListSnapshot.exists()) {
-                    throw Exception("Note list not found")
-                }
 
-                _boards.update { list ->
-                    list.map { board ->
-                        if (board.docId == boardId) board.copy(
-                            noteLists = board.noteLists.filterNot { it.docId == noteListId }
+                transaction.update(noteListRef, "name", name)
+                if (_currentBoard.value?.docId == boardId) {
+                    _currentBoard.update { board ->
+                        if (board?.docId == boardId) board.copy(
+                            noteLists = board.noteLists.map { noteList ->
+                                if (noteList.docId == noteListId) noteList.copy(name = name)
+                                else noteList
+                            }
                         )
                         else board
                     }
                 }
-                if (_currentBoard.value?.docId == boardId) {
-                    _currentBoard.update { board ->
-                        if (board?.docId == boardId) board.copy(
-                            noteLists = board.noteLists.filterNot { it.docId == noteListId }
+                _boards.update { list ->
+                    list.map { board ->
+                        if (board.docId == boardId) board.copy(
+                            noteLists = board.noteLists.map { noteList ->
+                                if (noteList.docId == noteListId) noteList.copy(name = name)
+                                else noteList
+                            }
                         )
                         else board
                     }
@@ -633,6 +636,60 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
             ) {
                 boardNotFound(boardId)
+                notesListener[noteListId]?.remove()
+                notesListener.remove(noteListId)
+            }
+            throw Exception("Board not found or missing permission")
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun addNoteToList(boardId: String, noteListId: String, note: Note) {
+        auth.currentUser ?: throw Exception("User not logged in")
+        val boardRef = firestore.collection("boards").document(boardId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
+        val noteRef = noteListRef.collection("notes").document()
+        val noteId = noteRef.id
+
+        try {
+            firestore.runTransaction { transaction ->
+                val boardSnapshot = transaction.get(boardRef)
+                if (!boardSnapshot.exists()) {
+                    boardNotFound(boardId)
+                    throw Exception("Board not found")
+                }
+                val noteListSnapshot = transaction.get(noteListRef)
+                if (!noteListSnapshot.exists()) {
+                    noteListNotFound(boardId, noteListId)
+                    throw Exception("Note list not found")
+                }
+
+                val newNote = note.copy(
+                    docId = noteId,
+                    createdAt = Timestamp.now(),
+                )
+                transaction.set(noteRef, newNote)
+                if (_currentBoard.value?.docId == boardId) {
+                    _currentBoard.update { board ->
+                        if (board?.docId == boardId) board.copy(
+                            noteLists = board.noteLists.map { noteList ->
+                                if (noteList.docId == noteListId)
+                                    noteList.copy(notes = noteList.notes + newNote)
+                                else noteList
+                            }
+                        )
+                        else board
+                    }
+                }
+            }.await()
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
+                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+            ) {
+                boardNotFound(boardId)
+                notesListener[noteListId]?.remove()
+                notesListener.remove(noteListId)
             }
             throw Exception("Board not found or missing permission")
         } catch(e: Exception) {

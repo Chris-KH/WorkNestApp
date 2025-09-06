@@ -1,8 +1,10 @@
 package com.apcs.worknestapp.ui.screens.board
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -51,9 +53,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -64,13 +68,11 @@ import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.board.NoteList
-import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.utils.ColorUtils
-import com.google.firebase.Timestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -94,7 +96,15 @@ fun BoardScreen(
 
     val board = boardViewModel.currentBoard.collectAsState()
     val boardCoverColor = board.value?.cover?.let { ColorUtils.safeParse(it) }
-    var editableBoardName by remember(board.value?.name) { mutableStateOf(board.value?.name ?: "") }
+    var editableBoardName by remember(board.value?.name) {
+        val name = board.value?.name ?: ""
+        mutableStateOf(
+            TextFieldValue(
+                text = name,
+                selection = TextRange(name.length)
+            )
+        )
+    }
 
     LaunchedEffect(Unit) {
         isFirstLoad = true
@@ -150,13 +160,17 @@ fun BoardScreen(
                                 onDone = {
                                     coroutineScope.launch {
                                         val initialName = board.value?.name ?: ""
-                                        if (editableBoardName.isNotBlank() && editableBoardName != initialName) {
+                                        val newName = editableBoardName.text
+                                        if (newName.isNotBlank() && newName != initialName) {
                                             val message = boardViewModel.updateBoardName(
-                                                boardId, editableBoardName
+                                                boardId, newName
                                             )
                                             if (message != null) {
                                                 focusManager.clearFocus()
-                                                editableBoardName = initialName
+                                                editableBoardName = TextFieldValue(
+                                                    text = initialName,
+                                                    selection = TextRange(initialName.length)
+                                                )
                                                 snackbarHost.showSnackbar(
                                                     message = message,
                                                     withDismissAction = true,
@@ -243,7 +257,7 @@ fun BoardScreen(
             val scale by animateFloatAsState(
                 targetValue = if (isZoomIn) 1f else 0.5f, label = "cardScale"
             )
-            val horizontalPadding = 28.dp
+            val horizontalPadding = 16.dp
             val cardWith = (screenWidth - horizontalPadding * 2)
 
             LaunchedEffect(isZoomIn) {
@@ -264,6 +278,11 @@ fun BoardScreen(
             Box(
                 modifier = Modifier
                     .padding(innerPadding)
+                    .clickable(
+                        onClick = { focusManager.clearFocus() },
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    )
                     .fillMaxSize()
                     .layout { measurable, constraints ->
                         val s = scale.coerceAtLeast(0.0001f)
@@ -323,7 +342,7 @@ fun BoardScreen(
                         horizontal = horizontalPadding,
                         vertical = 12.dp
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(horizontalPadding / 2),
+                    horizontalArrangement = Arrangement.spacedBy(horizontalPadding),
                 ) {
                     items(
                         items = board.value?.noteLists ?: emptyList(),
@@ -332,14 +351,6 @@ fun BoardScreen(
                             boardId = boardId,
                             noteList = noteList,
                             boardViewModel = boardViewModel,
-                            onAddNoteClick = { listId, newNoteName ->
-                                coroutineScope.launch {
-                                    val newNote = Note(
-                                        name = newNoteName, createdAt = Timestamp.now()
-                                    )
-                                    boardViewModel.addNoteToList(boardId, listId, newNote)
-                                }
-                            },
                             onNoteClick = { note ->
                                 if (note.docId != null) {
                                     navController.navigate(
@@ -358,14 +369,17 @@ fun BoardScreen(
                                 val noteListId = noteList.docId
                                 if (noteListId != null) {
                                     coroutineScope.launch {
-                                        boardViewModel.updateNoteListName(
+                                        val message = boardViewModel.updateNoteListName(
                                             boardId, noteListId, newName
                                         )
+                                        if (message != null) {
+                                            snackbarHost.showSnackbar(
+                                                message = message,
+                                                withDismissAction = true,
+                                            )
+                                        }
                                     }
                                 }
-                            },
-                            onNoteCheckedChange = { note, isChecked ->
-
                             },
                             onRemoveNoteList = {
                                 val noteListId = noteList.docId
@@ -382,10 +396,8 @@ fun BoardScreen(
                                     }
                                 }
                             },
-                            onRemoveSpecificNote = { listId, noteId ->
-
-                            },
-                            modifier = Modifier.width(cardWith)
+                            snackbarHost = snackbarHost,
+                            modifier = Modifier.width(cardWith),
                         )
                     }
                     item(key = "Add note list button") {

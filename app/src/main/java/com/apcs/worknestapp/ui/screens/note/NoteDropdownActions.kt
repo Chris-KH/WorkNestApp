@@ -27,13 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.domain.logic.SortBy
 import com.apcs.worknestapp.ui.theme.Roboto
-
-enum class NoteSortBy {
-    NEWEST,
-    OLDEST,
-    ALPHABETICAL,
-}
 
 @Composable
 fun NoteDropdownActions(
@@ -41,7 +36,7 @@ fun NoteDropdownActions(
     isNoteEmpty: Boolean,
     onDismissRequest: () -> Unit,
     onChangeBackground: () -> Unit,
-    onSort: (NoteSortBy) -> Unit,
+    onSort: (SortBy) -> Unit,
     onViewArchive: () -> Unit,
     onArchiveCompletedNotes: () -> Unit,
     onArchiveAllNotes: () -> Unit,
@@ -190,7 +185,7 @@ fun NoteDropdownActions(
                             Text(text = "Newest first", style = dropdownTextStyle)
                         },
                         onClick = {
-                            onSort(NoteSortBy.NEWEST)
+                            onSort(SortBy.NEWEST)
                             onDismissRequest()
                         },
                         contentPadding = PaddingValues(horizontal = horizontalPadding)
@@ -201,7 +196,7 @@ fun NoteDropdownActions(
                             Text(text = "Oldest first", style = dropdownTextStyle)
                         },
                         onClick = {
-                            onSort(NoteSortBy.OLDEST)
+                            onSort(SortBy.OLDEST)
                             onDismissRequest()
                         },
                         contentPadding = PaddingValues(horizontal = horizontalPadding)
@@ -212,7 +207,7 @@ fun NoteDropdownActions(
                             Text(text = "Alphabetical", style = dropdownTextStyle)
                         },
                         onClick = {
-                            onSort(NoteSortBy.ALPHABETICAL)
+                            onSort(SortBy.ALPHABETICAL)
                             onDismissRequest()
                         },
                         contentPadding = PaddingValues(horizontal = horizontalPadding)
