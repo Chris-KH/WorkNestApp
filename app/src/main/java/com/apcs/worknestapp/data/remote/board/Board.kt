@@ -13,6 +13,7 @@ data class Board(
     @DocumentId val docId: String? = null,
     val name: String? = "Untitled Board",
     val cover: Int? = Color.Gray.toArgb(),
+    val description: String? = null,
     val showNoteCover: Boolean? = null,
     val showCompletedStatus: Boolean? = null,
     val ownerId: String? = null,

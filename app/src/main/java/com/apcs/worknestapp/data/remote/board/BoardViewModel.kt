@@ -105,6 +105,17 @@ class BoardViewModel @Inject constructor(
         }
     }
 
+    suspend fun updateBoardDescription(docId: String, description: String): String? {
+        return try {
+            boardRepo.updateBoardDescription(docId, description)
+            null
+        } catch(e: Exception) {
+            val message = "Update board description failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
     suspend fun updateBoardShowNoteCover(docId: String, showNoteCover: Boolean): String? {
         return try {
             boardRepo.updateBoardShowNoteCover(docId, showNoteCover)

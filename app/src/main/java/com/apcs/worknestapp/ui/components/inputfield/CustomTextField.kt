@@ -3,6 +3,7 @@ package com.apcs.worknestapp.ui.components.inputfield
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -112,7 +113,7 @@ fun CustomTextField(
                 }
                 Box(
                     modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.CenterStart
+                    contentAlignment = Alignment.TopStart
                 ) {
                     if (isFocused || !singleLine) {
                         innerTextField()

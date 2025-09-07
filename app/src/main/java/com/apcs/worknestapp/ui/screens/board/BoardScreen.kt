@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -54,11 +55,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -93,24 +92,16 @@ fun BoardScreen(
     var isFirstLoad by remember { mutableStateOf(true) }
     val topAppBarColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
     val topAppBarContent = MaterialTheme.colorScheme.onSurface
-    var isZoomIn by rememberSaveable { mutableStateOf(false) }
+    var isZoomIn by rememberSaveable { mutableStateOf(true) }
     var showSettingModal by rememberSaveable { mutableStateOf(false) }
     val settingModalState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
-        confirmValueChange = { false }
+        confirmValueChange = { it != SheetValue.Hidden }
     )
 
     val board = boardViewModel.currentBoard.collectAsState()
     val boardCoverColor = board.value?.cover?.let { ColorUtils.safeParse(it) }
-    var editableBoardName by remember(board.value?.name) {
-        val name = board.value?.name ?: ""
-        mutableStateOf(
-            TextFieldValue(
-                text = name,
-                selection = TextRange(name.length)
-            )
-        )
-    }
+    var editableBoardName by remember(board.value?.name) { mutableStateOf(board.value?.name ?: "") }
 
     LaunchedEffect(Unit) {
         isFirstLoad = true
@@ -168,22 +159,19 @@ fun BoardScreen(
                                 onDone = {
                                     coroutineScope.launch {
                                         val initialName = board.value?.name ?: ""
-                                        val newName = editableBoardName.text
+                                        val newName = editableBoardName
                                         if (newName.isNotBlank() && newName != initialName) {
                                             val message = boardViewModel.updateBoardName(
                                                 boardId, newName
                                             )
+                                            focusManager.clearFocus()
                                             if (message != null) {
-                                                focusManager.clearFocus()
-                                                editableBoardName = TextFieldValue(
-                                                    text = initialName,
-                                                    selection = TextRange(initialName.length)
-                                                )
+                                                editableBoardName = initialName
                                                 snackbarHost.showSnackbar(
                                                     message = message,
                                                     withDismissAction = true,
                                                 )
-                                            } else focusManager.clearFocus()
+                                            }
                                         } else focusManager.clearFocus()
                                     }
                                 }),
@@ -291,7 +279,7 @@ fun BoardScreen(
             }
 
             if (showSettingModal) {
-                BoardSettingModal(
+                BoardModal(
                     board = board.value!!,
                     sheetState = settingModalState,
                     snackbarHost = snackbarHost,

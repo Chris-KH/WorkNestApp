@@ -65,17 +65,17 @@ fun CoverPickerModal(
     ModalBottomSheet(
         sheetState = sheetState,
         dragHandle = null,
-        shape = RoundedCornerShape(12.dp),
         onDismissRequest = {
             coroutineScope.launch {
                 sheetState.hide()
                 onDismissRequest()
             }
         },
+        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier
             .fillMaxSize()
-            .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()),
+            .padding(WindowInsets.statusBars.asPaddingValues()),
     ) {
         NoteModalBottomTopBar(
             title = "Cover Settings",

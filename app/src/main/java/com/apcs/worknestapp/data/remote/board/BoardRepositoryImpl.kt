@@ -2,6 +2,7 @@ package com.apcs.worknestapp.data.remote.board
 
 import android.util.Log
 import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
@@ -371,7 +372,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         val noteListsSnapshot = boardRef.collection("notelists").get().await()
         val noteLists = coroutineScope {
-            noteListsSnapshot.documents.mapNotNull { noteListDoc ->
+            noteListsSnapshot.documents.map { noteListDoc ->
                 async {
                     try {
                         val noteList = noteListDoc.toObject(NoteList::class.java)
@@ -386,8 +387,21 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 }
             }.awaitAll().filterNotNull()
         }
+        val members = coroutineScope {
+            board.memberIds.map { memberId ->
+                async {
+                    try {
+                        val memberSnapshot = firestore.collection("users").document(memberId)
+                            .get().await()
+                        memberSnapshot.toObject(User::class.java)
+                    } catch(_: Exception) {
+                        null
+                    }
+                }
+            }.awaitAll().filterNotNull()
+        }
 
-        val result = board.copy(noteLists = noteLists)
+        val result = board.copy(noteLists = noteLists, members = members)
         _currentBoard.value = result
         return result
     }
@@ -404,6 +418,31 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             }
             _boards.update { list ->
                 list.map { if (it.docId == docId) it.copy(name = name) else it }
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
+                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+            ) {
+                boardNotFound(docId)
+            }
+            throw Exception("Board not found or missing permission")
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    // * OK
+    override suspend fun updateBoardDescription(docId: String, description: String) {
+        auth.currentUser ?: throw IllegalStateException("User not logged in")
+        val boardRef = firestore.collection("boards").document(docId)
+
+        try {
+            boardRef.update("description", description).await()
+            if (_currentBoard.value?.docId == docId) {
+                _currentBoard.update { it?.copy(description = description) }
+            }
+            _boards.update { list ->
+                list.map { if (it.docId == docId) it.copy(description = description) else it }
             }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||

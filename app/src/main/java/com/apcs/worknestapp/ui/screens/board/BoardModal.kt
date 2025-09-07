@@ -52,21 +52,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
+import com.apcs.worknestapp.ui.components.CoverPickerModal
 import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.apcs.worknestapp.utils.ColorUtils
 import kotlinx.coroutines.launch
+
+enum class BoardSubModal {
+    MEMBERS,
+    BACKGROUND,
+    INFO,
+    ARCHIVE
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoardSettingModal(
+fun BoardModal(
     board: Board,
     sheetState: SheetState,
     onDismissRequest: () -> Unit,
@@ -75,12 +88,16 @@ fun BoardSettingModal(
     boardViewModel: BoardViewModel,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    var showSubModal by remember { mutableStateOf<BoardSubModal?>(null) }
     var isBoardMenu by remember { mutableStateOf(true) }
     var showNoteCover by remember(board.showNoteCover) {
         mutableStateOf(board.showNoteCover ?: false)
     }
     var showCompletedStatus by remember(board.showCompletedStatus) {
         mutableStateOf(board.showCompletedStatus ?: false)
+    }
+    var backgroundColor by remember(board.cover) {
+        mutableStateOf(board.cover?.let { ColorUtils.safeParse(it) })
     }
     val listItemTextStyle = TextStyle(
         fontSize = 15.sp, lineHeight = 16.sp,
@@ -91,11 +108,70 @@ fun BoardSettingModal(
         sheetState = sheetState,
         onDismissRequest = onDismissRequest,
         dragHandle = null,
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier
-            .padding(WindowInsets.statusBars.asPaddingValues())
             .fillMaxSize()
+            .padding(WindowInsets.statusBars.asPaddingValues())
+
     ) {
+        when(showSubModal) {
+            BoardSubModal.MEMBERS -> {
+                BoardMemberModal(
+                    board = board,
+                    onDismissRequest = { showSubModal = null },
+                    snackbarHost = snackbarHost,
+                    boardViewModel = boardViewModel,
+                )
+            }
+
+            BoardSubModal.BACKGROUND -> {
+                CoverPickerModal(
+                    currentColor = backgroundColor,
+                    onDismissRequest = { showSubModal = null },
+                    onSave = { newColor ->
+                        showSubModal = null
+                        val boardId = board.docId
+                        if (boardId != null && backgroundColor != newColor) {
+                            coroutineScope.launch {
+                                val prevState = backgroundColor
+                                backgroundColor = newColor
+                                val message =
+                                    boardViewModel.updateBoardCover(boardId, newColor?.toArgb())
+                                if (message != null) {
+                                    backgroundColor = prevState
+                                    snackbarHost.showSnackbar(
+                                        message = message,
+                                        withDismissAction = true,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+
+            BoardSubModal.INFO -> {
+                BoardInfoModal(
+                    board = board,
+                    onDismissRequest = { showSubModal = null },
+                    snackbarHost = snackbarHost,
+                    boardViewModel = boardViewModel,
+                )
+            }
+
+            BoardSubModal.ARCHIVE -> {
+                BoardArchiveModal(
+                    board = board,
+                    onDismissRequest = { showSubModal = null },
+                    snackbarHost = snackbarHost,
+                    boardViewModel = boardViewModel,
+                )
+            }
+
+            else -> {}
+        }
+
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -128,7 +204,7 @@ fun BoardSettingModal(
             )
             { isMenu ->
                 Box(
-                    modifier = Modifier.padding(vertical = 4.dp),
+                    modifier = Modifier.padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (isMenu) {
@@ -214,7 +290,9 @@ fun BoardSettingModal(
                                     trailingContent = {
                                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
                                     },
-                                    modifier = Modifier.clickable(onClick = {})
+                                    modifier = Modifier.clickable(
+                                        onClick = { showSubModal = BoardSubModal.MEMBERS }
+                                    )
                                 )
                             }
                             item(key = "Change background") {
@@ -232,7 +310,9 @@ fun BoardSettingModal(
                                     trailingContent = {
                                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
                                     },
-                                    modifier = Modifier.clickable(onClick = {})
+                                    modifier = Modifier.clickable(
+                                        onClick = { showSubModal = BoardSubModal.BACKGROUND }
+                                    )
                                 )
                             }
 
@@ -252,7 +332,9 @@ fun BoardSettingModal(
                                     trailingContent = {
                                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
                                     },
-                                    modifier = Modifier.clickable(onClick = {})
+                                    modifier = Modifier.clickable(
+                                        onClick = { showSubModal = BoardSubModal.INFO }
+                                    )
                                 )
                             }
 
@@ -358,7 +440,9 @@ fun BoardSettingModal(
                                     trailingContent = {
                                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
                                     },
-                                    modifier = Modifier.clickable(onClick = {})
+                                    modifier = Modifier.clickable(
+                                        onClick = { showSubModal = BoardSubModal.ARCHIVE }
+                                    )
                                 )
                             }
                             item(key = "Archive completed notes") {
