@@ -35,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -93,6 +94,11 @@ fun BoardScreen(
     val topAppBarColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
     val topAppBarContent = MaterialTheme.colorScheme.onSurface
     var isZoomIn by rememberSaveable { mutableStateOf(false) }
+    var showSettingModal by rememberSaveable { mutableStateOf(false) }
+    val settingModalState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { false }
+    )
 
     val board = boardViewModel.currentBoard.collectAsState()
     val boardCoverColor = board.value?.cover?.let { ColorUtils.safeParse(it) }
@@ -121,6 +127,8 @@ fun BoardScreen(
 
     LaunchedEffect(board.value) {
         if (board.value == null && !isFirstLoad) {
+            settingModalState.hide()
+            showSettingModal = false
             delay(1000)
             navController.popBackStack()
         }
@@ -201,7 +209,14 @@ fun BoardScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                showSettingModal = true
+                                settingModalState.show()
+                            }
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.MoreVert,
                             contentDescription = "Board modal",
@@ -273,6 +288,21 @@ fun BoardScreen(
                         nearest?.let { listState.animateScrollToItem(it.index, 0) }
                     }
                 }
+            }
+
+            if (showSettingModal) {
+                BoardSettingModal(
+                    board = board.value!!,
+                    sheetState = settingModalState,
+                    snackbarHost = snackbarHost,
+                    onDismissRequest = {
+                        coroutineScope.launch {
+                            settingModalState.hide()
+                            showSettingModal = false
+                        }
+                    },
+                    boardViewModel = boardViewModel,
+                )
             }
 
             Box(
@@ -350,21 +380,8 @@ fun BoardScreen(
                         NoteListCard(
                             boardId = boardId,
                             noteList = noteList,
+                            board = board.value!!,
                             boardViewModel = boardViewModel,
-                            onNoteClick = { note ->
-                                if (note.docId != null) {
-                                    navController.navigate(
-                                        "board_note_detail/${boardId}/${noteList.docId}/${note.docId}"
-                                    )
-                                } else {
-                                    coroutineScope.launch {
-                                        snackbarHost.showSnackbar(
-                                            message = "Cannot open note: Note ID is missing.",
-                                            withDismissAction = true
-                                        )
-                                    }
-                                }
-                            },
                             onUpdateNoteListName = { newName ->
                                 val noteListId = noteList.docId
                                 if (noteListId != null) {
@@ -397,6 +414,7 @@ fun BoardScreen(
                                 }
                             },
                             snackbarHost = snackbarHost,
+                            navController = navController,
                             modifier = Modifier.width(cardWith),
                         )
                     }

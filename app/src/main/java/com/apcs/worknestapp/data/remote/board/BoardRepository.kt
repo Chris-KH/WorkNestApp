@@ -24,6 +24,8 @@ interface BoardRepository {
     suspend fun refreshBoard()
     suspend fun getBoard(docId: String): Board
     suspend fun updateBoardName(docId: String, name: String)
+    suspend fun updateBoardShowNoteCover(docId: String, showNoteCover: Boolean)
+    suspend fun updateBoardShowCompletedStatus(docId: String, showCompletedStatus: Boolean)
     suspend fun updateBoardCover(docId: String, color: Int?)
     suspend fun addMemberToBoard(boardId: String, userIdToAdd: String)
     suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String)

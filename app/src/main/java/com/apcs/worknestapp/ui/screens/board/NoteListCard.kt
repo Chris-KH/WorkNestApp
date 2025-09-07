@@ -43,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.board.NoteList
 import com.apcs.worknestapp.data.remote.note.Note
@@ -55,9 +57,10 @@ import java.util.UUID
 fun NoteListCard(
     boardId: String,
     noteList: NoteList,
-    onNoteClick: (Note) -> Unit,
+    board: Board,
     onUpdateNoteListName: (String) -> Unit,
     onRemoveNoteList: () -> Unit,
+    navController: NavHostController,
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
     boardViewModel: BoardViewModel,
@@ -186,7 +189,10 @@ fun NoteListCard(
                 ) { note ->
                     NoteItem(
                         note = note,
-                        onClick = { onNoteClick(note) },
+                        board = board,
+                        onClick = {
+
+                        },
                         onCheckedChange = { isChecked ->
 
                         },

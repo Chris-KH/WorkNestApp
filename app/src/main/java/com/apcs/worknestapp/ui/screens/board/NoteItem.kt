@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.theme.success
@@ -37,6 +38,7 @@ import com.apcs.worknestapp.utils.ColorUtils
 @Composable
 fun NoteItem(
     note: Note,
+    board: Board,
     onClick: () -> Unit,
     onCheckedChange: (Boolean) -> Unit,
     onRemoveThisNote: () -> Unit,
@@ -61,7 +63,7 @@ fun NoteItem(
                 )
                 .combinedClickable(onClick = onClick)
         ) {
-            if (coverColor != null) {
+            if (coverColor != null && board.showNoteCover == true) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -80,25 +82,27 @@ fun NoteItem(
                 val lineHeight = 15.sp
                 val iconSize = with(LocalDensity.current) { fontSize.toDp() + 2.dp }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(
-                            if (note.completed == null || !note.completed) R.drawable.outline_circle
-                            else R.drawable.fill_checkbox
-                        ),
-                        tint = if (note.completed == null || !note.completed) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.success,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .clickable(onClick = {})
-                            .size(iconSize)
-                            .clip(CircleShape)
-                            .let {
-                                if (note.completed == true) it.background(MaterialTheme.colorScheme.onSurface)
-                                else it
-                            }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                if (board.showCompletedStatus == true) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(
+                                if (note.completed == null || !note.completed) R.drawable.outline_circle
+                                else R.drawable.fill_checkbox
+                            ),
+                            tint = if (note.completed == null || !note.completed) MaterialTheme.colorScheme.onSurface
+                            else MaterialTheme.colorScheme.success,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .clickable(onClick = {})
+                                .size(iconSize)
+                                .clip(CircleShape)
+                                .let {
+                                    if (note.completed == true) it.background(MaterialTheme.colorScheme.onSurface)
+                                    else it
+                                }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                 }
 
                 Text(

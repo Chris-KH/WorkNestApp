@@ -418,6 +418,59 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     }
 
     // *OK
+    override suspend fun updateBoardShowNoteCover(docId: String, showNoteCover: Boolean) {
+        auth.currentUser ?: throw IllegalStateException("User not logged in")
+        val boardRef = firestore.collection("boards").document(docId)
+
+        try {
+            boardRef.update("showNoteCover", showNoteCover).await()
+            if (_currentBoard.value?.docId == docId) {
+                _currentBoard.update { it?.copy(showNoteCover = showNoteCover) }
+            }
+            _boards.update { list ->
+                list.map { if (it.docId == docId) it.copy(showNoteCover = showNoteCover) else it }
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
+                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+            ) {
+                boardNotFound(docId)
+            }
+            throw Exception("Board not found or missing permission")
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    // *OK
+    override suspend fun updateBoardShowCompletedStatus(
+        docId: String,
+        showCompletedStatus: Boolean,
+    ) {
+        auth.currentUser ?: throw IllegalStateException("User not logged in")
+        val boardRef = firestore.collection("boards").document(docId)
+
+        try {
+            boardRef.update("showCompletedStatus", showCompletedStatus).await()
+            if (_currentBoard.value?.docId == docId) {
+                _currentBoard.update { it?.copy(showCompletedStatus = showCompletedStatus) }
+            }
+            _boards.update { list ->
+                list.map { if (it.docId == docId) it.copy(showCompletedStatus = showCompletedStatus) else it }
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
+                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+            ) {
+                boardNotFound(docId)
+            }
+            throw Exception("Board not found or missing permission")
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    // *OK
     override suspend fun updateBoardCover(docId: String, color: Int?) {
         auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(docId)

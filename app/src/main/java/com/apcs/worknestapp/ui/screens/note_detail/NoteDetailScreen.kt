@@ -86,7 +86,7 @@ import com.apcs.worknestapp.ui.components.notedetail.ChecklistItem
 import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
-import com.apcs.worknestapp.ui.components.notedetail.CoverPickerModal
+import com.apcs.worknestapp.ui.components.CoverPickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DateTimePickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DescriptionEditModal
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar

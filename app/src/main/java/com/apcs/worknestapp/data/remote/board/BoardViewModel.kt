@@ -94,12 +94,37 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    suspend fun updateBoardName(docId: String, newName: String): String? {
+    suspend fun updateBoardName(docId: String, name: String): String? {
         return try {
-            boardRepo.updateBoardName(docId, newName)
+            boardRepo.updateBoardName(docId, name)
             null
         } catch(e: Exception) {
             val message = "Update board name failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun updateBoardShowNoteCover(docId: String, showNoteCover: Boolean): String? {
+        return try {
+            boardRepo.updateBoardShowNoteCover(docId, showNoteCover)
+            null
+        } catch(e: Exception) {
+            val message = "Update board show note cover failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun updateBoardShowCompletedStatus(
+        docId: String,
+        showCompletedStatus: Boolean,
+    ): String? {
+        return try {
+            boardRepo.updateBoardShowCompletedStatus(docId, showCompletedStatus)
+            null
+        } catch(e: Exception) {
+            val message = "Update board show completed status failed"
             Log.e("BoardViewModel", message, e)
             e.message ?: message
         }

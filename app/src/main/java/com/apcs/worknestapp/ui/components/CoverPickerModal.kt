@@ -1,4 +1,4 @@
-package com.apcs.worknestapp.ui.components.notedetail
+package com.apcs.worknestapp.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,16 +39,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.apcs.worknestapp.ui.components.notedetail.CoverPreviewCard
+import com.apcs.worknestapp.ui.components.notedetail.NoteModalBottomTopBar
 import com.apcs.worknestapp.utils.ColorUtils
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CoverPickerModal(
+    modifier: Modifier = Modifier,
     currentColor: Color? = null,
     onSave: (Color?) -> Unit,
     onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var selectedColor by remember { mutableStateOf(currentColor) }
