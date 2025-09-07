@@ -3,6 +3,7 @@ package com.apcs.worknestapp.data.remote.user
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -85,8 +86,18 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val userRef = firestore.collection("users")
-        val snapshot = userRef.whereGreaterThanOrEqualTo("email", searchValue)
-            .whereLessThan("email", searchValue + "\uF8FF").orderBy("email").get().await()
+        val snapshot = userRef.where(
+            Filter.or(
+                Filter.and(
+                    Filter.greaterThanOrEqualTo("email", searchValue),
+                    Filter.lessThan("email", searchValue + "\uF8FF")
+                ),
+                Filter.and(
+                    Filter.greaterThanOrEqualTo("name", searchValue),
+                    Filter.lessThan("name", searchValue + "\uF8FF"),
+                )
+            )
+        ).orderBy("name").get().await()
 
         return snapshot.documents.mapNotNull {
             val user = it.toObject(User::class.java)

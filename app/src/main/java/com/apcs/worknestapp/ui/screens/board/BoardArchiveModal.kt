@@ -18,16 +18,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
+import com.apcs.worknestapp.ui.components.CustomSnackBar
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,9 +39,9 @@ fun BoardArchiveModal(
     board: Board,
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
-    snackbarHost: SnackbarHostState,
     boardViewModel: BoardViewModel,
 ) {
+    val modalSnackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -62,29 +65,34 @@ fun BoardArchiveModal(
             .fillMaxSize()
             .padding(WindowInsets.statusBars.asPaddingValues()),
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(vertical = 6.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                IconButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            sheetState.hide()
-                            onDismissRequest()
-                        }
-                    },
-                    modifier = Modifier.align(alignment = Alignment.CenterStart)
-                ) { Icon(Icons.Default.Close, contentDescription = null) }
-                Text(
-                    text = "Archive",
-                    modifier = Modifier.align(alignment = Alignment.Center)
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            SnackbarHost(
+                hostState = modalSnackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) { CustomSnackBar(data = it) }
+
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                sheetState.hide()
+                                onDismissRequest()
+                            }
+                        },
+                        modifier = Modifier.align(alignment = Alignment.CenterStart)
+                    ) { Icon(Icons.Default.Close, contentDescription = null) }
+                    Text(
+                        text = "Archive",
+                        modifier = Modifier.align(alignment = Alignment.Center)
+                    )
+                }
             }
         }
     }

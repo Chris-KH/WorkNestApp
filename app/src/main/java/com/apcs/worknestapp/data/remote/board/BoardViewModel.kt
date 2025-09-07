@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -74,13 +75,14 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun deleteBoard(docId: String): Boolean {
+    fun deleteBoard(docId: String): String? {
         return try {
             boardRepo.deleteBoard(docId)
-            true
+            null
         } catch(e: Exception) {
-            Log.e("BoardViewModel", "Delete board failed", e)
-            false
+            val message = "Delete board failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
         }
     }
 
@@ -152,9 +154,9 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String): String? {
+    suspend fun addMemberToBoard(boardId: String, user: User): String? {
         return try {
-            boardRepo.addMemberToBoard(boardId, userIdToAdd)
+            boardRepo.addMemberToBoard(boardId, user)
             null
         } catch(e: Exception) {
             val message = "Add member failed"
@@ -163,9 +165,9 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String): String? {
+    suspend fun removeMemberFromBoard(boardId: String, user: User): String? {
         return try {
-            boardRepo.removeMemberFromBoard(boardId, userIdToRemove)
+            boardRepo.removeMemberFromBoard(boardId, user)
             null
         } catch(e: Exception) {
             val message = "Remove member failed"

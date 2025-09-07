@@ -1,10 +1,5 @@
 package com.apcs.worknestapp.ui.screens.board
 
-import android.app.Activity
-import android.content.Context
-import android.util.Log
-import android.view.inputmethod.InputMethodManager
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -21,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -39,6 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -58,13 +53,10 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,6 +67,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.domain.usecase.AppDefault
+import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.launch
@@ -85,12 +78,12 @@ fun BoardInfoModal(
     board: Board,
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
-    snackbarHost: SnackbarHostState,
     boardViewModel: BoardViewModel,
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
+    val modalSnackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -129,96 +122,75 @@ fun BoardInfoModal(
                 .focusRequester(focusRequester)
                 .focusable()
         )
-
-        Column(
-            modifier = Modifier
-                .clickable(
-                    onClick = { clearFocus() },
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                )
-                .fillMaxSize()
-        ) {
-            val labelTextStyle = TextStyle(
-                fontSize = 12.sp, lineHeight = 12.sp, letterSpacing = (0).sp,
-                fontWeight = FontWeight.Normal, fontFamily = Roboto,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            val contentTextStyle = TextStyle(
-                fontSize = 16.sp, lineHeight = 20.sp, letterSpacing = (0).sp,
-                fontWeight = FontWeight.Normal, fontFamily = Roboto,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Box(
+        Box(modifier = Modifier.fillMaxSize()) {
+            SnackbarHost(
+                hostState = modalSnackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) { CustomSnackBar(data = it) }
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(vertical = 6.dp),
-                contentAlignment = Alignment.Center,
+                    .clickable(
+                        onClick = { clearFocus() },
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    )
+                    .fillMaxSize()
             ) {
-                IconButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            sheetState.hide()
-                            onDismissRequest()
-                        }
-                    },
-                    modifier = Modifier.align(alignment = Alignment.CenterStart)
-                ) { Icon(Icons.Default.Close, contentDescription = null) }
-                Text(
-                    text = "About this board",
-                    modifier = Modifier.align(alignment = Alignment.Center)
+                val labelTextStyle = TextStyle(
+                    fontSize = 12.sp, lineHeight = 12.sp, letterSpacing = (0).sp,
+                    fontWeight = FontWeight.Normal, fontFamily = Roboto,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-            LazyColumn(
-                contentPadding = PaddingValues(vertical = 32.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
-                item(key = "Board Name") {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "BOARD NAME",
-                            style = labelTextStyle,
-                            modifier = Modifier.padding(horizontal = 32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        CustomTextField(
-                            value = editableBoardName,
-                            onValueChange = { editableBoardName = it },
-                            textStyle = contentTextStyle,
-                            singleLine = true,
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    coroutineScope.launch {
-                                        val initialName = board.name ?: ""
-                                        val boardId = board.docId
-                                        val newName = editableBoardName
-                                        if (newName.isNotBlank() && newName != initialName && boardId != null) {
-                                            val message = boardViewModel.updateBoardName(
-                                                boardId, newName
-                                            )
-                                            clearFocus()
-                                            if (message != null) {
-                                                editableBoardName = initialName
-                                                snackbarHost.showSnackbar(
-                                                    message = message,
-                                                    withDismissAction = true,
-                                                )
-                                            }
-                                        } else clearFocus()
-                                    }
-                                }
-                            ),
-                            contentPadding = PaddingValues(vertical = 12.dp, horizontal = 16.dp),
-                            modifier = Modifier
-                                .onFocusChanged {
-                                    val isFocused = it.isFocused
-                                    if (!isFocused) {
+                val contentTextStyle = TextStyle(
+                    fontSize = 16.sp, lineHeight = 20.sp, letterSpacing = (0).sp,
+                    fontWeight = FontWeight.Normal, fontFamily = Roboto,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                sheetState.hide()
+                                onDismissRequest()
+                            }
+                        },
+                        modifier = Modifier.align(alignment = Alignment.CenterStart)
+                    ) { Icon(Icons.Default.Close, contentDescription = null) }
+                    Text(
+                        text = "About this board",
+                        modifier = Modifier.align(alignment = Alignment.Center)
+                    )
+                }
+                LazyColumn(
+                    contentPadding = PaddingValues(vertical = 32.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    item(key = "Board Name") {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "BOARD NAME",
+                                style = labelTextStyle,
+                                modifier = Modifier.padding(horizontal = 32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            CustomTextField(
+                                value = editableBoardName,
+                                onValueChange = { editableBoardName = it },
+                                textStyle = contentTextStyle,
+                                singleLine = true,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
                                         coroutineScope.launch {
                                             val initialName = board.name ?: ""
                                             val boardId = board.docId
@@ -230,7 +202,7 @@ fun BoardInfoModal(
                                                 clearFocus()
                                                 if (message != null) {
                                                     editableBoardName = initialName
-                                                    snackbarHost.showSnackbar(
+                                                    modalSnackbarHostState.showSnackbar(
                                                         message = message,
                                                         withDismissAction = true,
                                                     )
@@ -238,125 +210,128 @@ fun BoardInfoModal(
                                             } else clearFocus()
                                         }
                                     }
-                                }
-                                .fillMaxWidth()
-                        )
-                    }
-                }
-
-                if (madeUser != null) {
-                    item { Spacer(modifier = Modifier.height(32.dp)) }
-
-                    item(key = "Made By") {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = "MADE BY",
-                                style = labelTextStyle,
-                                modifier = Modifier.padding(horizontal = 32.dp)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
+                                ),
+                                contentPadding = PaddingValues(
+                                    vertical = 12.dp,
+                                    horizontal = 16.dp
+                                ),
                                 modifier = Modifier
+                                    .onFocusChanged {
+                                        val isFocused = it.isFocused
+                                        if (!isFocused) {
+                                            coroutineScope.launch {
+                                                val initialName = board.name ?: ""
+                                                val boardId = board.docId
+                                                val newName = editableBoardName
+                                                if (newName.isNotBlank() && newName != initialName && boardId != null) {
+                                                    val message = boardViewModel.updateBoardName(
+                                                        boardId, newName
+                                                    )
+                                                    clearFocus()
+                                                    if (message != null) {
+                                                        editableBoardName = initialName
+                                                        modalSnackbarHostState.showSnackbar(
+                                                            message = message,
+                                                            withDismissAction = true,
+                                                        )
+                                                    }
+                                                } else clearFocus()
+                                            }
+                                        }
+                                    }
                                     .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                    .padding(vertical = 10.dp, horizontal = 16.dp)
-                            ) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(context).data(madeUser.avatar)
-                                        .crossfade(true).build(),
-                                    placeholder = painterResource(R.drawable.fade_avatar_fallback),
-                                    error = painterResource(R.drawable.fade_avatar_fallback),
-                                    contentDescription = "Avatar",
-                                    contentScale = ContentScale.Crop,
-                                    filterQuality = FilterQuality.Medium,
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .aspectRatio(1f)
-                                        .clip(CircleShape),
+                            )
+                        }
+                    }
+
+                    if (madeUser != null) {
+                        item { Spacer(modifier = Modifier.height(32.dp)) }
+
+                        item(key = "Made By") {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = "MADE BY",
+                                    style = labelTextStyle,
+                                    modifier = Modifier.padding(horizontal = 32.dp)
                                 )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column(
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxHeight()
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                        .padding(vertical = 10.dp, horizontal = 16.dp)
                                 ) {
-                                    Text(
-                                        text = madeUser.name ?: AppDefault.USER_NAME,
-                                        fontSize = 15.sp,
-                                        lineHeight = 15.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(context).data(madeUser.avatar)
+                                            .crossfade(true).build(),
+                                        placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                                        error = painterResource(R.drawable.fade_avatar_fallback),
+                                        contentDescription = "Avatar",
+                                        contentScale = ContentScale.Crop,
+                                        filterQuality = FilterQuality.Medium,
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .aspectRatio(1f)
+                                            .clip(CircleShape),
                                     )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = madeUser.email ?: "",
-                                        fontSize = 13.sp,
-                                        lineHeight = 13.sp,
-                                        fontWeight = FontWeight.Normal,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                    ) {
+                                        Text(
+                                            text = madeUser.name ?: AppDefault.USER_NAME,
+                                            fontSize = 15.sp,
+                                            lineHeight = 15.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = madeUser.email ?: "",
+                                            fontSize = 13.sp,
+                                            lineHeight = 13.sp,
+                                            fontWeight = FontWeight.Normal,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                item { Spacer(modifier = Modifier.height(32.dp)) }
+                    item { Spacer(modifier = Modifier.height(32.dp)) }
 
-                item(key = "Board Description") {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "DESCRIPTION",
-                            style = labelTextStyle,
-                            modifier = Modifier.padding(horizontal = 32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        CustomTextField(
-                            value = editableBoardDescription,
-                            onValueChange = { editableBoardDescription = it },
-                            placeholder = {
-                                Text(
-                                    text = "It's your board's time to shine! " +
-                                            "Let people know what this board is used " +
-                                            "for and what they can expect to see",
-                                    style = contentTextStyle,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            },
-                            textStyle = contentTextStyle,
-                            singleLine = true,
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    coroutineScope.launch {
-                                        val initialDescription = board.description ?: ""
-                                        val boardId = board.docId
-                                        val newDescription = editableBoardDescription
-                                        if (newDescription != initialDescription && boardId != null) {
-                                            val message = boardViewModel.updateBoardDescription(
-                                                boardId, newDescription
-                                            )
-                                            clearFocus()
-                                            if (message != null) {
-                                                editableBoardDescription = initialDescription
-                                                snackbarHost.showSnackbar(
-                                                    message = message,
-                                                    withDismissAction = true,
-                                                )
-                                            }
-                                        } else clearFocus()
-                                    }
-                                }
-                            ),
-                            contentPadding = PaddingValues(vertical = 12.dp, horizontal = 16.dp),
-                            modifier = Modifier
-                                .onFocusChanged {
-                                    val isFocused = it.isFocused
-                                    if (!isFocused) {
+                    item(key = "Board Description") {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "DESCRIPTION",
+                                style = labelTextStyle,
+                                modifier = Modifier.padding(horizontal = 32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            CustomTextField(
+                                value = editableBoardDescription,
+                                onValueChange = { editableBoardDescription = it },
+                                placeholder = {
+                                    Text(
+                                        text = "It's your board's time to shine! " +
+                                                "Let people know what this board is used " +
+                                                "for and what they can expect to see",
+                                        style = contentTextStyle,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                },
+                                textStyle = contentTextStyle,
+                                singleLine = true,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
                                         coroutineScope.launch {
                                             val initialDescription = board.description ?: ""
                                             val boardId = board.docId
@@ -368,7 +343,7 @@ fun BoardInfoModal(
                                                 clearFocus()
                                                 if (message != null) {
                                                     editableBoardDescription = initialDescription
-                                                    snackbarHost.showSnackbar(
+                                                    modalSnackbarHostState.showSnackbar(
                                                         message = message,
                                                         withDismissAction = true,
                                                     )
@@ -376,9 +351,40 @@ fun BoardInfoModal(
                                             } else clearFocus()
                                         }
                                     }
-                                }
-                                .fillMaxWidth()
-                        )
+                                ),
+                                contentPadding = PaddingValues(
+                                    vertical = 12.dp,
+                                    horizontal = 16.dp
+                                ),
+                                modifier = Modifier
+                                    .onFocusChanged {
+                                        val isFocused = it.isFocused
+                                        if (!isFocused) {
+                                            coroutineScope.launch {
+                                                val initialDescription = board.description ?: ""
+                                                val boardId = board.docId
+                                                val newDescription = editableBoardDescription
+                                                if (newDescription != initialDescription && boardId != null) {
+                                                    val message =
+                                                        boardViewModel.updateBoardDescription(
+                                                            boardId, newDescription
+                                                        )
+                                                    clearFocus()
+                                                    if (message != null) {
+                                                        editableBoardDescription =
+                                                            initialDescription
+                                                        modalSnackbarHostState.showSnackbar(
+                                                            message = message,
+                                                            withDismissAction = true,
+                                                        )
+                                                    }
+                                                } else clearFocus()
+                                            }
+                                        }
+                                    }
+                                    .fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }

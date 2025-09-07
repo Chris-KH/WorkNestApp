@@ -18,6 +18,7 @@ data class Board(
     val showCompletedStatus: Boolean? = null,
     val ownerId: String? = null,
     val memberIds: List<String> = emptyList(),
+    val adminIds: List<String> = emptyList(),
     @ServerTimestamp val createdAt: Timestamp? = null,
 
     @get:Exclude val noteLists: List<NoteList> = emptyList(),

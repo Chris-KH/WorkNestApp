@@ -1,6 +1,8 @@
 package com.apcs.worknestapp.data.remote.board
 
 import android.util.Log
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
@@ -27,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.String
 
 class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     private val auth = FirebaseAuth.getInstance()
@@ -99,7 +102,28 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 val pendingBoards = _boards.value.filter { local ->
                     local.isLoading == true && remoteBoards.none { it.docId == local.docId }
                 }
-                _boards.value = (remoteBoards + pendingBoards).sortedByDescending { it.createdAt }
+                val allBoards = (remoteBoards + pendingBoards).sortedByDescending { it.createdAt }
+                if (_currentBoard.value != null) {
+                    val currentBoardId = _currentBoard.value!!.docId
+                    val board = allBoards.find { it.docId == currentBoardId }
+                    board?.let { new ->
+                        _currentBoard.update { current ->
+                            current?.copy(
+                                name = new.name,
+                                cover = new.cover,
+                                description = new.description,
+                                showNoteCover = new.showNoteCover,
+                                showCompletedStatus = new.showCompletedStatus,
+                                ownerId = new.ownerId,
+                                memberIds = new.memberIds,
+                                members = current.members.filterNot { member ->
+                                    new.memberIds.none { it == member.docId }
+                                }
+                            )
+                        }
+                    }
+                }
+                _boards.value = allBoards
             }
         }
     }
@@ -263,6 +287,8 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 docId = boardId,
                 ownerId = authUser.uid,
                 memberIds = listOf(authUser.uid),
+                showNoteCover = true,
+                showCompletedStatus = true,
                 createdAt = Timestamp.now(),
             )
             withContext(Dispatchers.Main) {
@@ -292,7 +318,13 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
     // *OK
     override fun deleteBoard(docId: String) {
-        auth.currentUser ?: throw Exception("User not logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        if (_currentBoard.value?.docId == docId) {
+            if (authUser.uid != _currentBoard.value!!.ownerId
+                && _currentBoard.value!!.adminIds.none { it == authUser.uid }
+            )
+                throw Exception("Missing permission to delete this board")
+        }
 
         repoScope.launch {
             try {
@@ -420,12 +452,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 list.map { if (it.docId == docId) it.copy(name = name) else it }
             }
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(docId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(docId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
@@ -445,12 +479,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 list.map { if (it.docId == docId) it.copy(description = description) else it }
             }
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(docId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(docId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
@@ -470,12 +506,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 list.map { if (it.docId == docId) it.copy(showNoteCover = showNoteCover) else it }
             }
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(docId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(docId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
@@ -498,12 +536,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 list.map { if (it.docId == docId) it.copy(showCompletedStatus = showCompletedStatus) else it }
             }
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(docId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(docId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
@@ -525,26 +565,35 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 }
             }
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(docId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(docId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
     }
 
     // *OK
-    override suspend fun addMemberToBoard(boardId: String, userIdToAdd: String) {
+    override suspend fun addMemberToBoard(boardId: String, user: User) {
         auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(boardId)
+        val userIdToAdd = user.docId ?: throw Exception("User not founded")
 
         try {
             boardRef.update("memberIds", FieldValue.arrayUnion(userIdToAdd)).await()
             if (_currentBoard.value?.docId == boardId) {
-                _currentBoard.update { it?.copy(memberIds = (it.memberIds + userIdToAdd).distinct()) }
+                _currentBoard.update {
+                    it?.copy(
+                        memberIds = (it.memberIds + userIdToAdd).distinct(),
+                        members = if (it.members.none { member -> member.docId == userIdToAdd }) it.members + user
+                        else it.members
+                    )
+                }
             }
             _boards.update { list ->
                 list.map {
@@ -555,22 +604,32 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(boardId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(boardId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
     }
 
     // *OK
-    override suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String) {
+    override suspend fun removeMemberFromBoard(boardId: String, user: User) {
         auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(boardId)
+        val userIdToRemove = user.docId ?: throw Exception("User not founded")
 
         try {
             boardRef.update("memberIds", FieldValue.arrayRemove(userIdToRemove)).await()
             if (_currentBoard.value?.docId == boardId) {
-                _currentBoard.update { it?.copy(memberIds = (it.memberIds - userIdToRemove).distinct()) }
+                _currentBoard.update {
+                    it?.copy(
+                        memberIds = (it.memberIds - userIdToRemove).distinct(),
+                        members = it.members.filterNot { member -> member.docId == userIdToRemove }
+                    )
+                }
             }
             _boards.update { list ->
                 list.map {
@@ -580,8 +639,12 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(boardId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(boardId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
@@ -626,12 +689,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 }
             }.await()
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(boardId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(boardId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
@@ -672,14 +737,18 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 }
             }.await()
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(boardId)
                 notesListener[noteListId]?.remove()
                 notesListener.remove(noteListId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(boardId)
+                notesListener[noteListId]?.remove()
+                notesListener.remove(noteListId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
@@ -724,14 +793,18 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 }
             }.await()
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(boardId)
                 notesListener[noteListId]?.remove()
                 notesListener.remove(noteListId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(boardId)
+                notesListener[noteListId]?.remove()
+                notesListener.remove(noteListId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }
@@ -776,14 +849,18 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 }
             }.await()
         } catch(e: FirebaseFirestoreException) {
-            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
-                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
-            ) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(boardId)
                 notesListener[noteListId]?.remove()
                 notesListener.remove(noteListId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(boardId)
+                notesListener[noteListId]?.remove()
+                notesListener.remove(noteListId)
+                throw Exception("Missing permission to perform this action")
             }
-            throw Exception("Board not found or missing permission")
+            throw e
         } catch(e: Exception) {
             throw e
         }

@@ -118,14 +118,15 @@ fun BoardScreen(
 
     LaunchedEffect(board.value) {
         if (board.value == null && !isFirstLoad) {
+            delay(1000)
             settingModalState.hide()
             showSettingModal = false
-            delay(1000)
             navController.popBackStack()
         }
     }
 
     LifecycleResumeEffect(boardId) {
+        boardViewModel.registerBoardListener()
         boardViewModel.registerNoteListListener(boardId)
         board.value?.noteLists?.forEach { noteList ->
             noteList.docId?.let { boardViewModel.registerNoteListener(boardId, it) }
@@ -133,6 +134,7 @@ fun BoardScreen(
         onPauseOrDispose {
             boardViewModel.removeNoteListener()
             boardViewModel.removeNoteListListener()
+            boardViewModel.registerBoardListener()
         }
     }
 
@@ -282,7 +284,6 @@ fun BoardScreen(
                 BoardModal(
                     board = board.value!!,
                     sheetState = settingModalState,
-                    snackbarHost = snackbarHost,
                     onDismissRequest = {
                         coroutineScope.launch {
                             settingModalState.hide()

@@ -201,9 +201,11 @@ fun HomeMainScreen(
                     board = board,
                     onClick = {
                         val boardId = board.docId
-                        boardId?.let {
-                            navController.navigate("board/$it") {
-                                restoreState = true
+                        if (board.isLoading != true) {
+                            boardId?.let {
+                                navController.navigate("board/$it") {
+                                    restoreState = true
+                                }
                             }
                         }
                     }

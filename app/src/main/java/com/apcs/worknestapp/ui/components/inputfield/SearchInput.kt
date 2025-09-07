@@ -43,14 +43,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.theme.Roboto
 
 @Composable
 fun SearchInput(
     value: String,
     onValueChange: (String) -> Unit,
-    onCancel: () -> Unit,
     modifier: Modifier = Modifier,
+    isSearching: Boolean = false,
+    onCancel: () -> Unit,
     animationDuration: Int = 300,
     placeholder: (@Composable () -> Unit)? = null,
     textStyle: TextStyle = TextStyle(
@@ -106,12 +108,21 @@ fun SearchInput(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.outline_magnifier),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (isSearching) {
+                    RotatingIcon(
+                        painter = painterResource(R.drawable.loading_icon_6),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.outline_magnifier),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Spacer(modifier = Modifier.width(6.dp))
                 Box(
                     modifier = Modifier.weight(1f),

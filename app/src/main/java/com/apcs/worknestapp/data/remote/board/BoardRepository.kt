@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.data.remote.board
 
 import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,8 +29,8 @@ interface BoardRepository {
     suspend fun updateBoardShowNoteCover(docId: String, showNoteCover: Boolean)
     suspend fun updateBoardShowCompletedStatus(docId: String, showCompletedStatus: Boolean)
     suspend fun updateBoardCover(docId: String, color: Int?)
-    suspend fun addMemberToBoard(boardId: String, userIdToAdd: String)
-    suspend fun removeMemberFromBoard(boardId: String, userIdToRemove: String)
+    suspend fun addMemberToBoard(boardId: String, user: User)
+    suspend fun removeMemberFromBoard(boardId: String, user: User)
 
     suspend fun addNoteList(boardId: String, noteList: NoteList)
     suspend fun removeNoteList(boardId: String, noteListId: String)
