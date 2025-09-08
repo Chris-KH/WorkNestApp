@@ -2,10 +2,14 @@ package com.apcs.worknestapp.ui.screens.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -97,120 +101,130 @@ fun HomeMainScreen(
         }
     }
 
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = { refresh() },
-        modifier = modifier.fillMaxSize()
+    Column(
+        modifier = modifier
+            .imePadding()
+            .fillMaxSize()
     ) {
-        var searchValue by remember { mutableStateOf("") }
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { refresh() },
+            modifier = Modifier.weight(1f),
         ) {
-            val horizontalPadding = 16.dp
+            var searchValue by remember { mutableStateOf("") }
 
-            item(key = "SearchInput") {
-                SearchInput(
-                    value = searchValue,
-                    onValueChange = { searchValue = it },
-                    onCancel = { focusManager.clearFocus() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding, vertical = 12.dp),
-                    interactionSource = remember { MutableInteractionSource() }
-                )
-            }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                val horizontalPadding = 16.dp
 
-            item(key = "QuickAddNote") {
-                var noteValue by remember { mutableStateOf("") }
-                QuickAddNoteInput(
-                    value = noteValue,
-                    onValueChange = { noteValue = it },
-                    onCancel = { focusManager.clearFocus() },
-                    onAdd = {},
-                    interactionSource = remember { MutableInteractionSource() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding, vertical = 10.dp)
-                )
-            }
-
-            item(key = "WorkSpace-Label") {
-                Text(
-                    text = "Your workspaces".uppercase(),
-                    fontSize = 16.sp,
-                    lineHeight = 16.sp,
-                    fontFamily = Roboto,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding, vertical = 12.dp)
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clickable(onClick = onNavigateToWorkspace)
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding, vertical = 12.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.outline_workspace),
-                        contentDescription = "Workspace",
-                        modifier = Modifier.size(24.dp),
+                item(key = "SearchInput") {
+                    SearchInput(
+                        value = searchValue,
+                        onValueChange = { searchValue = it },
+                        onCancel = { focusManager.clearFocus() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding, vertical = 12.dp),
+                        interactionSource = remember { MutableInteractionSource() }
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                }
+
+                item(key = "QuickAdd") {
+                    var noteValue by remember { mutableStateOf("") }
+                    QuickAddNoteInput(
+                        value = noteValue,
+                        onValueChange = { noteValue = it },
+                        onCancel = { focusManager.clearFocus() },
+                        onAdd = {},
+                        interactionSource = remember { MutableInteractionSource() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding, vertical = 10.dp)
+                    )
+                }
+
+                item(key = "WorkSpace-Label") {
                     Text(
-                        text = "Workspace Boards",
-                        fontSize = 14.sp,
-                        lineHeight = 14.sp,
+                        text = "Your workspaces".uppercase(),
+                        fontSize = 16.sp,
+                        lineHeight = 16.sp,
                         fontFamily = Roboto,
-                        fontWeight = FontWeight.Normal,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding, vertical = 12.dp)
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clickable(onClick = { })
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding, vertical = 12.dp)
                     ) {
+                        Icon(
+                            painter = painterResource(R.drawable.outline_workspace),
+                            contentDescription = "Workspace",
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Boards",
+                            text = "Workspace Boards",
                             fontSize = 14.sp,
                             lineHeight = 14.sp,
                             fontFamily = Roboto,
                             fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
                         )
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.rotate(90f),
-                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "Boards",
+                                fontSize = 14.sp,
+                                lineHeight = 14.sp,
+                                fontFamily = Roboto,
+                                fontWeight = FontWeight.Normal,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowUp,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.rotate(90f),
+                            )
+                        }
                     }
+                    HorizontalDivider()
                 }
-                HorizontalDivider()
-            }
 
-            items(
-                items = boards,
-                key = { it.docId ?: UUID.randomUUID() })
-            { board ->
-                BoardCard(
-                    board = board,
-                    onClick = {
-                        val boardId = board.docId
-                        if (board.isLoading != true) {
-                            boardId?.let {
-                                navController.navigate("board/$it") {
-                                    restoreState = true
+                items(
+                    items = boards.filter { board ->
+                        board.name?.contains(searchValue, ignoreCase = true) == true
+                    },
+                    key = { it.docId ?: UUID.randomUUID() })
+                { board ->
+                    BoardCard(
+                        board = board,
+                        onClick = {
+                            val boardId = board.docId
+                            if (board.isLoading != true) {
+                                boardId?.let {
+                                    navController.navigate("board/$it") {
+                                        restoreState = true
+                                    }
                                 }
                             }
                         }
-                    }
-                )
-                Spacer(modifier = Modifier.width(10.dp))
+                    )
+                }
+
+                item { Spacer(modifier = Modifier.height(120.dp)) }
             }
         }
     }

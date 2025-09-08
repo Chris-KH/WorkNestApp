@@ -7,6 +7,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -29,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -40,7 +47,7 @@ import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
@@ -161,7 +168,8 @@ fun HomeScreen(
                 }.using(SizeTransform(clip = false))
             },
             contentAlignment = Alignment.TopStart,
-            label = "HomeContentSwitch"
+            label = "HomeContentSwitch",
+            modifier = Modifier,
         ) {
             when(it) {
                 HomeSubScreenState.MAIN -> HomeMainScreen(
@@ -169,7 +177,16 @@ fun HomeScreen(
                     onFirstLoadDone = { isFirstLoad.value = false },
                     navController = navController,
                     snackbarHost = snackbarHost,
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = Modifier
+                        .padding(
+                            top = innerPadding.calculateTopPadding(),
+                            start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                            end = innerPadding.calculateEndPadding(LayoutDirection.Ltr)
+                        )
+                        .padding(
+                            bottom = if (WindowInsets.isImeVisible) 0.dp
+                            else innerPadding.calculateBottomPadding()
+                        ),
                     onNavigateToWorkspace = { currentSubScreen = HomeSubScreenState.WORKSPACE },
                 )
 
@@ -178,7 +195,16 @@ fun HomeScreen(
                     onFirstLoadDone = { isFirstLoad.value = false },
                     navController = navController,
                     snackbarHost = snackbarHost,
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = Modifier
+                        .padding(
+                            top = innerPadding.calculateTopPadding(),
+                            start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                            end = innerPadding.calculateEndPadding(LayoutDirection.Ltr)
+                        )
+                        .padding(
+                            bottom = if (WindowInsets.isImeVisible) 0.dp
+                            else innerPadding.calculateBottomPadding()
+                        ),
                     showModalBottom = showModalBottom,
                     onHideModal = { showModalBottom = false }
                 )

@@ -81,6 +81,7 @@ import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.inputfield.SearchInput
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -97,6 +98,7 @@ fun BoardMemberModal(
     boardViewModel: BoardViewModel,
     userViewModel: UserViewModel = hiltViewModel(),
 ) {
+    val authId = FirebaseAuth.getInstance().currentUser?.uid
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -383,19 +385,34 @@ fun BoardMemberModal(
                                                 .aspectRatio(1f)
                                                 .clip(CircleShape),
                                         )
-                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Spacer(modifier = Modifier.width(10.dp))
                                         Column(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .fillMaxHeight()
                                         ) {
-                                            Text(
-                                                text = user.name ?: AppDefault.USER_NAME,
-                                                fontSize = 15.sp,
-                                                lineHeight = 15.sp,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text(
+                                                    text = user.name ?: AppDefault.USER_NAME,
+                                                    fontSize = 15.sp,
+                                                    lineHeight = 15.sp,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.weight(1f, fill = false)
+                                                )
+                                                if (user.docId == authId) {
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(
+                                                        text = "(You)",
+                                                        fontSize = 14.sp,
+                                                        lineHeight = 14.sp,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
                                             Spacer(modifier = Modifier.height(2.dp))
                                             Text(
                                                 text = user.email ?: "",
