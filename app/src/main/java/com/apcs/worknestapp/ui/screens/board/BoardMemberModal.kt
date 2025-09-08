@@ -1,6 +1,5 @@
 package com.apcs.worknestapp.ui.screens.board
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -8,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,6 +30,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +41,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,13 +57,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -211,89 +213,210 @@ fun BoardMemberModal(
                     )
                 }
 
-                AnimatedContent(
-                    targetState = !isSearchMode
-                ) { isSearchMode ->
+                AnimatedContent(targetState = !isSearchMode) { isSearchMode ->
                     if (isSearchMode) {
-                        LazyColumn(
+                        Column(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxWidth(),
-                            contentPadding = PaddingValues(vertical = 24.dp)
+                                .fillMaxWidth()
                         ) {
-                            item(key = "Label") {
-                                Text(
-                                    text = "Board members (${members.size})",
-                                    fontSize = 15.sp,
-                                    lineHeight = 15.sp,
-                                    fontFamily = Roboto,
-                                    modifier = Modifier.padding(horizontal = horizontalPadding)
+                            var showMemberDialog by remember { mutableStateOf<User?>(null) }
+                            LaunchedEffect(memberIds) {
+                                if (showMemberDialog != null &&
+                                    memberIds.none { it == showMemberDialog!!.docId }
                                 )
+                                    showMemberDialog = null
                             }
 
-                            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-                            items(
-                                items = members,
-                                key = { it.docId ?: UUID.randomUUID() }
-                            ) { user ->
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
+                            showMemberDialog?.let { dialogUser ->
+                                BasicAlertDialog(
+                                    onDismissRequest = { showMemberDialog = null },
                                     modifier = Modifier
-                                        .clickable(onClick = {
-                                            if (user.docId != board.ownerId) {
-
-                                            }
-                                        })
                                         .fillMaxWidth()
-                                        .padding(horizontal = horizontalPadding, vertical = 10.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surface,
+                                            shape = RoundedCornerShape(0.dp)
+                                        )
                                 ) {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(context).data(user.avatar)
-                                            .crossfade(true).build(),
-                                        placeholder = painterResource(R.drawable.fade_avatar_fallback),
-                                        error = painterResource(R.drawable.fade_avatar_fallback),
-                                        contentDescription = "Avatar",
-                                        contentScale = ContentScale.Crop,
-                                        filterQuality = FilterQuality.Medium,
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .aspectRatio(1f)
-                                            .clip(CircleShape),
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
                                     Column(
                                         modifier = Modifier
-                                            .weight(1f)
-                                            .fillMaxHeight()
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
                                     ) {
-                                        Text(
-                                            text = user.name ?: AppDefault.USER_NAME,
-                                            fontSize = 15.sp,
-                                            lineHeight = 15.sp,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            AsyncImage(
+                                                model = ImageRequest.Builder(LocalContext.current)
+                                                    .data(dialogUser.avatar)
+                                                    .crossfade(true)
+                                                    .build(),
+                                                placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                                                error = painterResource(R.drawable.fade_avatar_fallback),
+                                                contentDescription = "Preview avatar",
+                                                contentScale = ContentScale.Crop,
+                                                filterQuality = FilterQuality.Low,
+                                                modifier = Modifier
+                                                    .size(52.dp)
+                                                    .clip(CircleShape),
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = dialogUser.name ?: AppDefault.USER_NAME,
+                                                    fontSize = 16.sp,
+                                                    lineHeight = 16.sp,
+                                                    fontFamily = Roboto,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Text(
+                                                    text = dialogUser.email ?: "",
+                                                    fontSize = 12.sp,
+                                                    lineHeight = 12.sp,
+                                                    fontFamily = Roboto,
+                                                    fontWeight = FontWeight.Normal,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            val textStyle = TextStyle(
+                                                fontSize = 14.sp, lineHeight = 14.sp,
+                                                fontFamily = Roboto, fontWeight = FontWeight.Medium
+                                            )
+
+                                            TextButton(onClick = {
+                                                showMemberDialog = null
+                                                val boardId = board.docId
+                                                if (boardId != null) {
+                                                    coroutineScope.launch {
+                                                        val message =
+                                                            boardViewModel.removeMemberFromBoard(
+                                                                boardId, dialogUser
+                                                            )
+                                                        if (message != null) {
+                                                            modalSnackbarHostState.showSnackbar(
+                                                                message = message,
+                                                                withDismissAction = true,
+                                                            )
+                                                        } else {
+                                                            modalSnackbarHostState.showSnackbar(
+                                                                message = "${dialogUser.name} was remove from the board",
+                                                                withDismissAction = true,
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }) {
+                                                Text(
+                                                    text = "Remove",
+                                                    style = textStyle,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                            TextButton(onClick = { showMemberDialog = null }) {
+                                                Text(
+                                                    text = "Close",
+                                                    style = textStyle,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            LazyColumn(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentPadding = PaddingValues(vertical = 24.dp)
+                            ) {
+                                item(key = "Label") {
+                                    Text(
+                                        text = "Board members (${members.size})",
+                                        fontSize = 15.sp,
+                                        lineHeight = 15.sp,
+                                        fontFamily = Roboto,
+                                        modifier = Modifier.padding(horizontal = horizontalPadding)
+                                    )
+                                }
+
+                                item { Spacer(modifier = Modifier.height(16.dp)) }
+
+                                items(
+                                    items = members,
+                                    key = { it.docId ?: UUID.randomUUID() }
+                                ) { user ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .clickable(onClick = {
+                                                if (user.docId != board.ownerId) {
+                                                    showMemberDialog = user
+                                                }
+                                            })
+                                            .fillMaxWidth()
+                                            .padding(
+                                                horizontal = horizontalPadding,
+                                                vertical = 10.dp
+                                            )
+                                    ) {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(context).data(user.avatar)
+                                                .crossfade(true).build(),
+                                            placeholder = painterResource(R.drawable.fade_avatar_fallback),
+                                            error = painterResource(R.drawable.fade_avatar_fallback),
+                                            contentDescription = "Avatar",
+                                            contentScale = ContentScale.Crop,
+                                            filterQuality = FilterQuality.Medium,
+                                            modifier = Modifier
+                                                .size(44.dp)
+                                                .aspectRatio(1f)
+                                                .clip(CircleShape),
                                         )
-                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
+                                        ) {
+                                            Text(
+                                                text = user.name ?: AppDefault.USER_NAME,
+                                                fontSize = 15.sp,
+                                                lineHeight = 15.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = user.email ?: "",
+                                                fontSize = 12.sp,
+                                                lineHeight = 12.sp,
+                                                fontWeight = FontWeight.Normal,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = user.email ?: "",
+                                            text = if (user.docId == board.ownerId) "Owner"
+                                            else "Member",
                                             fontSize = 12.sp,
                                             lineHeight = 12.sp,
                                             fontWeight = FontWeight.Normal,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = if (user.docId == board.ownerId) "Owner"
-                                        else "Member",
-                                        fontSize = 12.sp,
-                                        lineHeight = 12.sp,
-                                        fontWeight = FontWeight.Normal,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
                                 }
                             }
                         }

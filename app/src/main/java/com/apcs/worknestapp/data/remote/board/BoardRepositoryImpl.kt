@@ -8,6 +8,8 @@ import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
@@ -72,6 +74,37 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
+    private suspend fun getNoteLists(boardRef: DocumentReference): List<NoteList> = coroutineScope {
+        val noteListsSnapshot = boardRef.collection("notelists").get().await()
+        noteListsSnapshot.documents.mapNotNull { noteListDoc ->
+            async {
+                try {
+                    val noteList = noteListDoc.toObject(NoteList::class.java)
+                    val notesSnapshot = noteListDoc.reference.collection("notes").get().await()
+                    val notes = notesSnapshot.documents.mapNotNull {
+                        it.toObject(Note::class.java)
+                    }
+                    noteList?.copy(notes = notes)
+                } catch(_: Exception) {
+                    null
+                }
+            }
+        }.awaitAll().filterNotNull()
+    }
+
+    private suspend fun getUsers(ids: List<String>): List<User> = coroutineScope {
+        ids.chunked(10).map { chunk ->
+            async {
+                val usersSnapshot = firestore.collection("users")
+                    .whereIn(FieldPath.documentId(), chunk)
+                    .get()
+                    .await()
+                val users = usersSnapshot.documents.mapNotNull { it.toObject(User::class.java) }
+                users
+            }
+        }.awaitAll().flatten()
+    }
+
     // *OK
     override fun registerBoardListener() {
         val authUser = auth.currentUser
@@ -103,10 +136,15 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                     local.isLoading == true && remoteBoards.none { it.docId == local.docId }
                 }
                 val allBoards = (remoteBoards + pendingBoards).sortedByDescending { it.createdAt }
+                _boards.value = allBoards
+
                 if (_currentBoard.value != null) {
                     val currentBoardId = _currentBoard.value!!.docId
                     val board = allBoards.find { it.docId == currentBoardId }
                     board?.let { new ->
+                        val isSameMembers = _currentBoard.value!!.memberIds.groupingBy { it }
+                            .eachCount() == new.memberIds.groupingBy { it }.eachCount()
+
                         _currentBoard.update { current ->
                             current?.copy(
                                 name = new.name,
@@ -116,14 +154,19 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                                 showCompletedStatus = new.showCompletedStatus,
                                 ownerId = new.ownerId,
                                 memberIds = new.memberIds,
-                                members = current.members.filterNot { member ->
-                                    new.memberIds.none { it == member.docId }
-                                }
                             )
+                        }
+
+                        if (!isSameMembers) {
+                            repoScope.launch {
+                                val members = getUsers(new.memberIds)
+                                withContext(Dispatchers.Main) {
+                                    _currentBoard.update { it?.copy(members = members) }
+                                }
+                            }
                         }
                     }
                 }
-                _boards.value = allBoards
             }
         }
     }
@@ -402,35 +445,10 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             throw SecurityException("User does not have access to this board.")
         }
 
-        val noteListsSnapshot = boardRef.collection("notelists").get().await()
-        val noteLists = coroutineScope {
-            noteListsSnapshot.documents.map { noteListDoc ->
-                async {
-                    try {
-                        val noteList = noteListDoc.toObject(NoteList::class.java)
-                        val notesSnapshot = noteListDoc.reference.collection("notes").get().await()
-                        val notes = notesSnapshot.documents.mapNotNull {
-                            it.toObject(Note::class.java)
-                        }
-                        noteList?.copy(notes = notes)
-                    } catch(_: Exception) {
-                        null
-                    }
-                }
-            }.awaitAll().filterNotNull()
-        }
-        val members = coroutineScope {
-            board.memberIds.map { memberId ->
-                async {
-                    try {
-                        val memberSnapshot = firestore.collection("users").document(memberId)
-                            .get().await()
-                        memberSnapshot.toObject(User::class.java)
-                    } catch(_: Exception) {
-                        null
-                    }
-                }
-            }.awaitAll().filterNotNull()
+        val (noteLists, members) = coroutineScope {
+            val noteListsDeferred = async { getNoteLists(boardRef) }
+            val membersDeferred = async { getUsers(board.memberIds) }
+            Pair(noteListsDeferred.await(), membersDeferred.await())
         }
 
         val result = board.copy(noteLists = noteLists, members = members)
@@ -606,7 +624,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 boardNotFound(boardId)
                 throw Exception("Board not found")
             } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
-                boardNotFound(boardId)
                 throw Exception("Missing permission to perform this action")
             }
             throw e
@@ -641,7 +658,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 boardNotFound(boardId)
                 throw Exception("Board not found")
             } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
-                boardNotFound(boardId)
                 throw Exception("Missing permission to perform this action")
             }
             throw e
@@ -794,7 +810,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             }.await()
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                boardNotFound(boardId)
+                noteListNotFound(boardId, noteListId)
                 notesListener[noteListId]?.remove()
                 notesListener.remove(noteListId)
                 throw Exception("Board not found")
@@ -810,6 +826,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
+    // *OK
     override suspend fun addNoteToList(boardId: String, noteListId: String, note: Note) {
         auth.currentUser ?: throw Exception("User not logged in")
         val boardRef = firestore.collection("boards").document(boardId)
@@ -850,7 +867,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             }.await()
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
-                boardNotFound(boardId)
+                noteListNotFound(boardId, noteListId)
                 notesListener[noteListId]?.remove()
                 notesListener.remove(noteListId)
                 throw Exception("Board not found")
@@ -880,8 +897,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         noteRef.delete().await()
     }
-
-
+    
     override suspend fun updateNoteCheckedStatus(
         boardId: String,
         noteListId: String,
