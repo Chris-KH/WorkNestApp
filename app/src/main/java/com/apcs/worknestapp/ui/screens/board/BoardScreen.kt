@@ -384,6 +384,7 @@ fun BoardScreen(
                                     }
                                 }
                             },
+                            onArchiveNoteList = {},
                             onRemoveNoteList = {
                                 val noteListId = noteList.docId
                                 if (noteListId != null) {

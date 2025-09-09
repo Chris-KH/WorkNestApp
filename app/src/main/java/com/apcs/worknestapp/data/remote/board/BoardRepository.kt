@@ -23,7 +23,6 @@ interface BoardRepository {
 
     fun addBoard(board: Board)
     fun deleteBoard(docId: String)
-    fun deleteAllBoards()
     suspend fun refreshBoard()
     suspend fun getBoard(docId: String): Board
     suspend fun updateBoardName(docId: String, name: String)
@@ -37,9 +36,11 @@ interface BoardRepository {
     suspend fun addNoteList(boardId: String, noteList: NoteList)
     suspend fun removeNoteList(boardId: String, noteListId: String)
     suspend fun updateNoteListName(boardId: String, noteListId: String, name: String)
-
     suspend fun addNoteToNoteList(boardId: String, noteListId: String, note: Note)
     suspend fun removeNoteFromNoteList(boardId: String, noteListId: String, noteId: String)
+    suspend fun archiveCompletedNotesInList(boardId: String, noteListId: String)
+    suspend fun archiveAllNotesInList(boardId: String, noteListId: String)
+    suspend fun deleteAllNotesInList(boardId: String, noteListId: String)
 
     suspend fun getNote(boardId: String, noteListId: String, noteId: String): Note
     suspend fun updateNoteName(boardId: String, noteListId: String, noteId: String, name: String)

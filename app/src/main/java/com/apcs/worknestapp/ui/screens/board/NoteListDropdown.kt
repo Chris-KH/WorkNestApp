@@ -28,6 +28,7 @@ fun NoteListDropdown(
     onDismissRequest: () -> Unit,
     onArchiveCompletedNotes: () -> Unit,
     onArchiveAllNotes: () -> Unit,
+    onArchiveNoteList: () -> Unit,
     onDeleteAllNotes: () -> Unit,
     onDeleteNoteList: () -> Unit,
 ) {
@@ -52,6 +53,13 @@ fun NoteListDropdown(
                     Text(text = "Archive completed", style = dropdownTextStyle)
                 },
                 onClick = onArchiveCompletedNotes,
+                trailingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.outline_archive),
+                        contentDescription = "Archive completed",
+                        modifier = Modifier.size(iconSize),
+                    )
+                },
                 contentPadding = PaddingValues(horizontal = horizontalPadding)
             )
             HorizontalDivider()
@@ -60,13 +68,36 @@ fun NoteListDropdown(
                     Text(text = "Archive all notes", style = dropdownTextStyle)
                 },
                 onClick = onArchiveAllNotes,
+                trailingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.outline_archive),
+                        contentDescription = "Archive all notes",
+                        modifier = Modifier.size(iconSize),
+                    )
+                },
                 contentPadding = PaddingValues(horizontal = horizontalPadding)
             )
-            HorizontalDivider(
-                thickness = 8.dp,
-                color = MaterialTheme.colorScheme.surfaceContainer
-            )
+            HorizontalDivider()
         }
+        DropdownMenuItem(
+            text = {
+                Text(text = "Archive list", style = dropdownTextStyle)
+            },
+            onClick = onArchiveNoteList,
+            trailingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.outline_archive),
+                    contentDescription = "Archive list",
+                    modifier = Modifier.size(iconSize),
+                )
+            },
+            contentPadding = PaddingValues(horizontal = horizontalPadding)
+        )
+        HorizontalDivider(
+            thickness = 8.dp,
+            color = MaterialTheme.colorScheme.surfaceContainer
+        )
+
 
         // GROUP 2
         if (!isNoteEmpty) {

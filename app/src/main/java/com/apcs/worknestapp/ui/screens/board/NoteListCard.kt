@@ -60,6 +60,7 @@ fun NoteListCard(
     noteList: NoteList,
     board: Board,
     onUpdateNoteListName: (String) -> Unit,
+    onArchiveNoteList: () -> Unit,
     onRemoveNoteList: () -> Unit,
     navController: NavHostController,
     snackbarHost: SnackbarHostState,
@@ -69,7 +70,7 @@ fun NoteListCard(
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var newNoteName by rememberSaveable(noteList.docId) { mutableStateOf("") }
-    val notes = noteList.notes
+    val notes = noteList.notes.filterNot { it.archived == true }
 
     var editableNoteListName by remember(noteList.name, noteList.docId) {
         mutableStateOf(noteList.name ?: "")
@@ -165,12 +166,57 @@ fun NoteListCard(
                         onDismissRequest = { showDropdown = false },
                         onArchiveCompletedNotes = {
                             showDropdown = false
+                            val noteListId = noteList.docId
+                            if (noteListId != null) {
+                                coroutineScope.launch {
+                                    val message = boardViewModel.archiveCompletedNotesInList(
+                                        boardId,
+                                        noteListId
+                                    )
+                                    if (message != null) {
+                                        snackbarHost.showSnackbar(
+                                            message = message,
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            }
                         },
                         onArchiveAllNotes = {
                             showDropdown = false
+                            val noteListId = noteList.docId
+                            if (noteListId != null) {
+                                coroutineScope.launch {
+                                    val message =
+                                        boardViewModel.archiveAllNotesInList(boardId, noteListId)
+                                    if (message != null) {
+                                        snackbarHost.showSnackbar(
+                                            message = message,
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        onArchiveNoteList = {
+                            showDropdown = false
+                            onArchiveNoteList()
                         },
                         onDeleteAllNotes = {
                             showDropdown = false
+                            val noteListId = noteList.docId
+                            if (noteListId != null) {
+                                coroutineScope.launch {
+                                    val message =
+                                        boardViewModel.deleteAllNotesInList(boardId, noteListId)
+                                    if (message != null) {
+                                        snackbarHost.showSnackbar(
+                                            message = message,
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            }
                         },
                         onDeleteNoteList = {
                             showDropdown = false
@@ -200,12 +246,27 @@ fun NoteListCard(
                                 restoreState = true
                             }
                         },
-                        onCheckedChange = { isChecked ->
-
+                        onCheckedChange = {
+                            val noteListId = noteList.docId
+                            val noteId = note.docId
+                            if (noteListId != null && noteId != null) {
+                                coroutineScope.launch {
+                                    val currentState = note.completed
+                                    val message = boardViewModel.updateNoteComplete(
+                                        boardId,
+                                        noteListId,
+                                        noteId,
+                                        currentState != true,
+                                    )
+                                    if (message != null) {
+                                        snackbarHost.showSnackbar(
+                                            message = message,
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            }
                         },
-                        onRemoveThisNote = {
-
-                        }
                     )
                 }
             }

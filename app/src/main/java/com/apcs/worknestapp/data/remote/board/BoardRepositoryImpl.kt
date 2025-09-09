@@ -575,32 +575,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
-    // *OK - NOT USE
-    override fun deleteAllBoards() {
-        val authUser = auth.currentUser ?: throw Exception("User not logged in")
-        val boardsToDeleteQuery =
-            firestore.collection("boards").whereEqualTo("ownerId", authUser.uid)
-
-        val previousState = _boards.value
-        _boards.update { list -> list.filterNot { it.ownerId == authUser.uid } }
-
-        repoScope.launch {
-            try {
-                val snapshot = boardsToDeleteQuery.get().await()
-                if (snapshot.isEmpty) return@launch
-
-                val batch = firestore.batch()
-                snapshot.documents.forEach { batch.delete(it.reference) }
-                batch.commit().await()
-            } catch(e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _boards.value = previousState
-                }
-                throw e
-            }
-        }
-    }
-
     // *OK
     override suspend fun refreshBoard() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
@@ -1028,6 +1002,100 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 throw Exception("Note not found")
             } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) { //Only occur when you is not a member
                 noteNotFound(boardId, noteListId, noteId)
+                boardNotFound(boardId)
+                throw Exception("Board not found or missing permission to perform this action")
+            }
+            throw e
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun archiveCompletedNotesInList(boardId: String, noteListId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
+
+        val boardRef = firestore.collection("boards").document(boardId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
+        val notesRef = noteListRef.collection("notes")
+
+        try {
+            val snapshot = notesRef
+                .whereEqualTo("completed", true)
+                .whereNotEqualTo("archived", true)
+                .get()
+                .await()
+
+            if (!snapshot.isEmpty) {
+                val batch = firestore.batch()
+                snapshot.documents.forEach {
+                    batch.update(it.reference, "archived", true)
+                }
+                batch.commit().await()
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) { //Only occur when you is not a member
+                boardNotFound(boardId)
+                throw Exception("Board not found or missing permission to perform this action")
+            }
+            throw e
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun archiveAllNotesInList(boardId: String, noteListId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
+
+        val boardRef = firestore.collection("boards").document(boardId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
+        val notesRef = noteListRef.collection("notes")
+
+        try {
+            val snapshot = notesRef
+                .whereNotEqualTo("archived", true)
+                .get()
+                .await()
+
+            if (!snapshot.isEmpty) {
+                val batch = firestore.batch()
+                snapshot.documents.forEach {
+                    batch.update(it.reference, "archived", true)
+                }
+                batch.commit().await()
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) { //Only occur when you is not a member
+                boardNotFound(boardId)
+                throw Exception("Board not found or missing permission to perform this action")
+            }
+            throw e
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun deleteAllNotesInList(boardId: String, noteListId: String) {
+        auth.currentUser ?: throw Exception("User not logged in")
+
+        val boardRef = firestore.collection("boards").document(boardId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
+        val notesRef = noteListRef.collection("notes")
+
+        try {
+            val snapshot = notesRef
+                .whereNotEqualTo("archived", true)
+                .get()
+                .await()
+
+            if (!snapshot.isEmpty) {
+                val batch = firestore.batch()
+                snapshot.documents.forEach {
+                    batch.delete(it.reference)
+                }
+                batch.commit().await()
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) { //Only occur when you is not a member
                 boardNotFound(boardId)
                 throw Exception("Board not found or missing permission to perform this action")
             }

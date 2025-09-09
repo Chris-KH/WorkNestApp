@@ -79,16 +79,6 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun deleteAllBoards(): Boolean {
-        return try {
-            boardRepo.deleteAllBoards()
-            true
-        } catch(e: Exception) {
-            Log.e("BoardViewModel", "Delete all boards failed", e)
-            false
-        }
-    }
-
     suspend fun updateBoardName(docId: String, name: String): String? {
         return try {
             boardRepo.updateBoardName(docId, name)
@@ -223,6 +213,39 @@ class BoardViewModel @Inject constructor(
             null
         } catch(e: Exception) {
             val message = "Delete note failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun archiveCompletedNotesInList(boardId: String, noteListId: String): String? {
+        return try {
+            boardRepo.archiveCompletedNotesInList(boardId, noteListId)
+            null
+        } catch(e: Exception) {
+            val message = "Archive completed in this list notes failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun archiveAllNotesInList(boardId: String, noteListId: String): String? {
+        return try {
+            boardRepo.archiveAllNotesInList(boardId, noteListId)
+            null
+        } catch(e: Exception) {
+            val message = "Archive all notes in this list failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun deleteAllNotesInList(boardId: String, noteListId: String): String? {
+        return try {
+            boardRepo.deleteAllNotesInList(boardId, noteListId)
+            null
+        } catch(e: Exception) {
+            val message = "Delete all notes in this list failed"
             Log.e("BoardViewModel", message, e)
             e.message ?: message
         }

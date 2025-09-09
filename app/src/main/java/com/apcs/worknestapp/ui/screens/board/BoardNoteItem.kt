@@ -40,8 +40,7 @@ fun BoardNoteItem(
     note: Note,
     board: Board,
     onClick: () -> Unit,
-    onCheckedChange: (Boolean) -> Unit,
-    onRemoveThisNote: () -> Unit,
+    onCheckedChange: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(12.dp)
@@ -57,9 +56,7 @@ fun BoardNoteItem(
                 .fillMaxWidth()
                 .clip(shape)
                 .border(
-                    width = 8.dp,
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = shape
+                    width = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant, shape = shape
                 )
                 .combinedClickable(onClick = onClick)
         ) {
@@ -92,15 +89,11 @@ fun BoardNoteItem(
                             tint = if (note.completed == null || !note.completed) MaterialTheme.colorScheme.onSurface
                             else MaterialTheme.colorScheme.success,
                             contentDescription = null,
-                            modifier = Modifier
-                                .clickable(onClick = {})
-                                .size(iconSize)
-                                .clip(CircleShape)
-                                .let {
+                            modifier = Modifier.clickable(onClick = onCheckedChange).size(iconSize)
+                                .clip(CircleShape).let {
                                     if (note.completed == true) it.background(MaterialTheme.colorScheme.onSurface)
                                     else it
-                                }
-                        )
+                                })
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                 }
