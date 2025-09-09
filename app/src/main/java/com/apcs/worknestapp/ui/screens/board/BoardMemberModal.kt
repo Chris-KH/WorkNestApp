@@ -67,6 +67,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -168,7 +169,9 @@ fun BoardMemberModal(
         Box(modifier = Modifier.fillMaxSize()) {
             SnackbarHost(
                 hostState = modalSnackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .zIndex(1000f)
             ) { CustomSnackBar(data = it) }
 
             Column(modifier = Modifier.fillMaxSize()) {

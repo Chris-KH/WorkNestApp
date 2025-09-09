@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.ui.components.CustomSnackBar
@@ -68,7 +69,9 @@ fun BoardArchiveModal(
         Box(modifier = Modifier.fillMaxSize()) {
             SnackbarHost(
                 hostState = modalSnackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .zIndex(1000f)
             ) { CustomSnackBar(data = it) }
 
             Column(modifier = Modifier.fillMaxSize()) {

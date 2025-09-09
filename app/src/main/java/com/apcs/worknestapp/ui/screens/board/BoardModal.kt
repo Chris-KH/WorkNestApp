@@ -59,6 +59,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
@@ -188,7 +189,9 @@ fun BoardModal(
         Box(modifier = Modifier.fillMaxSize()) {
             SnackbarHost(
                 hostState = modalSnackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .zIndex(1000f)
             ) { CustomSnackBar(data = it) }
 
             Column(modifier = Modifier.fillMaxSize()) {
