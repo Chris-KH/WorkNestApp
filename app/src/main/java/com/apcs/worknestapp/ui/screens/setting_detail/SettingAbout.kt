@@ -70,14 +70,18 @@ fun OverviewPage() {
             Text(
                 text = "Work Nest is a productivity and collaboration application developed to help individuals and teams plan, organize, and manage daily tasks and larger projects. ",
                 fontSize = 18.sp,
-                lineHeight = 22.sp
+                lineHeight = 22.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
         item {
             Text(
                 text = "This app supports both personal task tracking and team-based project organization, with data stored securely in the cloud to enable seamless access from any device.",
                 fontSize = 18.sp,
-                lineHeight = 22.sp
+                lineHeight = 22.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }
@@ -110,16 +114,25 @@ fun AboutUsPage() {
             )
         }
 
+
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text("Lê Minh Nghĩa", fontWeight = FontWeight.Bold)
                 Text("Email: lmnghia23@apcs.fitus.edu.vn")
                 Text("VNUHCM - University of Science")
             }
         }
-
+        item {Spacer(modifier = Modifier.height(22.dp))}
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text("Hoàng Tuấn Khoa", fontWeight = FontWeight.Bold)
                 Text("Email: htkhoa23@apcs.fitus.edu.vn")
                 Text("VNUHCM - University of Science")
