@@ -2,6 +2,8 @@ package com.apcs.worknestapp.ui.screens.home
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -28,7 +30,10 @@ fun HomeDropdownActions(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = MaterialTheme.colorScheme.surface,
+        shadowElevation = 32.dp,
+        shape = RoundedCornerShape(25f),
+        modifier = Modifier.widthIn(min = 200.dp),
     ) {
         val dropdownTextStyle = TextStyle(
             fontSize = 14.sp, lineHeight = 14.sp,
@@ -52,23 +57,24 @@ fun HomeDropdownActions(
             onClick = onCreateBoard,
             contentPadding = PaddingValues(horizontal = horizontalPadding)
         )
-        HorizontalDivider()
-        DropdownMenuItem(
-            text = {
-                Text(
-                    text = "Create a card",
-                    style = dropdownTextStyle
-                )
-            },
-            trailingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.outline_card),
-                    contentDescription = "Create a board",
-                    modifier = Modifier.size(24.dp),
-                )
-            },
-            onClick = onCreateCard,
-            contentPadding = PaddingValues(horizontal = horizontalPadding)
-        )
+        //TODO
+//        HorizontalDivider()
+//        DropdownMenuItem(
+//            text = {
+//                Text(
+//                    text = "Create a card",
+//                    style = dropdownTextStyle
+//                )
+//            },
+//            trailingIcon = {
+//                Icon(
+//                    painter = painterResource(R.drawable.outline_card),
+//                    contentDescription = "Create a board",
+//                    modifier = Modifier.size(24.dp),
+//                )
+//            },
+//            onClick = onCreateCard,
+//            contentPadding = PaddingValues(horizontal = horizontalPadding)
+//        )
     }
 }

@@ -62,7 +62,6 @@ fun SettingDetailScreen(
         when(field) {
             SettingField.ACCOUNT -> SettingAccount(
                 navController = navController,
-                snackbarHost = snackbarHost,
                 modifier = Modifier.padding(innerPadding),
             )
 

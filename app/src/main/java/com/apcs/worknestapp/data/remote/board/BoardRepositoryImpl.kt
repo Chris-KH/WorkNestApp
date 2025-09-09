@@ -1002,7 +1002,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     }
 
     // *OK
-    // TODO
     override suspend fun removeNoteFromNoteList(
         boardId: String,
         noteListId: String,

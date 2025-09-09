@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,55 +42,61 @@ fun SettingTheme(
     val themeState = themeViewModel.theme.collectAsState()
     val themeMode = themeState.value
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-                .padding(horizontal = 16.dp)
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 20.dp, horizontal = 16.dp)
         ) {
-            Text(text = "Choose theme")
-            Spacer(modifier = Modifier.height(20.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20f))
-            ) {
-                ThemeOption(
-                    label = "System",
-                    isSelected = themeMode == ThemeMode.SYSTEM,
-                    leadingIcon = R.drawable.outline_system,
-                    onClick = {
-                        themeViewModel.saveTheme(ThemeMode.SYSTEM)
-                    }
-                )
-                HorizontalDivider(
-                    thickness = (0.7).dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-                ThemeOption(
-                    label = "Light",
-                    isSelected = themeMode == ThemeMode.LIGHT,
-                    leadingIcon = R.drawable.outline_sun,
-                    onClick = {
-                        themeViewModel.saveTheme(ThemeMode.LIGHT)
-                    }
-                )
-                HorizontalDivider(
-                    thickness = (0.7).dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-                ThemeOption(
-                    label = "Dark",
-                    isSelected = themeMode == ThemeMode.DARK,
-                    leadingIcon = R.drawable.outline_moon,
-                    onClick = {
-                        themeViewModel.saveTheme(ThemeMode.DARK)
-                    }
-                )
+            item {
+                Text(text = "Choose theme")
             }
+
+            item {
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
+                        .clip(RoundedCornerShape(25f))
+                ) {
+                    ThemeOption(
+                        label = "System",
+                        isSelected = themeMode == ThemeMode.SYSTEM,
+                        leadingIcon = R.drawable.outline_system,
+                        onClick = {
+                            themeViewModel.saveTheme(ThemeMode.SYSTEM)
+                        }
+                    )
+                    HorizontalDivider(
+                        thickness = (0.7).dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                    ThemeOption(
+                        label = "Light",
+                        isSelected = themeMode == ThemeMode.LIGHT,
+                        leadingIcon = R.drawable.outline_sun,
+                        onClick = {
+                            themeViewModel.saveTheme(ThemeMode.LIGHT)
+                        }
+                    )
+                    HorizontalDivider(
+                        thickness = (0.7).dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                    ThemeOption(
+                        label = "Dark",
+                        isSelected = themeMode == ThemeMode.DARK,
+                        leadingIcon = R.drawable.outline_moon,
+                        onClick = {
+                            themeViewModel.saveTheme(ThemeMode.DARK)
+                        }
+                    )
+                }
+            }
+
         }
     }
 }

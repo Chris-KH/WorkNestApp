@@ -61,7 +61,6 @@ fun SettingAccountDetailScreen(
 ) {
     val authViewModel = LocalAuthViewModel.current
     val profile = authViewModel.profile.collectAsState()
-
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
 
@@ -255,6 +254,7 @@ fun SettingAccountDetailScreen(
                         fontSize = 13.sp,
                         lineHeight = 15.sp,
                         fontWeight = FontWeight.Normal,
+                        textAlign = TextAlign.Justify,
                         color = MaterialTheme.colorScheme.outline,
                     )
                 }
