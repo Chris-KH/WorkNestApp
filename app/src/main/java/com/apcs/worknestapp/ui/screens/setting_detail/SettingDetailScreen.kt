@@ -81,8 +81,6 @@ fun SettingDetailScreen(
             )
 
             SettingField.ABOUT -> SettingAbout(
-                navController = navController,
-                snackbarHost = snackbarHost,
                 modifier = Modifier.padding(innerPadding),
             )
         }
