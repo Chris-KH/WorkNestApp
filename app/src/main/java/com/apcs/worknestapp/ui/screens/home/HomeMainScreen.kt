@@ -220,7 +220,8 @@ fun HomeMainScreen(
                                     }
                                 }
                             }
-                        }
+                        },
+                        modifier = Modifier.animateItem()
                     )
                 }
 

@@ -360,8 +360,12 @@ fun BoardScreen(
                     ),
                     horizontalArrangement = Arrangement.spacedBy(horizontalPadding),
                 ) {
+                    val noteLists = (board.value?.noteLists ?: emptyList()).filterNot {
+                        it.archived == true
+                    }
+
                     items(
-                        items = board.value?.noteLists ?: emptyList(),
+                        items = noteLists,
                         key = { it.docId ?: UUID.randomUUID() }) { noteList ->
                         NoteListCard(
                             boardId = boardId,
@@ -384,7 +388,22 @@ fun BoardScreen(
                                     }
                                 }
                             },
-                            onArchiveNoteList = {},
+                            onArchiveNoteList = {
+                                val noteListId = noteList.docId
+                                if (noteListId != null) {
+                                    coroutineScope.launch {
+                                        val message = boardViewModel.updateNoteListArchive(
+                                            boardId, noteListId, true
+                                        )
+                                        if (message != null) {
+                                            snackbarHost.showSnackbar(
+                                                message = message,
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
+                                }
+                            },
                             onRemoveNoteList = {
                                 val noteListId = noteList.docId
                                 if (noteListId != null) {
@@ -402,7 +421,9 @@ fun BoardScreen(
                             },
                             snackbarHost = snackbarHost,
                             navController = navController,
-                            modifier = Modifier.width(cardWith),
+                            modifier = Modifier
+                                .animateItem()
+                                .width(cardWith),
                         )
                     }
                     item(key = "Add note list button") {

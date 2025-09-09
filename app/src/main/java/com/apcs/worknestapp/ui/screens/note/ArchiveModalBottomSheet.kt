@@ -177,6 +177,7 @@ fun ArchiveModalBottomSheet(
                         },
                         onCompleteClick = {},
                         onLongClick = null,
+                        modifier = Modifier.animateItem()
                     )
                 }
             }

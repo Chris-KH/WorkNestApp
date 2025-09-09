@@ -192,6 +192,21 @@ class BoardViewModel @Inject constructor(
         }
     }
 
+    suspend fun updateNoteListArchive(
+        boardId: String,
+        noteListId: String,
+        newState: Boolean,
+    ): String? {
+        return try {
+            boardRepo.updateNoteListArchive(boardId, noteListId, newState)
+            null
+        } catch(e: Exception) {
+            val message = "${if (newState) "Archive" else "Unarchived"} note list failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
     suspend fun addNoteToList(boardId: String, noteListId: String, note: Note): String? {
         return try {
             boardRepo.addNoteToNoteList(boardId, noteListId, note)

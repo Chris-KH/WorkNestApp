@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.ui.screens.note
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -27,6 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -140,13 +142,14 @@ fun NoteScreen(
                     var showActionMenu by remember { mutableStateOf(false) }
 
                     if (displayNotes.isNotEmpty()) {
-                        IconButton(
-                            onClick = { isInSelectMode = !isInSelectMode },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                contentColor = if (isInSelectMode) MaterialTheme.colorScheme.surface
-                                else MaterialTheme.colorScheme.primary,
-                                disabledContentColor = Color.Unspecified,
-                            )
+                        IconToggleButton(
+                            checked = isInSelectMode,
+                            onCheckedChange = { isInSelectMode = it },
+                            colors = IconButtonDefaults.iconToggleButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary,
+                                checkedContentColor = MaterialTheme.colorScheme.surface,
+                                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                            ),
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.outline_select),
@@ -155,65 +158,57 @@ fun NoteScreen(
                                     .size(24.dp)
                                     .zIndex(10f)
                             )
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        color = if (isInSelectMode) MaterialTheme.colorScheme.primary
-                                        else Color.Unspecified,
-                                        shape = CircleShape,
-                                    )
-                                    .size(36.dp)
-                                    .zIndex(1f)
-                            )
                         }
                     }
-                    IconButton(
-                        enabled = !showActionMenu,
-                        onClick = { showActionMenu = true },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.symbol_three_dot),
-                            contentDescription = "More options",
-                            modifier = Modifier
-                                .size(24.dp)
-                                .rotate(-90f)
-                        )
-                        NoteDropdownActions(
-                            expanded = showActionMenu,
-                            isNoteEmpty = displayNotes.isEmpty(),
-                            onDismissRequest = { showActionMenu = false },
-                            onChangeBackground = {},
-                            onSort = { notesSortBy = it },
-                            onViewArchive = {
-                                coroutineScope.launch {
+                    AnimatedVisibility(visible = !isInSelectMode) {
+                        IconButton(
+                            enabled = !showActionMenu,
+                            onClick = { showActionMenu = true },
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.symbol_three_dot),
+                                contentDescription = "More options",
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .rotate(-90f)
+                            )
+                            NoteDropdownActions(
+                                expanded = showActionMenu,
+                                isNoteEmpty = displayNotes.isEmpty(),
+                                onDismissRequest = { showActionMenu = false },
+                                onChangeBackground = {},
+                                onSort = { notesSortBy = it },
+                                onViewArchive = {
+                                    coroutineScope.launch {
+                                        showActionMenu = false
+                                        showArchiveModal = true
+                                        archiveModalSheetState.show()
+                                    }
+                                },
+                                onArchiveCompletedNotes = {
+                                    noteViewModel.archiveCompletedNotes()
                                     showActionMenu = false
-                                    showArchiveModal = true
-                                    archiveModalSheetState.show()
+                                },
+                                onArchiveAllNotes = {
+                                    noteViewModel.archiveAllNotes(archived = true)
+                                    showActionMenu = false
+                                },
+                                onDeleteAllNotes = {
+                                    showActionMenu = false
+                                    dialogState = ConfirmDialogState(
+                                        title = "Delete all notes",
+                                        message = "Are you sure to delete all notes",
+                                        confirmText = "Delete",
+                                        cancelText = "Cancel",
+                                        onConfirm = {
+                                            dialogState = null
+                                            noteViewModel.deleteAllArchivedNotes(archived = false)
+                                        },
+                                        onCancel = { dialogState = null }
+                                    )
                                 }
-                            },
-                            onArchiveCompletedNotes = {
-                                noteViewModel.archiveCompletedNotes()
-                                showActionMenu = false
-                            },
-                            onArchiveAllNotes = {
-                                noteViewModel.archiveAllNotes(archived = true)
-                                showActionMenu = false
-                            },
-                            onDeleteAllNotes = {
-                                showActionMenu = false
-                                dialogState = ConfirmDialogState(
-                                    title = "Delete all notes",
-                                    message = "Are you sure to delete all notes",
-                                    confirmText = "Delete",
-                                    cancelText = "Cancel",
-                                    onConfirm = {
-                                        dialogState = null
-                                        noteViewModel.deleteAllArchivedNotes(archived = false)
-                                    },
-                                    onCancel = { dialogState = null }
-                                )
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             )
@@ -352,7 +347,10 @@ fun NoteScreen(
                                             }
                                         }
                                     },
-                                    onLongClick = { if (!isInSelectMode) showNoteItemDialog = note }
+                                    onLongClick = {
+                                        if (!isInSelectMode) showNoteItemDialog = note
+                                    },
+                                    modifier = Modifier.animateItem()
                                 )
                             }
                         }

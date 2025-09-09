@@ -942,6 +942,49 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
+    override suspend fun updateNoteListArchive(
+        boardId: String,
+        noteListId: String,
+        newState: Boolean,
+    ) {
+        auth.currentUser ?: throw Exception("User not logged in")
+        val boardRef = firestore.collection("boards").document(boardId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
+
+        try {
+            firestore.runTransaction { transaction ->
+                val boardSnapshot = transaction.get(boardRef)
+                if (!boardSnapshot.exists()) {
+                    boardNotFound(boardId)
+                    throw Exception("Board not found")
+                }
+
+                transaction.update(noteListRef, "archived", newState)
+                if (_currentBoard.value?.docId == boardId) {
+                    _currentBoard.update { board ->
+                        if (board?.docId == boardId) board.copy(
+                            noteLists = board.noteLists.map { noteList ->
+                                if (noteList.docId == noteListId) noteList.copy(archived = newState)
+                                else noteList
+                            })
+                        else board
+                    }
+                }
+            }.await()
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
+                noteListNotFound(boardId, noteListId)
+                throw Exception("Note list not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                boardNotFound(boardId)
+                throw Exception("Board not found or missing permission to perform this action")
+            }
+            throw e
+        } catch(e: Exception) {
+            throw Exception("${if (newState) "Archive" else "Unarchived"} note list failed")
+        }
+    }
+
     // *OK
     override suspend fun addNoteToNoteList(boardId: String, noteListId: String, note: Note) {
         auth.currentUser ?: throw Exception("User not logged in")

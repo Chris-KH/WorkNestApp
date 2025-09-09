@@ -36,6 +36,7 @@ interface BoardRepository {
     suspend fun addNoteList(boardId: String, noteList: NoteList)
     suspend fun removeNoteList(boardId: String, noteListId: String)
     suspend fun updateNoteListName(boardId: String, noteListId: String, name: String)
+    suspend fun updateNoteListArchive(boardId: String, noteListId: String, newState: Boolean)
     suspend fun addNoteToNoteList(boardId: String, noteListId: String, note: Note)
     suspend fun removeNoteFromNoteList(boardId: String, noteListId: String, noteId: String)
     suspend fun archiveCompletedNotesInList(boardId: String, noteListId: String)

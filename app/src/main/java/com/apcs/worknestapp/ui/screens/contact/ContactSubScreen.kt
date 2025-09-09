@@ -135,7 +135,7 @@ fun ContactSubScreen(
                         ) {
                             ConservationItem(
                                 conservation = it,
-                                modifier = Modifier,
+                                modifier = Modifier.animateItem(),
                                 onMarkSeenState = { state ->
                                     if (it.docId == null) return@ConservationItem
                                     coroutineScope.launch {
@@ -164,7 +164,7 @@ fun ContactSubScreen(
                         ) {
                             FriendItem(
                                 friend = it,
-                                modifier = Modifier,
+                                modifier = Modifier.animateItem(),
                                 onClick = {
                                     if (it.docId != null) {
                                         navController.navigate(
