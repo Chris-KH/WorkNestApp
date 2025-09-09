@@ -2,12 +2,12 @@ package com.apcs.worknestapp.data.remote.board
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.apcs.worknestapp.data.remote.note.Checklist
 import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -16,29 +16,22 @@ class BoardViewModel @Inject constructor(
 ) : ViewModel() {
     val boards = boardRepo.boards
     val currentBoard = boardRepo.currentBoard
+    val currentNote = boardRepo.currentNote
 
-    fun removeBoardListener() {
-        boardRepo.removeBoardListener()
+    fun registerBoardsListener() = boardRepo.registerBoardsListener()
+    fun removeBoardsListener() = boardRepo.removeBoardsListener()
+
+    fun registerCurrentBoardListener(boardId: String) =
+        boardRepo.registerCurrentBoardListener(boardId)
+
+    fun removeCurrentBoardListener() = boardRepo.removeCurrentBoardListener()
+
+    fun registerCurrentNoteListener(boardId: String, noteListId: String, noteId: String) {
+        boardRepo.registerCurrentNoteListener(boardId, noteListId, noteId)
     }
 
-    fun registerBoardListener() {
-        boardRepo.registerBoardListener()
-    }
-
-    fun removeNoteListListener() {
-        boardRepo.removeNoteListListener()
-    }
-
-    fun registerNoteListListener(boardId: String) {
-        boardRepo.registerNoteListListener(boardId)
-    }
-
-    fun registerNoteListener(boardId: String, noteListId: String) {
-        boardRepo.registerNoteListener(boardId, noteListId)
-    }
-
-    fun removeNoteListener() {
-        boardRepo.removeNoteListener()
+    fun removeCurrentNoteListener() {
+        boardRepo.removeCurrentNoteListener()
     }
 
     suspend fun refreshBoardsIfEmpty(): Boolean {
@@ -211,7 +204,7 @@ class BoardViewModel @Inject constructor(
 
     suspend fun addNoteToList(boardId: String, noteListId: String, note: Note): String? {
         return try {
-            boardRepo.addNoteToList(boardId, noteListId, note)
+            boardRepo.addNoteToNoteList(boardId, noteListId, note)
             null
         } catch(e: Exception) {
             val message = "Add note failed"
@@ -220,161 +213,246 @@ class BoardViewModel @Inject constructor(
         }
     }
 
-    fun removeNoteFromNoteList(boardId: String, noteListId: String, noteId: String): Boolean {
-        var deleted: Boolean = false
-        viewModelScope.launch {
-            boardRepo.removeNoteFromList(boardId, noteListId, noteId)
-            deleted = true
-        }
-        return deleted
-    }
-
-
-    fun refreshNotes(boardId: String, noteListId: String) {
-        viewModelScope.launch {
-            boardRepo.refreshNotes(boardId, noteListId)
-        }
-    }
-
-
-    fun updateNoteName(boardId: String, noteListId: String, docId: String, name: String): Boolean {
-        var success = false
-        viewModelScope.launch {
-            if (boardRepo.updateNoteName(boardId, noteListId, docId, name))
-                success = true
-        }
-        return success
-    }
-
-    fun updateNoteCover(boardId: String, noteListId: String, docId: String, color: Int?): Boolean {
-        viewModelScope.launch {
-            boardRepo.updateNoteCover(boardId, noteListId, docId, color)
-        }
-        return true
-    }
-
-    fun updateNoteDescription(
-        boardId: String, noteListId: String, docId: String, description: String,
-    ): Boolean {
-        viewModelScope.launch {
-            boardRepo.updateNoteDescription(boardId, noteListId, docId, description)
-        }
-        return true
-    }
-
-    fun updateNoteComplete(
+    suspend fun removeNoteFromNoteList(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
+    ): String? {
+        return try {
+            boardRepo.removeNoteFromNoteList(boardId, noteListId, noteId)
+            null
+        } catch(e: Exception) {
+            val message = "Delete note failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun getNote(boardId: String, noteListId: String, noteId: String): Note? {
+        return try {
+            boardRepo.getNote(boardId, noteListId, noteId)
+        } catch(e: Exception) {
+            Log.e("BoardViewModel", e.message, e)
+            null
+        }
+    }
+
+
+    suspend fun updateNoteName(
+        boardId: String,
+        noteListId: String,
+        noteId: String,
+        name: String,
+    ): String? {
+        return try {
+            boardRepo.updateNoteName(boardId, noteListId, noteId, name)
+            null
+        } catch(e: Exception) {
+            val message = "Update note name failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun updateNoteCover(
+        boardId: String,
+        noteListId: String,
+        noteId: String,
+        color: Int?,
+    ): String? {
+        return try {
+            boardRepo.updateNoteCover(boardId, noteListId, noteId, color)
+            null
+        } catch(e: Exception) {
+            val message = "Update note cover failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun updateNoteDescription(
+        boardId: String,
+        noteListId: String,
+        noteId: String,
+        description: String,
+    ): String? {
+        return try {
+            boardRepo.updateNoteDescription(boardId, noteListId, noteId, description)
+            null
+        } catch(e: Exception) {
+            val message = "Update note description failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun updateNoteComplete(
+        boardId: String,
+        noteListId: String,
+        noteId: String,
         newState: Boolean,
-    ): Boolean {
-        var success = false
-        viewModelScope.launch {
-            if (boardRepo.updateNoteComplete(boardId, noteListId, docId, newState))
-                success = true
+    ): String? {
+        return try {
+            boardRepo.updateNoteComplete(boardId, noteListId, noteId, newState)
+            null
+        } catch(e: Exception) {
+            val message = "Update note complete failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
         }
-        return success
     }
 
-    fun updateNoteArchive(
+    suspend fun updateNoteArchive(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
         newState: Boolean,
-    ): Boolean {
-        var success = false
-        viewModelScope.launch {
-            if (boardRepo.updateNoteArchive(boardId, noteListId, docId, newState))
-                success = true
+    ): String? {
+        return try {
+            boardRepo.updateNoteArchive(boardId, noteListId, noteId, newState)
+            null
+        } catch(e: Exception) {
+            val message = "Update note archive failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
         }
-        return success
     }
 
-    fun updateNoteStartDate(
+    suspend fun updateNoteStartDate(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
         dateTime: Timestamp?,
-    ): Boolean {
-        var success = false
-        viewModelScope.launch {
-            if (boardRepo.updateNoteStartDate(boardId, noteListId, docId, dateTime))
-                success = true
+    ): String? {
+        return try {
+            boardRepo.updateNoteStartDate(boardId, noteListId, noteId, dateTime)
+            null
+        } catch(e: Exception) {
+            val message = "Update note start date failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
         }
-        return success
     }
 
-    fun updateNoteEndDate(
+    suspend fun updateNoteEndDate(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
         dateTime: Timestamp?,
-    ): Boolean {
-        var success = false
-
-        viewModelScope.launch {
-            if (boardRepo.updateNoteEndDate(boardId, noteListId, docId, dateTime))
-                success = true
+    ): String? {
+        return try {
+            boardRepo.updateNoteEndDate(boardId, noteListId, noteId, dateTime)
+            null
+        } catch(e: Exception) {
+            val message = "Update note end date failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
         }
-        return success
     }
 
-    fun updateNoteCheckedStatus(
+    suspend fun addNewChecklist(
         boardId: String,
         noteListId: String,
-        noteId: String,
-        isChecked: Boolean,
-    ): Boolean {
-        return false
-    }
-
-    fun getChecklist(boardId: String, noteListId: String, noteId: String, checklistId: String) {
-
-    }
-
-    fun addNewChecklist(boardId: String, noteListId: String, noteId: String): Boolean {
-        var success = false
-        viewModelScope.launch {
-            if (boardRepo.addNewChecklistBoard(boardId, noteListId, noteId))
-                success = true
+        noteId: String, checklist: Checklist,
+    ): String? {
+        return try {
+            boardRepo.addNewChecklist(boardId, noteListId, noteId, checklist)
+            null
+        } catch(e: Exception) {
+            val message = "Add new checklist failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
         }
-        return success
     }
 
-    fun updateChecklistName(
+    suspend fun deleteChecklist(
         boardId: String,
         noteListId: String,
-        noteId: String,
-        checklistId: String?,
-        newName: String,
-    ): Boolean {
-        var success = false
-        viewModelScope.launch {
-            if (boardRepo.updateChecklistBoardName(
-                    boardId,
-                    noteListId,
-                    noteId,
-                    checklistId,
-                    newName
-                )
-            )
-                success = true
+        noteId: String, checklistId: String,
+    ): String? {
+        return try {
+            boardRepo.deleteChecklist(boardId, noteListId, noteId, checklistId)
+            null
+        } catch(e: Exception) {
+            val message = "Delete checklist failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
         }
-        return success
     }
 
-    fun removeChecklist(
+    suspend fun updateChecklistName(
         boardId: String,
         noteListId: String,
-        noteId: String,
-        checklistId: String?,
-    ): Boolean {
-        var success = false
-        viewModelScope.launch {
-            if (boardRepo.deleteChecklistBoard(boardId, noteListId, noteId, checklistId))
-                success = true
+        noteId: String, checklistId: String, name: String,
+    ): String? {
+        return try {
+            boardRepo.updateChecklistName(boardId, noteListId, noteId, checklistId, name)
+            null
+        } catch(e: Exception) {
+            val message = "Update checklist name failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
         }
-        return success
+    }
+
+    suspend fun addNewTask(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, task: Task,
+    ): String? {
+        return try {
+            boardRepo.addNewTask(boardId, noteListId, noteId, checklistId, task)
+            null
+        } catch(e: Exception) {
+            val message = "Add new task failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun deleteTask(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, taskId: String,
+    ): String? {
+        return try {
+            boardRepo.deleteTask(boardId, noteListId, noteId, checklistId, taskId)
+            null
+        } catch(e: Exception) {
+            val message = "Delete task failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun updateTaskName(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, taskId: String, name: String,
+    ): String? {
+        return try {
+            boardRepo.updateTaskName(boardId, noteListId, noteId, checklistId, taskId, name)
+            null
+        } catch(e: Exception) {
+            val message = "Update task name failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun updateTaskDone(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, taskId: String, done: Boolean,
+    ): String? {
+        return try {
+            boardRepo.updateTaskDone(boardId, noteListId, noteId, checklistId, taskId, done)
+            null
+        } catch(e: Exception) {
+            val message = "Update task done to $done failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
     }
 
     fun clearCache() {

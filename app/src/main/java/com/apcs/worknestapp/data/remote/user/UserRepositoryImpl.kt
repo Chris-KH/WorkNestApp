@@ -45,7 +45,7 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
     }
 
     override fun registerFriendshipListener() {
-        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val authUser = auth.currentUser ?: return
 
         friendshipListener?.remove()
 

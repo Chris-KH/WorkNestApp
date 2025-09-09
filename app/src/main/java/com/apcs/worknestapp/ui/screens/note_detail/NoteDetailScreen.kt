@@ -44,6 +44,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -71,12 +72,14 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Checklist
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
 import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.domain.logic.DateFormater
+import com.apcs.worknestapp.ui.components.CoverPickerModal
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.components.notedetail.Attachment
@@ -86,7 +89,6 @@ import com.apcs.worknestapp.ui.components.notedetail.ChecklistItem
 import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
-import com.apcs.worknestapp.ui.components.CoverPickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DateTimePickerModal
 import com.apcs.worknestapp.ui.components.notedetail.DescriptionEditModal
 import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
@@ -113,6 +115,7 @@ fun NoteDetailScreen(
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isFirstLoad by remember { mutableStateOf(true) }
+    var isRefreshing by remember { mutableStateOf(false) }
     var modalBottomType by remember { mutableStateOf<NoteModalBottomType?>(null) }
 
     //NoteState
@@ -161,6 +164,13 @@ fun NoteDetailScreen(
         snapshotFlow { lazyListState.firstVisibleItemIndex }.collect {
             topBarBackground = if (it != 0) surfaceColor
             else surfaceColorOverlay
+        }
+    }
+
+    LifecycleResumeEffect(noteId) {
+        noteViewModel.registerCurrentNoteListener(noteId)
+        onPauseOrDispose {
+            noteViewModel.removeCurrentNoteListener()
         }
     }
 
@@ -391,556 +401,571 @@ fun NoteDetailScreen(
 
                     null -> null
                 }
-                LazyColumn(
-                    state = lazyListState, modifier = Modifier
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        coroutineScope.launch {
+                            isRefreshing = true
+                            noteViewModel.getNote(noteId)
+                            isRefreshing = false
+                        }
+                    },
+                    modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    val spacerWidth = 12.dp
-                    val fontFamily = Roboto
-                    val smallLabelTextStyle = TextStyle(
-                        fontSize = 15.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
-                        fontFamily = fontFamily, fontWeight = FontWeight.Normal,
-                    )
-                    val mediumLabelTextStyle = TextStyle(
-                        fontSize = 15.sp, lineHeight = 18.sp, letterSpacing = 0.sp,
-                        fontFamily = fontFamily, fontWeight = FontWeight.Normal,
-                    )
-                    val verticalPadding = 20.dp
-                    val horizontalPadding = 16.dp
-                    val leadingIconSize = with(density) { 16.sp.toDp() + 2.dp }
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        val spacerWidth = 12.dp
+                        val fontFamily = Roboto
+                        val smallLabelTextStyle = TextStyle(
+                            fontSize = 15.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
+                            fontFamily = fontFamily, fontWeight = FontWeight.Normal,
+                        )
+                        val mediumLabelTextStyle = TextStyle(
+                            fontSize = 15.sp, lineHeight = 18.sp, letterSpacing = 0.sp,
+                            fontFamily = fontFamily, fontWeight = FontWeight.Normal,
+                        )
+                        val verticalPadding = 20.dp
+                        val horizontalPadding = 16.dp
+                        val leadingIconSize = with(density) { 16.sp.toDp() + 2.dp }
 
-                    item(key = "SpacerCover") {
-                        if (noteCoverColor != null) {
+                        item(key = "SpacerCover") {
+                            if (noteCoverColor != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(innerPadding.calculateTopPadding())
+                                        .background(noteCoverColor)
+                                )
+                            } else Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding()))
+                        }
+                        item(key = "Cover") {
                             Box(
+                                contentAlignment = Alignment.BottomStart,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(innerPadding.calculateTopPadding())
-                                    .background(noteCoverColor)
-                            )
-                        } else Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding()))
-                    }
-                    item(key = "Cover") {
-                        Box(
-                            contentAlignment = Alignment.BottomStart,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .let {
-                                    val temp = it.height(innerPadding.calculateTopPadding())
-                                    if (noteCoverColor == null) return@let temp
-                                    return@let temp.background(noteCoverColor)
-                                }
-                                .padding(horizontal = horizontalPadding / 2, vertical = 8.dp)) {
-                            val shape = RoundedCornerShape(15f)
-                            Row(
-                                modifier = Modifier
-                                    .clickable(onClick = {
-                                        modalBottomType = NoteModalBottomType.COVER
-                                    })
-                                    .clip(shape)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        shape = shape
-                                    )
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                        shape = shape,
-                                    )
-                                    .padding(vertical = 8.dp, horizontal = 20.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.fill_cover),
-                                    contentDescription = "Cover",
-                                    modifier = Modifier.size(leadingIconSize),
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Cover",
-                                    fontSize = 16.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
-                                    fontFamily = fontFamily, fontWeight = FontWeight.Normal,
-                                )
-                            }
-                        }
-                    }
-                    if (note.value?.archived == true) {
-                        item(key = "ArchiveStatus") {
-                            val shape = RoundedCornerShape(15f)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(
-                                modifier = Modifier
-                                    .clip(shape)
-                                    .padding(horizontal = horizontalPadding)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.error, shape = shape
-                                    )
-                                    .padding(vertical = 6.dp, horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.outline_archive),
-                                    contentDescription = "Cover",
-                                    modifier = Modifier.size(18.dp),
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "Archived",
-                                    fontSize = 12.sp, lineHeight = 12.sp, letterSpacing = 0.sp,
-                                    fontFamily = fontFamily, fontWeight = FontWeight.Normal,
-                                    color = MaterialTheme.colorScheme.onError,
-                                )
-                            }
-                        }
-                    }
-                    item(key = "Name") {
-                        Row(
-                            verticalAlignment = Alignment.Top,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = horizontalPadding, vertical = 24.dp),
-                        ) {
-                            val fontSize = 22.sp
-                            val iconSize = with(density) { fontSize.toDp() + 2.dp }
-                            Icon(
-                                painter = painterResource(
-                                    if (note.value?.completed == true) R.drawable.fill_checkbox
-                                    else R.drawable.outline_circle
-                                ),
-                                tint = if (note.value?.completed == true) MaterialTheme.colorScheme.success
-                                else MaterialTheme.colorScheme.onSurface,
-                                contentDescription = null,
-                                modifier = Modifier.size(iconSize).clip(CircleShape)
-                                    .clickable(onClick = {
-                                        coroutineScope.launch {
-                                            val isSuccess = noteViewModel.updateNoteComplete(
-                                                docId = noteId,
-                                                newState = note.value?.completed != true,
-                                            )
-                                            if (!isSuccess) {
-                                                snackbarHost.showSnackbar(
-                                                    message = "Mark note completed failed",
-                                                    withDismissAction = true,
-                                                )
-                                            }
-                                        }
-                                    }).let {
-                                        if (note.value?.completed == true) return@let it.background(
-                                            MaterialTheme.colorScheme.onSurface
+                                    .let {
+                                        val temp = it.height(innerPadding.calculateTopPadding())
+                                        if (noteCoverColor == null) return@let temp
+                                        return@let temp.background(noteCoverColor)
+                                    }
+                                    .padding(horizontal = horizontalPadding / 2, vertical = 8.dp)) {
+                                val shape = RoundedCornerShape(15f)
+                                Row(
+                                    modifier = Modifier
+                                        .clickable(onClick = {
+                                            modalBottomType = NoteModalBottomType.COVER
+                                        })
+                                        .clip(shape)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            shape = shape
                                         )
-                                        return@let it
-                                    })
-                            Spacer(modifier = Modifier.width(8.dp))
-                            CustomTextField(
-                                value = noteName,
-                                onValueChange = { noteName = it },
-                                placeholder = {
+                                        .border(
+                                            width = 1.dp,
+                                            color = MaterialTheme.colorScheme.outlineVariant,
+                                            shape = shape,
+                                        )
+                                        .padding(vertical = 8.dp, horizontal = 20.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.fill_cover),
+                                        contentDescription = "Cover",
+                                        modifier = Modifier.size(leadingIconSize),
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Note Name",
+                                        text = "Cover",
+                                        fontSize = 16.sp, lineHeight = 16.sp, letterSpacing = 0.sp,
+                                        fontFamily = fontFamily, fontWeight = FontWeight.Normal,
+                                    )
+                                }
+                            }
+                        }
+                        if (note.value?.archived == true) {
+                            item(key = "ArchiveStatus") {
+                                val shape = RoundedCornerShape(15f)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .clip(shape)
+                                        .padding(horizontal = horizontalPadding)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.error, shape = shape
+                                        )
+                                        .padding(vertical = 6.dp, horizontal = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_archive),
+                                        contentDescription = "Cover",
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Archived",
+                                        fontSize = 12.sp, lineHeight = 12.sp, letterSpacing = 0.sp,
+                                        fontFamily = fontFamily, fontWeight = FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onError,
+                                    )
+                                }
+                            }
+                        }
+                        item(key = "Name") {
+                            Row(
+                                verticalAlignment = Alignment.Top,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = horizontalPadding, vertical = 24.dp),
+                            ) {
+                                val fontSize = 22.sp
+                                val iconSize = with(density) { fontSize.toDp() + 2.dp }
+                                Icon(
+                                    painter = painterResource(
+                                        if (note.value?.completed == true) R.drawable.fill_checkbox
+                                        else R.drawable.outline_circle
+                                    ),
+                                    tint = if (note.value?.completed == true) MaterialTheme.colorScheme.success
+                                    else MaterialTheme.colorScheme.onSurface,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(iconSize).clip(CircleShape)
+                                        .clickable(onClick = {
+                                            coroutineScope.launch {
+                                                val isSuccess = noteViewModel.updateNoteComplete(
+                                                    docId = noteId,
+                                                    newState = note.value?.completed != true,
+                                                )
+                                                if (!isSuccess) {
+                                                    snackbarHost.showSnackbar(
+                                                        message = "Mark note completed failed",
+                                                        withDismissAction = true,
+                                                    )
+                                                }
+                                            }
+                                        }).let {
+                                            if (note.value?.completed == true) return@let it.background(
+                                                MaterialTheme.colorScheme.onSurface
+                                            )
+                                            return@let it
+                                        })
+                                Spacer(modifier = Modifier.width(8.dp))
+                                CustomTextField(
+                                    value = noteName,
+                                    onValueChange = { noteName = it },
+                                    placeholder = {
+                                        Text(
+                                            text = "Note Name",
+                                            fontSize = fontSize,
+                                            lineHeight = fontSize,
+                                            fontFamily = fontFamily,
+                                            letterSpacing = 0.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    textStyle = TextStyle(
                                         fontSize = fontSize,
                                         lineHeight = fontSize,
                                         fontFamily = fontFamily,
                                         letterSpacing = 0.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                },
-                                textStyle = TextStyle(
-                                    fontSize = fontSize,
-                                    lineHeight = fontSize,
-                                    fontFamily = fontFamily,
-                                    letterSpacing = 0.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                ),
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Done
-                                ),
-                                keyboardActions = KeyboardActions(
-                                    onDone = {
-                                        val noteNameInitial = note.value?.name ?: ""
-                                        if (noteName != noteNameInitial) {
-                                            coroutineScope.launch {
-                                                if (noteName.isBlank()) noteName = noteNameInitial
-                                                else {
-                                                    val isSuccess = noteViewModel.updateNoteName(
-                                                        docId = noteId,
-                                                        name = noteName,
-                                                    )
-                                                    if (!isSuccess) {
-                                                        noteName = noteNameInitial
-                                                        snackbarHost.showSnackbar(
-                                                            message = "Update note name failed. Try again",
-                                                            withDismissAction = true,
-                                                        )
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    ),
+                                    keyboardOptions = KeyboardOptions.Default.copy(
+                                        imeAction = ImeAction.Done
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onDone = {
+                                            val noteNameInitial = note.value?.name ?: ""
+                                            if (noteName != noteNameInitial) {
+                                                coroutineScope.launch {
+                                                    if (noteName.isBlank()) noteName =
+                                                        noteNameInitial
+                                                    else {
+                                                        val isSuccess =
+                                                            noteViewModel.updateNoteName(
+                                                                docId = noteId,
+                                                                name = noteName,
+                                                            )
+                                                        if (!isSuccess) {
+                                                            noteName = noteNameInitial
+                                                            snackbarHost.showSnackbar(
+                                                                message = "Update note name failed. Try again",
+                                                                withDismissAction = true,
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            focusManager.clearFocus()
+                                        }
+                                    ),
+                                    containerColor = Color.Transparent,
+                                    modifier = Modifier
+                                        .onFocusChanged { state ->
+                                            val noteNameInitial = note.value?.name ?: ""
+                                            if (!state.isFocused && noteName != noteNameInitial) {
+                                                coroutineScope.launch {
+                                                    if (noteName.isBlank()) noteName =
+                                                        noteNameInitial
+                                                    else {
+                                                        val isSuccess =
+                                                            noteViewModel.updateNoteName(
+                                                                docId = noteId,
+                                                                name = noteName,
+                                                            )
+                                                        if (!isSuccess) {
+                                                            noteName = noteNameInitial
+                                                            snackbarHost.showSnackbar(
+                                                                message = "Update note name failed. Try again",
+                                                                withDismissAction = true,
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
-                                        focusManager.clearFocus()
-                                    }
-                                ),
-                                containerColor = Color.Transparent,
-                                modifier = Modifier
-                                    .onFocusChanged { state ->
-                                        val noteNameInitial = note.value?.name ?: ""
-                                        if (!state.isFocused && noteName != noteNameInitial) {
-                                            coroutineScope.launch {
-                                                if (noteName.isBlank()) noteName = noteNameInitial
-                                                else {
-                                                    val isSuccess = noteViewModel.updateNoteName(
-                                                        docId = noteId,
-                                                        name = noteName,
-                                                    )
-                                                    if (!isSuccess) {
-                                                        noteName = noteNameInitial
-                                                        snackbarHost.showSnackbar(
-                                                            message = "Update note name failed. Try again",
-                                                            withDismissAction = true,
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                            )
-                        }
-                    }
-                    item(key = "Description") {
-                        Row(
-                            verticalAlignment = Alignment.Top,
-                            modifier = Modifier
-                                .clickable(onClick = {
-                                    modalBottomType = NoteModalBottomType.DESCRIPTION
-                                })
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                .padding(
-                                    horizontal = horizontalPadding, vertical = verticalPadding
-                                ),
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_description),
-                                contentDescription = "Note description",
-                                modifier = Modifier.size(leadingIconSize),
-                            )
-                            Spacer(modifier = Modifier.width(spacerWidth))
-                            Text(
-                                text = if (note.value?.description.isNullOrEmpty()) "Add description"
-                                else note.value?.description ?: "",
-                                style = mediumLabelTextStyle,
-                                color = if (note.value?.description.isNullOrEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
-                                else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        HorizontalDivider()
-                    }
-                    item(key = "DateTime") {
-                        Column(
-                            modifier = Modifier
-                                .padding(vertical = 8.dp)
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .clickable(onClick = {
-                                        modalBottomType = NoteModalBottomType.START_DATE
-                                    })
-                                    .fillMaxWidth()
-                                    .padding(
-                                        horizontal = horizontalPadding, vertical = verticalPadding
-                                    ),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.outline_clock),
-                                    contentDescription = "Start date",
-                                    modifier = Modifier.size(leadingIconSize),
-                                )
-                                Spacer(modifier = Modifier.width(spacerWidth))
-                                Text(
-                                    text = if (note.value?.startDate == null) "Start date"
-                                    else DateFormater.format(
-                                        timestamp = note.value!!.startDate!!,
-                                        formatString = "'Starts' dd MMMM, yyyy 'at' HH:mm"
-                                    ),
-                                    style = mediumLabelTextStyle,
-                                    color = if (note.value?.startDate == null) MaterialTheme.colorScheme.onSurfaceVariant
-                                    else MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.weight(1f),
                                 )
                             }
-                            HorizontalDivider(
-                                modifier = Modifier.padding(start = leadingIconSize + horizontalPadding + spacerWidth)
-                            )
+                        }
+                        item(key = "Description") {
                             Row(
+                                verticalAlignment = Alignment.Top,
                                 modifier = Modifier
                                     .clickable(onClick = {
-                                        modalBottomType = NoteModalBottomType.END_DATE
+                                        modalBottomType = NoteModalBottomType.DESCRIPTION
                                     })
                                     .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                     .padding(
                                         horizontal = horizontalPadding, vertical = verticalPadding
                                     ),
-                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(
-                                    painter = painterResource(
-                                        if (note.value?.completed == true) R.drawable.outline_checkmark
-                                        else R.drawable.outline_square
-                                    ),
-                                    contentDescription = "End date",
-                                    tint = if (note.value?.endDate == null) Color.Transparent
-                                    else MaterialTheme.colorScheme.primary,
+                                    painter = painterResource(R.drawable.outline_description),
+                                    contentDescription = "Note description",
                                     modifier = Modifier.size(leadingIconSize),
                                 )
                                 Spacer(modifier = Modifier.width(spacerWidth))
                                 Text(
-                                    text = if (note.value?.endDate == null) "End date"
-                                    else DateFormater.format(
-                                        timestamp = note.value!!.endDate!!,
-                                        formatString = "'Due' dd MMMM, yyyy 'at' HH:mm"
-                                    ),
+                                    text = if (note.value?.description.isNullOrEmpty()) "Add description"
+                                    else note.value?.description ?: "",
                                     style = mediumLabelTextStyle,
-                                    color = if (note.value?.endDate == null) MaterialTheme.colorScheme.onSurfaceVariant
-                                    else MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.weight(1f),
+                                    color = if (note.value?.description.isNullOrEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
+                                    else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             HorizontalDivider()
                         }
-                    }
-                    item(key = "CheckLists") {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = horizontalPadding),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
+                        item(key = "DateTime") {
+                            Column(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = verticalPadding)
+                                    .padding(vertical = 8.dp)
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                             ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.outline_checkmark),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(leadingIconSize),
+                                Row(
+                                    modifier = Modifier
+                                        .clickable(onClick = {
+                                            modalBottomType = NoteModalBottomType.START_DATE
+                                        })
+                                        .fillMaxWidth()
+                                        .padding(
+                                            horizontal = horizontalPadding,
+                                            vertical = verticalPadding
+                                        ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_clock),
+                                        contentDescription = "Start date",
+                                        modifier = Modifier.size(leadingIconSize),
+                                    )
+                                    Spacer(modifier = Modifier.width(spacerWidth))
+                                    Text(
+                                        text = if (note.value?.startDate == null) "Start date"
+                                        else DateFormater.format(
+                                            timestamp = note.value!!.startDate!!,
+                                            formatString = "'Starts' dd MMMM, yyyy 'at' HH:mm"
+                                        ),
+                                        style = mediumLabelTextStyle,
+                                        color = if (note.value?.startDate == null) MaterialTheme.colorScheme.onSurfaceVariant
+                                        else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(start = leadingIconSize + horizontalPadding + spacerWidth)
                                 )
-                                Spacer(modifier = Modifier.width(spacerWidth))
-                                Text(text = "Checklists", style = smallLabelTextStyle)
+                                Row(
+                                    modifier = Modifier
+                                        .clickable(onClick = {
+                                            modalBottomType = NoteModalBottomType.END_DATE
+                                        })
+                                        .fillMaxWidth()
+                                        .padding(
+                                            horizontal = horizontalPadding,
+                                            vertical = verticalPadding
+                                        ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(
+                                            if (note.value?.completed == true) R.drawable.outline_checkmark
+                                            else R.drawable.outline_square
+                                        ),
+                                        contentDescription = "End date",
+                                        tint = if (note.value?.endDate == null) Color.Transparent
+                                        else MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(leadingIconSize),
+                                    )
+                                    Spacer(modifier = Modifier.width(spacerWidth))
+                                    Text(
+                                        text = if (note.value?.endDate == null) "End date"
+                                        else DateFormater.format(
+                                            timestamp = note.value!!.endDate!!,
+                                            formatString = "'Due' dd MMMM, yyyy 'at' HH:mm"
+                                        ),
+                                        style = mediumLabelTextStyle,
+                                        color = if (note.value?.endDate == null) MaterialTheme.colorScheme.onSurfaceVariant
+                                        else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                                HorizontalDivider()
                             }
-                            Spacer(modifier = Modifier.width(spacerWidth))
-                            IconButton(
-                                onClick = {
-                                    val newChecklist = Checklist()
-                                    val isSuccess = noteViewModel
-                                        .addNewChecklist(noteId, newChecklist)
-                                    if (!isSuccess) {
+                        }
+                        item(key = "CheckLists") {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = horizontalPadding),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(vertical = verticalPadding)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_checkmark),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(leadingIconSize),
+                                    )
+                                    Spacer(modifier = Modifier.width(spacerWidth))
+                                    Text(text = "Checklists", style = smallLabelTextStyle)
+                                }
+                                Spacer(modifier = Modifier.width(spacerWidth))
+                                IconButton(
+                                    onClick = {
+                                        val newChecklist = Checklist()
                                         coroutineScope.launch {
+                                            val isSuccess = noteViewModel
+                                                .addNewChecklist(noteId, newChecklist)
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Add new checklist failed",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        }
+                                    },
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Add,
+                                        contentDescription = "Add new check list",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
+                            }
+                        }
+                        itemsIndexed(
+                            items = checklists,
+                            key = { _, item -> item.docId ?: UUID.randomUUID() }
+                        ) { idx, checklist ->
+                            ChecklistItem(
+                                checklist = checklist,
+                                noteId = noteId,
+                                noteViewModel = noteViewModel,
+                                onAddNewTask = {
+                                    val checklistId = checklist.docId ?: return@ChecklistItem
+                                    val newTask = Task()
+                                    coroutineScope.launch {
+                                        val isSuccess = noteViewModel
+                                            .addNewTask(noteId, checklistId, newTask)
+                                        if (!isSuccess) {
                                             snackbarHost.showSnackbar(
-                                                message = "Add new checklist failed",
+                                                message = "Add task failed",
                                                 withDismissAction = true,
                                             )
                                         }
                                     }
                                 },
-                            ) {
-                                Icon(
-                                    Icons.Filled.Add,
-                                    contentDescription = "Add new check list",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp),
-                                )
+                                onChangeChecklistName = { newName ->
+                                    val checklistId = checklist.docId
+                                    if (checklistId == null) return@ChecklistItem false
+                                    val isSuccess = noteViewModel
+                                        .updateChecklistName(noteId, checklistId, newName)
+                                    return@ChecklistItem isSuccess
+                                },
+                                onDeleteChecklist = {
+                                    val checklistId = checklist.docId ?: return@ChecklistItem
+                                    coroutineScope.launch {
+                                        val isSuccess =
+                                            noteViewModel.deleteChecklist(noteId, checklistId)
+                                        if (!isSuccess) {
+                                            snackbarHost.showSnackbar(
+                                                message = "Delete checklist failed",
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
+                                },
+                                snackbarHost = snackbarHost,
+                                modifier = Modifier
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                    .padding(horizontal = horizontalPadding)
+                            )
+
+                            if (idx + 1 < checklists.size) {
+                                Spacer(modifier = Modifier.height(6.dp))
                             }
                         }
-                    }
-                    itemsIndexed(
-                        items = checklists,
-                        key = { _, item -> item.docId ?: UUID.randomUUID() }
-                    ) { idx, item ->
-                        ChecklistItem(
-                            checklist = item,
-                            noteId = noteId,
-                            noteViewModel = noteViewModel,
-                            onAddNewTask = {
-                                val checklistId = item.docId ?: return@ChecklistItem
-                                val newTask = Task()
-                                val isSuccess = noteViewModel
-                                    .addNewTask(noteId, checklistId, newTask)
-                                if (!isSuccess) {
-                                    coroutineScope.launch {
-                                        snackbarHost.showSnackbar(
-                                            message = "Add task failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
-                                }
-                            },
-                            onChangeChecklistName = { newName ->
-                                val initialName = note.value?.name ?: ""
-                                val checklistId = item.docId ?: return@ChecklistItem initialName
-                                val isSuccess = noteViewModel
-                                    .updateChecklistName(noteId, checklistId, newName)
-                                if (!isSuccess) {
-                                    coroutineScope.launch {
-                                        snackbarHost.showSnackbar(
-                                            message = "Update checklist name failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
-                                    return@ChecklistItem initialName
-                                }
-                                return@ChecklistItem newName
-                            },
-                            onDeleteChecklist = {
-                                val checklistId = item.docId ?: return@ChecklistItem
-                                val isSuccess = noteViewModel.deleteChecklist(noteId, checklistId)
-                                if (!isSuccess) {
-                                    coroutineScope.launch {
-                                        snackbarHost.showSnackbar(
-                                            message = "Delete checklist failed",
-                                            withDismissAction = true,
-                                        )
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                .padding(horizontal = horizontalPadding)
-                        )
-
-                    }
-                    item(key = "Attachments") {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = horizontalPadding),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                        item(key = "Attachments") {
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = verticalPadding),
+                                    .fillMaxWidth()
+                                    .padding(horizontal = horizontalPadding),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(vertical = verticalPadding),
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.fill_attachment),
+                                        contentDescription = "Attachments",
+                                        modifier = Modifier.size(leadingIconSize),
+                                    )
+                                    Spacer(modifier = Modifier.width(spacerWidth))
+                                    Text(text = "Attachments", style = smallLabelTextStyle)
+                                }
+                                Box { // Box to anchor the DropdownMenu
+                                    IconButton(
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.primary
+                                        ), onClick = { showAttachmentMenu = true }) {
+                                        Icon(
+                                            Icons.Filled.Add,
+                                            contentDescription = "Add new attachment",
+                                            modifier = Modifier.size(24.dp),
+                                        )
+                                    }
+                                    // This is the Submenu
+                                    AttachmentOptionsDropdownMenu(
+                                        expanded = showAttachmentMenu,
+                                        onDismissRequest = { showAttachmentMenu = false },
+                                        onOptionSelected = { selectedOption ->
+                                            showAttachmentMenu = false
+                                            // --- Placeholder  --- /////////////////////////////////////////////////
+                                            when(selectedOption) {
+                                                AttachmentOption.UPLOAD_FILE -> {
+                                                    println("Option Selected: Upload File")
+                                                    // TODO: Placeholder Attach File
+                                                    attachmentsList = (attachmentsList + Attachment(
+                                                        UUID.randomUUID().toString(),
+                                                        "Placeholder File",
+                                                        "File"
+                                                    ))
+                                                }
+
+                                                AttachmentOption.ADD_LINK -> {
+                                                    println("Option Selected: Add Link")
+                                                    attachmentsList = (attachmentsList + Attachment(
+                                                        UUID.randomUUID().toString(),
+                                                        "Placeholder Link",
+                                                        "Link"
+                                                    ))
+                                                }
+
+                                                AttachmentOption.ADD_IMAGE_FROM_GALLERY -> {
+                                                    println("Option Selected: Add Image from Gallery")
+                                                    attachmentsList = attachmentsList + Attachment(
+                                                        UUID.randomUUID().toString(),
+                                                        "Placeholder Gallery Image",
+                                                        "Image"
+                                                    )
+                                                }
+
+                                                AttachmentOption.TAKE_PHOTO -> {
+                                                    println("Option Selected: Take Photo")
+                                                    attachmentsList = attachmentsList + Attachment(
+                                                        UUID.randomUUID().toString(),
+                                                        "Placeholder Camera Photo",
+                                                        "Image"
+                                                    )
+                                                }
+                                            }
+                                        })
+                                }
+                            }
+
+                            /*                        if (attachmentsList.isNotEmpty()) {
+                                                        attachmentsList.forEach { attachment ->
+                                                            //TODO: Add AttachmentItemRow
+                                                            HorizontalDivider()
+                                                        }
+                                                    }*/
+                        }
+                        item(key = "CommentLabel") {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        horizontal = horizontalPadding, vertical = verticalPadding
+                                    ),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.fill_attachment),
+                                    painter = painterResource(R.drawable.outline_comment),
                                     contentDescription = "Attachments",
                                     modifier = Modifier.size(leadingIconSize),
                                 )
                                 Spacer(modifier = Modifier.width(spacerWidth))
-                                Text(text = "Attachments", style = smallLabelTextStyle)
-                            }
-                            Box { // Box to anchor the DropdownMenu
-                                IconButton(
-                                    colors = IconButtonDefaults.iconButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.primary
-                                    ), onClick = { showAttachmentMenu = true }) {
-                                    Icon(
-                                        Icons.Filled.Add,
-                                        contentDescription = "Add new attachment",
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
-                                // This is the Submenu
-                                AttachmentOptionsDropdownMenu(
-                                    expanded = showAttachmentMenu,
-                                    onDismissRequest = { showAttachmentMenu = false },
-                                    onOptionSelected = { selectedOption ->
-                                        showAttachmentMenu = false
-                                        // --- Placeholder  --- /////////////////////////////////////////////////
-                                        when(selectedOption) {
-                                            AttachmentOption.UPLOAD_FILE -> {
-                                                println("Option Selected: Upload File")
-                                                // TODO: Placeholder Attach File
-                                                attachmentsList = (attachmentsList + Attachment(
-                                                    UUID.randomUUID().toString(),
-                                                    "Placeholder File",
-                                                    "File"
-                                                ))
-                                            }
-
-                                            AttachmentOption.ADD_LINK -> {
-                                                println("Option Selected: Add Link")
-                                                attachmentsList = (attachmentsList + Attachment(
-                                                    UUID.randomUUID().toString(),
-                                                    "Placeholder Link",
-                                                    "Link"
-                                                ))
-                                            }
-
-                                            AttachmentOption.ADD_IMAGE_FROM_GALLERY -> {
-                                                println("Option Selected: Add Image from Gallery")
-                                                attachmentsList = attachmentsList + Attachment(
-                                                    UUID.randomUUID().toString(),
-                                                    "Placeholder Gallery Image",
-                                                    "Image"
-                                                )
-                                            }
-
-                                            AttachmentOption.TAKE_PHOTO -> {
-                                                println("Option Selected: Take Photo")
-                                                attachmentsList = attachmentsList + Attachment(
-                                                    UUID.randomUUID().toString(),
-                                                    "Placeholder Camera Photo",
-                                                    "Image"
-                                                )
-                                            }
-                                        }
-                                    })
+                                Text(text = "Comments", style = smallLabelTextStyle)
                             }
                         }
-
-                        /*                        if (attachmentsList.isNotEmpty()) {
-                                                    attachmentsList.forEach { attachment ->
-                                                        //TODO: Add AttachmentItemRow
-                                                        HorizontalDivider()
-                                                    }
-                                                }*/
-                    }
-                    item(key = "CommentLabel") {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    horizontal = horizontalPadding, vertical = verticalPadding
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_comment),
-                                contentDescription = "Attachments",
-                                modifier = Modifier.size(leadingIconSize),
-                            )
-                            Spacer(modifier = Modifier.width(spacerWidth))
-                            Text(text = "Comments", style = smallLabelTextStyle)
+                        if (commentList.isEmpty()) item(key = "EmptyComment") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                    .padding(vertical = 24.dp, horizontal = 32.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "There are no comments on this note",
+                                    style = mediumLabelTextStyle,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                            HorizontalDivider()
                         }
-                    }
-                    if (commentList.isEmpty()) item(key = "EmptyComment") {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                .padding(vertical = 24.dp, horizontal = 32.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "There are no comments on this note",
-                                style = mediumLabelTextStyle,
-                                textAlign = TextAlign.Center,
-                            )
+                        else itemsIndexed(items = commentList) { index, comment ->
+                            CommentItem(comment = comment)
                         }
-                        HorizontalDivider()
+                        item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(160.dp)) }
                     }
-                    else itemsIndexed(items = commentList) { index, comment ->
-                        CommentItem(comment = comment)
-                    }
-                    item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(160.dp)) }
                 }
                 CommentInputSection(
                     commentText = commentText,

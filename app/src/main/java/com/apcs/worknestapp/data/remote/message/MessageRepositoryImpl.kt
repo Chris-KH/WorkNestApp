@@ -137,7 +137,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
     override fun registerConservationListener() {
-        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val authUser = auth.currentUser ?: return
 
         val conservationSnapshot = firestore.collection("conservations")
             .whereArrayContains("userIds", authUser.uid)
@@ -176,7 +176,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
     override fun registerMessageListener(conservationId: String) {
-        auth.currentUser ?: throw Exception("User not logged in")
+        auth.currentUser ?: return
         if (messageListeners.containsKey(conservationId)) return
 
         val listener = firestore.collection("conservations").document(conservationId)

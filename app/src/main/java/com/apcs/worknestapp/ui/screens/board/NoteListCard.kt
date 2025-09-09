@@ -49,6 +49,7 @@ import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.board.NoteList
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
+import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -187,11 +188,17 @@ fun NoteListCard(
                     items = notes,
                     key = { note -> note.docId ?: UUID.randomUUID() }
                 ) { note ->
-                    NoteItem(
+                    BoardNoteItem(
                         note = note,
                         board = board,
                         onClick = {
-
+                            val noteListId = noteList.docId ?: ""
+                            val noteId = note.docId ?: ""
+                            navController.navigate(
+                                Screen.BoardNoteDetail.route + "/$boardId/$noteListId/$noteId"
+                            ) {
+                                restoreState = true
+                            }
                         },
                         onCheckedChange = { isChecked ->
 

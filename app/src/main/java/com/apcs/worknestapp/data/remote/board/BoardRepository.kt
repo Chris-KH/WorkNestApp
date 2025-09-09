@@ -1,23 +1,25 @@
 package com.apcs.worknestapp.data.remote.board
 
+import com.apcs.worknestapp.data.remote.note.Checklist
 import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 
 interface BoardRepository {
     val boards: StateFlow<List<Board>>
     val currentBoard: StateFlow<Board?>
+    val currentNote: StateFlow<Note?>
 
     //Listener
-    fun registerBoardListener()
-    fun removeBoardListener()
-    fun registerNoteListener(boardId: String, noteListId: String)
-    fun removeNoteListener()
-    fun registerNoteListListener(boardId: String)
-    fun removeNoteListListener()
+    fun registerBoardsListener()
+    fun removeBoardsListener()
+    fun registerCurrentBoardListener(boardId: String)
+    fun removeCurrentBoardListener()
+    fun registerCurrentNoteListener(boardId: String, noteListId: String, noteId: String)
+    fun removeCurrentNoteListener()
 
     fun addBoard(board: Board)
     fun deleteBoard(docId: String)
@@ -36,82 +38,88 @@ interface BoardRepository {
     suspend fun removeNoteList(boardId: String, noteListId: String)
     suspend fun updateNoteListName(boardId: String, noteListId: String, name: String)
 
-    suspend fun addNoteToList(boardId: String, noteListId: String, note: Note)
-    suspend fun removeNoteFromList(boardId: String, noteListId: String, noteId: String)
-    suspend fun updateNoteCheckedStatus(
-        boardId: String,
-        noteListId: String,
-        noteId: String,
-        isChecked: Boolean,
-    )
+    suspend fun addNoteToNoteList(boardId: String, noteListId: String, note: Note)
+    suspend fun removeNoteFromNoteList(boardId: String, noteListId: String, noteId: String)
 
-    suspend fun getNote(boardId: String, noteListId: String, noteId: String): Note?
-    suspend fun refreshNotes(boardId: String, noteListId: String)
-
-    suspend fun updateNoteName(
-        boardId: String,
-        noteListId: String,
-        docId: String,
-        name: String,
-    ): Boolean
-
-    suspend fun updateNoteCover(
-        boardId: String,
-        noteListId: String,
-        docId: String,
-        color: Int?,
-    ): Boolean
-
+    suspend fun getNote(boardId: String, noteListId: String, noteId: String): Note
+    suspend fun updateNoteName(boardId: String, noteListId: String, noteId: String, name: String)
+    suspend fun updateNoteCover(boardId: String, noteListId: String, noteId: String, color: Int?)
     suspend fun updateNoteDescription(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
         description: String,
-    ): Boolean
+    )
 
     suspend fun updateNoteComplete(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
         newState: Boolean,
-    ): Boolean
+    )
 
     suspend fun updateNoteArchive(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
         newState: Boolean,
-    ): Boolean
+    )
 
     suspend fun updateNoteStartDate(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
         dateTime: Timestamp?,
-    ): Boolean
+    )
 
     suspend fun updateNoteEndDate(
         boardId: String,
         noteListId: String,
-        docId: String,
+        noteId: String,
         dateTime: Timestamp?,
-    ): Boolean
+    )
 
-    suspend fun addNewChecklistBoard(boardId: String, noteListId: String, noteId: String): Boolean
-    suspend fun updateChecklistBoardName(
+    suspend fun addNewChecklist(
         boardId: String,
         noteListId: String,
-        noteId: String,
-        checklistId: String?,
-        newName: String,
-    ): Boolean
+        noteId: String, checklist: Checklist,
+    )
 
-    suspend fun deleteChecklistBoard(
+    suspend fun deleteChecklist(
         boardId: String,
         noteListId: String,
-        noteId: String,
-        checklistId: String?,
-    ): Boolean
+        noteId: String, checklistId: String,
+    )
+
+    suspend fun updateChecklistName(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, name: String,
+    )
+
+    suspend fun addNewTask(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, task: Task,
+    )
+
+    suspend fun deleteTask(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, taskId: String,
+    )
+
+    suspend fun updateTaskName(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, taskId: String, name: String,
+    )
+
+    suspend fun updateTaskDone(
+        boardId: String,
+        noteListId: String,
+        noteId: String, checklistId: String, taskId: String, done: Boolean,
+    )
 
     fun clearCache()
 }

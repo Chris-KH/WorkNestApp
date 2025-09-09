@@ -13,16 +13,21 @@ class NoteViewModel @Inject constructor(
     val notes = noteRepo.notes
     val currentNote = noteRepo.currentNote
 
-    fun removeListener() {
-        noteRepo.removeListener()
+
+    fun registerNotesListener() {
+        noteRepo.registerNotesListener()
     }
 
-    fun registerListener() {
-        try {
-            noteRepo.registerListener()
-        } catch(e: Exception) {
-            Log.e("NoteViewModel", "Register listener for notes failed", e)
-        }
+    fun removeNotesListener() {
+        noteRepo.removeNotesListener()
+    }
+
+    fun registerCurrentNoteListener(noteId: String) {
+        noteRepo.registerCurrentNoteListener(noteId)
+    }
+
+    fun removeCurrentNoteListener() {
+        noteRepo.removeCurrentNoteListener()
     }
 
     suspend fun refreshNotesIfEmpty(): Boolean {
@@ -129,7 +134,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun addNewChecklist(noteId: String, checklist: Checklist = Checklist()): Boolean {
+    suspend fun addNewChecklist(noteId: String, checklist: Checklist = Checklist()): Boolean {
         return try {
             noteRepo.addNewChecklist(noteId, checklist)
             true
@@ -139,7 +144,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun deleteChecklist(noteId: String, checklistId: String): Boolean {
+    suspend fun deleteChecklist(noteId: String, checklistId: String): Boolean {
         return try {
             noteRepo.deleteChecklist(noteId, checklistId)
             true
@@ -149,7 +154,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun updateChecklistName(noteId: String, checklistId: String, name: String): Boolean {
+    suspend fun updateChecklistName(noteId: String, checklistId: String, name: String): Boolean {
         return try {
             noteRepo.updateChecklistName(noteId, checklistId, name)
             true
@@ -159,7 +164,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun addNewTask(noteId: String, checklistId: String, task: Task): Boolean {
+    suspend fun addNewTask(noteId: String, checklistId: String, task: Task): Boolean {
         return try {
             noteRepo.addNewTask(noteId, checklistId, task)
             true
@@ -169,7 +174,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun deleteTask(noteId: String, checklistId: String, taskId: String): Boolean {
+    suspend fun deleteTask(noteId: String, checklistId: String, taskId: String): Boolean {
         return try {
             noteRepo.deleteTask(noteId, checklistId, taskId)
             true
@@ -179,7 +184,12 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun updateTaskName(noteId: String, checklistId: String, taskId: String, name: String): Boolean {
+    suspend fun updateTaskName(
+        noteId: String,
+        checklistId: String,
+        taskId: String,
+        name: String,
+    ): Boolean {
         return try {
             noteRepo.updateTaskName(noteId, checklistId, taskId, name)
             true
@@ -189,7 +199,7 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    fun updateTaskDone(
+    suspend fun updateTaskDone(
         noteId: String,
         checklistId: String,
         taskId: String,

@@ -36,7 +36,7 @@ import com.apcs.worknestapp.ui.theme.success
 import com.apcs.worknestapp.utils.ColorUtils
 
 @Composable
-fun NoteItem(
+fun BoardNoteItem(
     note: Note,
     board: Board,
     onClick: () -> Unit,

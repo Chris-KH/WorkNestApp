@@ -4,20 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -26,14 +24,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
@@ -42,15 +43,19 @@ import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.onSuccess
 import com.apcs.worknestapp.ui.theme.success
+import kotlinx.coroutines.launch
 
 @Composable
 fun TaskItem(
     task: Task,
-    onChangeTaskName: (String) -> String,
+    onChangeTaskName: suspend (String) -> Boolean,
     onToggleTask: () -> Unit,
     onDeleteTask: () -> Unit,
+    snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
     var taskName by remember(task.name) { mutableStateOf(task.name ?: "") }
     val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
@@ -125,6 +130,30 @@ fun TaskItem(
                     color = MaterialTheme.colorScheme.onBackground
                 ),
                 containerColor = Color.Transparent,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        val initialName = task.name ?: ""
+                        if (taskName != initialName) {
+                            if (taskName.isBlank()) taskName = initialName
+                            else {
+                                coroutineScope.launch {
+                                    val isSuccess = onChangeTaskName(taskName)
+                                    if (!isSuccess) {
+                                        taskName = initialName
+                                        snackbarHost.showSnackbar(
+                                            message = "Update task name failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ),
                 modifier = Modifier
                     .weight(1f)
                     .onFocusChanged { state ->
@@ -132,25 +161,20 @@ fun TaskItem(
                         if (!state.isFocused && taskName != initialName) {
                             if (taskName.isBlank()) taskName = initialName
                             else {
-                                val newName = onChangeTaskName(taskName)
-                                taskName = newName
+                                coroutineScope.launch {
+                                    val isSuccess = onChangeTaskName(taskName)
+                                    if (!isSuccess) {
+                                        taskName = initialName
+                                        snackbarHost.showSnackbar(
+                                            message = "Update task name failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
             )
-            if (taskName.isBlank() || taskName == task.name)
-                Spacer(modifier = Modifier.width(48.dp))
-            else {
-                IconButton(onClick = {
-                    val newName = onChangeTaskName(taskName)
-                    taskName = newName
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                    )
-                }
-            }
         }
     }
 }

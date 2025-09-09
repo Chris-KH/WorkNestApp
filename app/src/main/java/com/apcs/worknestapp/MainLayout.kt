@@ -412,7 +412,7 @@ fun MainLayout(startDestination: String) {
 
                 if (boardId.isNullOrBlank() || notelistId.isNullOrBlank() || noteId.isNullOrBlank()) {
                     FallbackScreen(
-                        message = "Cannot open this note. One or more IDs are missing.",
+                        message = "Board not found",
                         navController = navController,
                         modifier = Modifier.padding(innerPadding)
                     )

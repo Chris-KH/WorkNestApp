@@ -95,9 +95,9 @@ fun HomeMainScreen(
     }
 
     LifecycleResumeEffect(Unit) {
-        boardViewModel.registerBoardListener()
+        boardViewModel.registerBoardsListener()
         onPauseOrDispose {
-            boardViewModel.removeBoardListener()
+            boardViewModel.removeBoardsListener()
         }
     }
 

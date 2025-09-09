@@ -120,6 +120,7 @@ fun NoteScreen(
 
     LaunchedEffect(displayNotes) {
         if (isInSelectMode) {
+            if (displayNotes.isEmpty()) isInSelectMode = false
             selectedNotes.removeAll { noteId ->
                 displayNotes.find { it.docId == noteId } == null
             }
@@ -127,8 +128,8 @@ fun NoteScreen(
     }
 
     LifecycleResumeEffect(Unit) {
-        noteViewModel.registerListener()
-        onPauseOrDispose { noteViewModel.removeListener() }
+        noteViewModel.registerNotesListener()
+        onPauseOrDispose { noteViewModel.removeNotesListener() }
     }
 
     Scaffold(

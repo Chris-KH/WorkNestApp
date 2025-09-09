@@ -90,7 +90,7 @@ fun BoardScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
-    var isFirstLoad by remember { mutableStateOf(true) }
+    var isFirstLoad by rememberSaveable { mutableStateOf(true) }
     val topAppBarColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
     val topAppBarContent = MaterialTheme.colorScheme.onSurface
     var isZoomIn by rememberSaveable { mutableStateOf(true) }
@@ -105,16 +105,17 @@ fun BoardScreen(
     var editableBoardName by remember(board.value?.name) { mutableStateOf(board.value?.name ?: "") }
 
     LaunchedEffect(Unit) {
-        isFirstLoad = true
-        val remoteBoard = boardViewModel.getBoard(boardId)
-        if (remoteBoard == null) {
-            navController.popBackStack()
-            snackbarHost.showSnackbar(
-                message = "Load board failed. Board not founded",
-                withDismissAction = true,
-            )
+        if (isFirstLoad) {
+            val remoteBoard = boardViewModel.getBoard(boardId)
+            if (remoteBoard == null) {
+                navController.popBackStack()
+                snackbarHost.showSnackbar(
+                    message = "Load board failed. Board not founded",
+                    withDismissAction = true,
+                )
+            }
+            isFirstLoad = false
         }
-        isFirstLoad = false
     }
 
     LaunchedEffect(board.value) {
@@ -127,15 +128,9 @@ fun BoardScreen(
     }
 
     LifecycleResumeEffect(boardId) {
-        boardViewModel.registerBoardListener()
-        boardViewModel.registerNoteListListener(boardId)
-        board.value?.noteLists?.forEach { noteList ->
-            noteList.docId?.let { boardViewModel.registerNoteListener(boardId, it) }
-        }
+        boardViewModel.registerCurrentBoardListener(boardId)
         onPauseOrDispose {
-            boardViewModel.removeNoteListener()
-            boardViewModel.removeNoteListListener()
-            boardViewModel.registerBoardListener()
+            boardViewModel.removeCurrentBoardListener()
         }
     }
 

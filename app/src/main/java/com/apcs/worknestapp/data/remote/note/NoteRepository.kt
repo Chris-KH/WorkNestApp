@@ -7,8 +7,10 @@ interface NoteRepository {
     val notes: StateFlow<List<Note>>
     val currentNote: StateFlow<Note?>
 
-    fun removeListener()
-    fun registerListener()
+    fun registerNotesListener()
+    fun removeNotesListener()
+    fun registerCurrentNoteListener(noteId: String)
+    fun removeCurrentNoteListener()
     suspend fun refreshNotes()
     suspend fun getNote(docId: String): Note
     fun addNote(note: Note)
@@ -21,13 +23,13 @@ interface NoteRepository {
     fun archiveCompletedNotes()
 
     //Checklist in note
-    fun addNewChecklist(noteId: String, checklist: Checklist)
-    fun deleteChecklist(noteId: String, checklistId: String)
-    fun updateChecklistName(noteId: String, checklistId: String, name: String)
-    fun addNewTask(noteId: String, checklistId: String, task: Task)
-    fun deleteTask(noteId: String, checklistId: String, taskId: String)
-    fun updateTaskName(noteId: String, checklistId: String, taskId: String, name: String)
-    fun updateTaskDone(noteId: String, checklistId: String, taskId: String, done: Boolean)
+    suspend fun addNewChecklist(noteId: String, checklist: Checklist)
+    suspend fun deleteChecklist(noteId: String, checklistId: String)
+    suspend fun updateChecklistName(noteId: String, checklistId: String, name: String)
+    suspend fun addNewTask(noteId: String, checklistId: String, task: Task)
+    suspend fun deleteTask(noteId: String, checklistId: String, taskId: String)
+    suspend fun updateTaskName(noteId: String, checklistId: String, taskId: String, name: String)
+    suspend fun updateTaskDone(noteId: String, checklistId: String, taskId: String, done: Boolean)
 
     //Update note
     suspend fun updateNoteName(docId: String, name: String)
