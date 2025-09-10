@@ -6,6 +6,7 @@ import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -152,16 +153,24 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             if (snapshot == null) return@addSnapshotListener
             if (snapshot.metadata.isFromCache) return@addSnapshotListener
 
+
             repoScope.launch {
                 val authUser = auth.currentUser ?: return@launch
                 val conservationList = snapshot.documents.mapNotNull { doc ->
                     val cons = doc.toObject(Conservation::class.java) ?: return@mapNotNull null
                     val otherUserId = cons.userIds?.firstOrNull { it != authUser.uid }
-                        ?: return@mapNotNull null
+                    if (otherUserId == null) return@mapNotNull null
+                    Log.d("Test", cons.toString())
+                    if (cons.deletedFor != null && cons.deletedFor.contains(authUser.uid)) {
+                        removeMessageListener(doc.id)
+                        messageCache.remove(doc.id)
+                        userListeners[otherUserId]?.remove()
+                        userCache.remove(otherUserId)
+                        return@mapNotNull null
+                    }
 
                     async { cons.withOtherUserData(otherUserId, isCache = true) }
                 }.awaitAll().map { it.copy(messages = messageCache[it.docId] ?: emptyList()) }
-                Log.d("Test", conservationList.toString())
                 _conservations.value = conservationList
             }
         }
@@ -176,7 +185,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
     override fun registerMessageListener(conservationId: String) {
-        auth.currentUser ?: return
+        val authUser = auth.currentUser ?: return
         if (messageListeners.containsKey(conservationId)) return
 
         val listener = firestore.collection("conservations").document(conservationId)
@@ -188,10 +197,12 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                     return@addSnapshotListener
                 }
                 if (snapshot == null) return@addSnapshotListener
+                if (snapshot.metadata.isFromCache) return@addSnapshotListener
                 val messages = (messageCache[conservationId] ?: emptyList()).toMutableList()
 
                 for(change in snapshot.documentChanges) {
                     val msg = change.document.toObject(Message::class.java)
+                    if (msg.deletedFor?.contains(authUser.uid) == true) continue
                     when(change.type) {
                         DocumentChange.Type.ADDED -> {
                             if (messages.any { it.docId == msg.docId }) continue
@@ -211,7 +222,9 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                 }
                 updateMessages(
                     conservationId = conservationId,
-                    messages = messages.sortedByDescending { it.createdAt })
+                    messages = messages.filterNot { msg ->
+                        msg.deletedFor?.contains(authUser.uid) == true
+                    }.sortedByDescending { it.createdAt })
             }
         messageListeners[conservationId] = listener
     }
@@ -239,6 +252,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
             online = userMetadata.online,
         )
         val messages = messageCache[conservation.docId] ?: emptyList()
+        Log.d("Test2", messages.toString())
 
         _conservations.update { list ->
             (list + conservation.copy(
@@ -246,7 +260,6 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                 messages = messages
             )).sortedByDescending { it.lastTime }
         }
-        Log.d("Test", _conservations.value.toString())
 
         userCache[otherUserId] = conservationUserData
         messageCache[conservation.docId] = messages
@@ -291,10 +304,16 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
         val conservationList = coroutineScope {
             conservationSnapshot.documents.mapNotNull { doc ->
-                val cons = doc.toObject(Conservation::class.java)
-                val otherUserId = cons?.userIds?.firstOrNull { it != authUser.uid }
-                    ?: return@mapNotNull null
+                val cons = doc.toObject(Conservation::class.java) ?: return@mapNotNull null
+                val otherUserId = cons.userIds?.firstOrNull { it != authUser.uid }
+                if (otherUserId == null) return@mapNotNull null
 
+                if (cons.deletedFor != null && cons.deletedFor.contains(authUser.uid)) {
+                    messageCache.remove(doc.id)
+                    userListeners[otherUserId]?.remove()
+                    userCache.remove(otherUserId)
+                    return@mapNotNull null
+                }
                 async { cons.withOtherUserData(otherUserId) }
             }.awaitAll()
         }.map { it.copy(messages = messageCache[it.docId] ?: emptyList()) }
@@ -303,20 +322,32 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
     override suspend fun deleteConservation(docId: String) {
-        auth.currentUser ?: throw Exception("User not logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        firestore.collection("conservations").document(docId).delete().await()
+        val conservationRef = firestore.collection("conservations").document(docId)
+        val messagesRef =
+            firestore.collection("conservations").document(docId).collection("messages")
+
+        removeMessageListener(docId)
+        val currentMessages = messageCache[docId]
+        messageCache.remove(docId)
+
+        firestore.runTransaction { transaction ->
+            currentMessages?.forEach { message ->
+                val messageId = message.docId
+                if (messageId != null) transaction.update(
+                    messagesRef.document(messageId),
+                    "deletedFor",
+                    FieldValue.arrayUnion(authUser.uid)
+                )
+            }
+            transaction.update(conservationRef, "deletedFor", FieldValue.arrayUnion(authUser.uid))
+        }.await()
 
         _conservations.update { list -> list.filterNot { it.docId == docId } }
         if (_currentConservation.value?.docId == docId) {
             _currentConservation.value = null
         }
-
-        userCache.remove(docId)
-        userListeners[docId]?.remove()
-        userListeners.remove(docId)
-        messageCache.remove(docId)
-        removeMessageListener(docId)
     }
 
     override suspend fun updateConservationSeen(docId: String, state: Boolean) {
@@ -341,7 +372,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                     } else it
                 }
             }
-        }
+        }.await()
     }
 
     override suspend fun loadNewMessages(conservationId: String) {
@@ -393,41 +424,23 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                     isSending = false,
                     isSentSuccess = true,
                 )
-                val conservationSnapshot = transaction.get(conservationRef)
-                if (conservationSnapshot.exists()) {
-                    transaction.update(
-                        conservationRef, mapOf(
-                            "sender" to firestore.collection("users").document(authUser.uid),
-                            "lastTime" to Timestamp.now(),
-                            "lastContent" to when(sentMessage.type) {
-                                MessageType.TEXT.name -> sentMessage.content ?: ""
-                                MessageType.IMAGE.name -> "{Someone} has sent a image"
-                                MessageType.VIDEO.name -> "{Someone} has sent a video"
-                                MessageType.VOICE.name -> "{Someone} has sent a voice"
-                                else -> ""
-                            },
-                            "senderSeen" to true,
-                            "receiverSeen" to false
-                        )
+                transaction.set(
+                    conservationRef, mapOf(
+                        "userIds" to conservation.userIds,
+                        "sender" to firestore.collection("users").document(authUser.uid),
+                        "lastTime" to Timestamp.now(),
+                        "lastContent" to when(sentMessage.type) {
+                            MessageType.TEXT.name -> sentMessage.content ?: ""
+                            MessageType.IMAGE.name -> "{Someone} has sent a image"
+                            MessageType.VIDEO.name -> "{Someone} has sent a video"
+                            MessageType.VOICE.name -> "{Someone} has sent a voice"
+                            else -> ""
+                        },
+                        "senderSeen" to true,
+                        "receiverSeen" to false,
+                        "deletedFor" to FieldValue.arrayRemove(authUser.uid)
                     )
-                } else {
-                    transaction.set(
-                        conservationRef, mapOf(
-                            "userIds" to conservation.userIds,
-                            "sender" to firestore.collection("users").document(authUser.uid),
-                            "lastTime" to Timestamp.now(),
-                            "lastContent" to when(sentMessage.type) {
-                                MessageType.TEXT.name -> sentMessage.content ?: ""
-                                MessageType.IMAGE.name -> "{Someone} has sent a image"
-                                MessageType.VIDEO.name -> "{Someone} has sent a video"
-                                MessageType.VOICE.name -> "{Someone} has sent a voice"
-                                else -> ""
-                            },
-                            "senderSeen" to true,
-                            "receiverSeen" to false
-                        )
-                    )
-                }
+                )
 
                 transaction.set(
                     messageRef,
@@ -475,30 +488,13 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         }
     }
 
+
     override suspend fun deleteMessage(conservationId: String, messageId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
         val conservationRef = firestore.collection("conservations").document(conservationId)
         val messageRef = conservationRef.collection("messages").document(messageId)
 
-        firestore.runTransaction { transaction ->
-            val messageSnapshot = transaction.get(messageRef)
-            if (!messageSnapshot.exists()) throw Exception("Message does not exists")
-
-            transaction.update(
-                messageRef, mapOf(
-                    "deleteBy" to firestore.collection("users").document(authUser.uid),
-                    "content" to "Message is deleted",
-                    "type" to MessageType.DELETED.name
-                )
-            )
-
-            transaction.update(
-                conservationRef, mapOf(
-                    "sender" to firestore.collection("users").document(authUser.uid),
-                    "lastContent" to "{Someone} has removed message",
-                )
-            )
-        }.await()
+        messageRef.update("deleteFor", FieldValue.arrayUnion(authUser.uid)).await()
     }
 
     override fun clearCache() {

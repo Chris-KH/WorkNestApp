@@ -142,7 +142,21 @@ fun ContactSubScreen(
                                         messageViewModel.updateConservationSeen(it.docId, state)
                                     }
                                 },
-                                onDelete = {},
+                                onDelete = {
+                                    val conservationId = it.docId
+                                    if (conservationId != null) {
+                                        coroutineScope.launch {
+                                            val isSuccess =
+                                                messageViewModel.deleteConservation(conservationId)
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Delete conservation failed",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        }
+                                    }
+                                },
                                 onClick = {
                                     val conservationId = it.docId
                                     messageViewModel.getConservation(docId = conservationId)

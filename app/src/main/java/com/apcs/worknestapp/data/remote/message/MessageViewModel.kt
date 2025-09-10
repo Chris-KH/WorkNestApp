@@ -94,6 +94,16 @@ class MessageViewModel @Inject constructor(
         }
     }
 
+    suspend fun deleteConservation(conservationId: String): Boolean {
+        return try {
+            messageRepo.deleteConservation(conservationId)
+            true
+        } catch(e: Exception) {
+            Log.e("MessageViewModel", "Delete conservation failed", e)
+            false
+        }
+    }
+
     fun sendMessage(conservationId: String, message: Message) {
         viewModelScope.launch {
             try {

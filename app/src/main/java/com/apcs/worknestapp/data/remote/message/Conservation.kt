@@ -14,6 +14,7 @@ data class Conservation(
     val lastTime: Timestamp? = null,
     val senderSeen: Boolean? = null,
     val receiverSeen: Boolean? = null,
+    val deletedFor: List<String>? = null,
 
     //Additional data
     @get:Exclude val isTemporary: Boolean = false,
