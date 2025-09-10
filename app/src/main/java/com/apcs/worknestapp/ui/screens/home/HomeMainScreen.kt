@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,8 +47,11 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
+import com.apcs.worknestapp.data.remote.note.Note
+import com.apcs.worknestapp.data.remote.note.NoteViewModel
 import com.apcs.worknestapp.ui.components.inputfield.SearchInput
 import com.apcs.worknestapp.ui.theme.Roboto
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -62,6 +66,7 @@ fun HomeMainScreen(
     snackbarHost: SnackbarHostState,
     modifier: Modifier = Modifier,
     onNavigateToWorkspace: () -> Unit,
+    noteViewModel: NoteViewModel = hiltViewModel(),
     boardViewModel: BoardViewModel = hiltViewModel(),
 ) {
     val focusManager = LocalFocusManager.current
@@ -132,12 +137,24 @@ fun HomeMainScreen(
                 }
 
                 item(key = "QuickAdd") {
-                    var noteValue by remember { mutableStateOf("") }
+                    var noteName by rememberSaveable { mutableStateOf("") }
                     QuickAddNoteInput(
-                        value = noteValue,
-                        onValueChange = { noteValue = it },
+                        value = noteName,
+                        onValueChange = { noteName = it },
                         onCancel = { focusManager.clearFocus() },
-                        onAdd = {},
+                        onAdd = {
+                            if (noteName.isNotBlank()) {
+                                val name = noteName
+                                noteName = ""
+                                noteViewModel.addNote(
+                                    Note(
+                                        name = name, description = "", cover = null,
+                                        completed = false, archived = false, isLoading = true,
+                                        createdAt = Timestamp.now()
+                                    )
+                                )
+                            }
+                        },
                         interactionSource = remember { MutableInteractionSource() },
                         modifier = Modifier
                             .fillMaxWidth()

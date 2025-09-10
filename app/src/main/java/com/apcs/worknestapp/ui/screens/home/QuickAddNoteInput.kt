@@ -46,9 +46,7 @@ fun QuickAddNoteInput(
 ) {
     val isFocused by interactionSource.collectIsFocusedAsState()
 
-    Column(
-        modifier = modifier,
-    ) {
+    Column(modifier = modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -120,7 +118,7 @@ fun QuickAddNoteInput(
                 ),
                 placeholder = {
                     Text(
-                        text = "Add card",
+                        text = "Add note",
                         fontSize = 14.sp,
                         lineHeight = 14.sp,
                         fontWeight = FontWeight.Normal,
