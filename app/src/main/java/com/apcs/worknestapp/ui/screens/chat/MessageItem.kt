@@ -8,11 +8,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
@@ -42,11 +47,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.Conservation
 import com.apcs.worknestapp.data.remote.message.Message
+import com.apcs.worknestapp.data.remote.message.MessageType
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.apcs.worknestapp.ui.components.RotatingIcon
@@ -111,30 +118,57 @@ fun MessageItem(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                     }
-                    Box(
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                color = if (isMyMessage) MaterialTheme.colorScheme.secondaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                shape = RoundedCornerShape(10.dp)
+
+                    if (message.type == MessageType.TEXT.name) {
+                        Box(
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    color = if (isMyMessage) MaterialTheme.colorScheme.secondaryContainer
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .combinedClickable(
+                                    onClick = { isShowDate = !isShowDate },
+                                    onLongClick = {},
+                                )
+                                .padding(vertical = 12.dp, horizontal = 14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = message.content ?: "Hehe",
+                                fontSize = 14.sp,
+                                lineHeight = 15.sp,
+                                fontFamily = Roboto,
+                                fontWeight = FontWeight.Normal,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
-                            .combinedClickable(
-                                onClick = { isShowDate = !isShowDate },
-                                onLongClick = {},
+                        }
+                    } else if (message.type == MessageType.IMAGE.name) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .aspectRatio(1f)
+                                .padding(vertical = 12.dp),
+                        ) {
+                            //TODO như cứt
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(message.content)
+                                    .crossfade(true)
+                                    .build(),
+                                placeholder = painterResource(R.drawable.fade_image_fallback),
+                                error = painterResource(R.drawable.fade_image_fallback),
+                                contentDescription = "Image",
+                                contentScale = ContentScale.Fit,
+                                filterQuality = FilterQuality.Medium,
+                                modifier = Modifier
+
                             )
-                            .padding(vertical = 12.dp, horizontal = 14.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = message.content ?: "Hehe",
-                            fontSize = 14.sp,
-                            lineHeight = 15.sp,
-                            fontFamily = Roboto,
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
+                        }
+                    } else if (message.type == MessageType.VOICE.name) {
+                        //TODO here
                     }
                 }
 

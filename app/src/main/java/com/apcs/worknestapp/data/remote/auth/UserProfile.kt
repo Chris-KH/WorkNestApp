@@ -15,5 +15,6 @@ data class UserProfile(
     val bio: String? = null,
     val pronouns: String? = null,
     val online: Boolean? = null,
+    val deletedConservations: List<String>? = null,
     @ServerTimestamp val createdAt: Timestamp? = null,
 )

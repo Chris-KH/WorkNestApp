@@ -120,28 +120,29 @@ fun ConservationItem(
                     showDropdown = false
                 },
             )
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = if (isPin) "Unpin" else "Pin",
-                        style = dropdownTextStyle,
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(
-                            if (isPin) R.drawable.outline_unpin
-                            else R.drawable.outline_pin
-                        ),
-                        contentDescription = if (isPin) "Unpin" else "Pin",
-                        modifier = Modifier.size(24.dp)
-                    )
-                },
-                onClick = {
-                    //TODO: Future feature, but not now:))
-                    showDropdown = false
-                },
-            )
+            //TODO
+//            DropdownMenuItem(
+//                text = {
+//                    Text(
+//                        text = if (isPin) "Unpin" else "Pin",
+//                        style = dropdownTextStyle,
+//                    )
+//                },
+//                leadingIcon = {
+//                    Icon(
+//                        painter = painterResource(
+//                            if (isPin) R.drawable.outline_unpin
+//                            else R.drawable.outline_pin
+//                        ),
+//                        contentDescription = if (isPin) "Unpin" else "Pin",
+//                        modifier = Modifier.size(24.dp)
+//                    )
+//                },
+//                onClick = {
+//                    //TODO: Future feature, but not now:))
+//                    showDropdown = false
+//                },
+//            )
             DropdownMenuItem(
                 text = {
                     Text(
