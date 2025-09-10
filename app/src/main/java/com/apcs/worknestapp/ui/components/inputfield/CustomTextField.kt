@@ -71,9 +71,25 @@ fun CustomTextField(
     var isFocused by remember { mutableStateOf(false) }
 
     Row(
-        modifier = modifier,
+        modifier = modifier
+            .let {
+                if (border != null) return@let it.border(
+                    border = border,
+                    shape = shape
+                )
+                return@let it
+            }
+            .background(
+                color = containerColor,
+                shape = shape,
+            )
+            .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (leadingIcon != null) {
+            leadingIcon()
+            Spacer(modifier = Modifier.width(8.dp))
+        }
         BasicTextField(
             value = value,
             onValueChange = { onValueChange(it) },
@@ -88,29 +104,13 @@ fun CustomTextField(
             cursorBrush = cursorBrush,
             modifier = Modifier
                 .onFocusChanged { isFocused = it.isFocused }
-                .weight(1f)
-                .let {
-                    if (border != null) return@let it.border(
-                        border = border,
-                        shape = shape
-                    )
-                    return@let it
-                }
-                .background(
-                    color = containerColor,
-                    shape = shape,
-                ),
+                .weight(1f),
         ) { innerTextField ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(contentPadding)
             ) {
-                if (leadingIcon != null) {
-                    leadingIcon()
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
                 Box(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.TopStart
@@ -129,13 +129,12 @@ fun CustomTextField(
                     }
                     if (value.text.isEmpty() && placeholder != null) placeholder()
                 }
-                if (trailingIcon != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    trailingIcon()
-                }
             }
         }
-
+        if (trailingIcon != null) {
+            Spacer(modifier = Modifier.width(8.dp))
+            trailingIcon()
+        }
     }
 }
 

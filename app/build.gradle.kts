@@ -101,6 +101,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
 
+    //Emoji
+    implementation(libs.androidx.emoji2.emojipicker)
+    implementation(libs.androidx.compose.material.icons.extended)
+
     //Default
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

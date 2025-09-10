@@ -6,15 +6,18 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,19 +36,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -76,7 +76,7 @@ import com.apcs.worknestapp.ui.theme.success
 import com.google.firebase.auth.FirebaseAuth
 import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ChatScreen(
     conservationId: String,
@@ -86,12 +86,9 @@ fun ChatScreen(
     messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
     val authId = FirebaseAuth.getInstance().currentUser?.uid
-
     val focusManager = LocalFocusManager.current
-    val coroutineScope = rememberCoroutineScope()
 
     val conservation = messageViewModel.currentConservation.collectAsState()
-    var chatFocused by remember { mutableStateOf(false) }
     var textMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -250,7 +247,6 @@ fun ChatScreen(
 
                         val showDate = when {
                             idx + 1 == messages.size -> true
-
                             nextCreatedAt != null -> {
                                 val diffMinutes = (currentCreatedAt - nextCreatedAt) / (1000 * 60)
                                 diffMinutes >= 30
@@ -267,10 +263,8 @@ fun ChatScreen(
                             isLastMessage = idx == 0,
                             modifier = Modifier,
                         )
-                        if (idx + 1 < messages.size) {
-                            if (mes.sender?.id != messages[idx + 1].sender?.id) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                            }
+                        if (idx + 1 < messages.size && mes.sender?.id != messages[idx + 1].sender?.id) {
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
@@ -280,7 +274,7 @@ fun ChatScreen(
                     onSend = {
                         if (textMessage.isNotBlank()) {
                             val message = Message(
-                                content = textMessage,
+                                content = textMessage.trim(),
                                 type = MessageType.TEXT.name
                             )
                             textMessage = ""
@@ -288,10 +282,9 @@ fun ChatScreen(
                         }
                     },
                     modifier = Modifier
-                        .onFocusChanged { chatFocused = it.isFocused }
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .background(MaterialTheme.colorScheme.surface)
                         .let {
-                            if (chatFocused) return@let it
+                            if (WindowInsets.isImeVisible) return@let it
                             return@let it.padding(bottom = innerPadding.calculateBottomPadding())
                         }
                 )
