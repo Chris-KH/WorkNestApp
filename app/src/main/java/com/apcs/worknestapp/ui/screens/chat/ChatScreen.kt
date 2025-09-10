@@ -41,6 +41,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,6 +75,8 @@ import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -87,23 +90,22 @@ fun ChatScreen(
 ) {
     val authId = FirebaseAuth.getInstance().currentUser?.uid
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
 
     val conservation = messageViewModel.currentConservation.collectAsState()
     var textMessage by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        messageViewModel.getConservation(docId = conservationId)
-        messageViewModel.registerMessageListener(conservationId)
-        messageViewModel.updateConservationSeen(conservationId, true)
-    }
-
     LifecycleResumeEffect(Unit) {
-        messageViewModel.getConservation(docId = conservationId)
-        messageViewModel.registerMessageListener(conservationId)
+        messageViewModel.registerCurrentConservationListener(conservationId)
 
         onPauseOrDispose {
-            messageViewModel.removeMessageListener(conservationId)
+            messageViewModel.removeCurrentConservationListener()
         }
+    }
+
+    LaunchedEffect(Unit) {
+        messageViewModel.getConservation(docId = conservationId)
+        messageViewModel.updateConservationSeen(conservationId, true)
     }
 
     Scaffold(
@@ -261,6 +263,22 @@ fun ChatScreen(
                             isMyMessage = mes.sender?.id == authId,
                             showSentDate = showDate,
                             isLastMessage = idx == 0,
+                            onDeleteMessage = { isForMe ->
+                                val messageId = mes.docId
+                                if (messageId != null) {
+                                    coroutineScope.launch {
+                                        val isSuccess = messageViewModel.deleteMessage(
+                                            conservationId, messageId, isForMe
+                                        )
+                                        if (!isSuccess) {
+                                            snackbarHost.showSnackbar(
+                                                message = "Delete message failed",
+                                                withDismissAction = true,
+                                            )
+                                        }
+                                    }
+                                }
+                            },
                             modifier = Modifier,
                         )
                         if (idx + 1 < messages.size && mes.sender?.id != messages[idx + 1].sender?.id) {

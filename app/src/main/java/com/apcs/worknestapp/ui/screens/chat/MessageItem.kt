@@ -1,19 +1,16 @@
 package com.apcs.worknestapp.ui.screens.chat
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,8 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,7 +47,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apcs.worknestapp.R
@@ -66,9 +65,11 @@ fun MessageItem(
     isMyMessage: Boolean,
     showSentDate: Boolean,
     isLastMessage: Boolean,
+    onDeleteMessage: (isForMe: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isShowDate by remember { mutableStateOf(false) }
+    var showDropdown by remember { mutableStateOf(false) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -131,7 +132,7 @@ fun MessageItem(
                                 )
                                 .combinedClickable(
                                     onClick = { isShowDate = !isShowDate },
-                                    onLongClick = {},
+                                    onLongClick = { showDropdown = true },
                                 )
                                 .padding(vertical = 12.dp, horizontal = 14.dp),
                             contentAlignment = Alignment.Center
@@ -144,6 +145,63 @@ fun MessageItem(
                                 fontWeight = FontWeight.Normal,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
+                            DropdownMenu(
+                                expanded = showDropdown,
+                                onDismissRequest = { showDropdown = false },
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.widthIn(min = 200.dp)
+                            ) {
+                                val dropdownTextStyle = TextStyle(
+                                    fontSize = 14.sp, lineHeight = 14.sp,
+                                    fontFamily = Roboto, fontWeight = FontWeight.Normal,
+                                )
+                                val horizontalPadding = 16.dp
+                                val iconSize = 24.dp
+                                DropdownMenuItem(
+                                    colors = MenuDefaults.itemColors(
+                                        textColor = MaterialTheme.colorScheme.error,
+                                        trailingIconColor = MaterialTheme.colorScheme.error,
+                                    ),
+                                    text = {
+                                        Text(text = "Delete for me", style = dropdownTextStyle)
+                                    },
+                                    onClick = {
+                                        onDeleteMessage(true)
+                                    },
+                                    trailingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.outline_trash),
+                                            contentDescription = "Delete message",
+                                            modifier = Modifier.size(iconSize),
+                                        )
+                                    },
+                                    contentPadding = PaddingValues(horizontal = horizontalPadding)
+                                )
+                                DropdownMenuItem(
+                                    colors = MenuDefaults.itemColors(
+                                        textColor = MaterialTheme.colorScheme.error,
+                                        trailingIconColor = MaterialTheme.colorScheme.error,
+                                    ),
+                                    text = {
+                                        Text(
+                                            text = "Delete for everyone",
+                                            style = dropdownTextStyle
+                                        )
+                                    },
+                                    onClick = {
+                                        onDeleteMessage(false)
+                                    },
+                                    trailingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.outline_trash),
+                                            contentDescription = "Delete message",
+                                            modifier = Modifier.size(iconSize),
+                                        )
+                                    },
+                                    contentPadding = PaddingValues(horizontal = horizontalPadding)
+                                )
+                            }
                         }
                     } else if (message.type == MessageType.IMAGE.name) {
                         Box(

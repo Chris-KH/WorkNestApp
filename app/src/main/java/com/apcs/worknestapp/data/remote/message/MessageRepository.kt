@@ -9,8 +9,8 @@ interface MessageRepository {
 
     fun registerConservationListener()
     fun removeConservationListener()
-    fun registerMessageListener(conservationId: String)
-    fun removeMessageListener(conservationId: String)
+    fun registerCurrentConservationListener(conservationId: String)
+    fun removeCurrentConservationListener()
     fun getConservation(docId: String?): Conservation?
     fun getConservationWith(userId: String): Conservation?
     fun createConservation(conservation: Conservation, userMetadata: User)
@@ -19,6 +19,6 @@ interface MessageRepository {
     suspend fun updateConservationSeen(docId: String, state: Boolean)
     suspend fun loadNewMessages(conservationId: String)
     suspend fun sendMessage(conservationId: String, message: Message)
-    suspend fun deleteMessage(conservationId: String, messageId: String)
+    suspend fun deleteMessage(conservationId: String, messageId: String, isForMe: Boolean)
     fun clearCache()
 }

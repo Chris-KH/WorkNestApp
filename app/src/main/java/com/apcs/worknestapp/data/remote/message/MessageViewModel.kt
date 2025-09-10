@@ -76,12 +76,12 @@ class MessageViewModel @Inject constructor(
         messageRepo.removeConservationListener()
     }
 
-    fun registerMessageListener(conservationId: String) {
-        messageRepo.registerMessageListener(conservationId)
+    fun registerCurrentConservationListener(conservationId: String) {
+        messageRepo.registerCurrentConservationListener(conservationId)
     }
 
-    fun removeMessageListener(conservationId: String) {
-        messageRepo.removeMessageListener(conservationId)
+    fun removeCurrentConservationListener() {
+        messageRepo.removeCurrentConservationListener()
     }
 
     suspend fun loadNewMessages(conservationId: String): Boolean {
@@ -111,6 +111,20 @@ class MessageViewModel @Inject constructor(
             } catch(e: Exception) {
                 Log.e("MessageViewModel", "Send message failed", e)
             }
+        }
+    }
+
+    suspend fun deleteMessage(
+        conservationId: String,
+        messageId: String,
+        isForMe: Boolean,
+    ): Boolean {
+        return try {
+            messageRepo.deleteMessage(conservationId, messageId, isForMe)
+            true
+        } catch(e: Exception) {
+            Log.e("MessageViewModel", "Delete message failed", e)
+            false
         }
     }
 }

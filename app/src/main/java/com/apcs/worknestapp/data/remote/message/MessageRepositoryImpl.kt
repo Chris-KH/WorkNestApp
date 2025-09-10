@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import kotlin.collections.set
 
 class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     private val auth = FirebaseAuth.getInstance()
@@ -35,19 +36,20 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
     private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + errorHandler)
 
+    private val _conservations = MutableStateFlow(emptyList<Conservation>())
+    override val conservations: StateFlow<List<Conservation>> = _conservations.asStateFlow()
     private var conservationsListener: ListenerRegistration? = null
 
     private val userCache = mutableMapOf<String, ConservationUserData>()
     private val userListeners = mutableMapOf<String, ListenerRegistration>()
 
     private val messageCache = mutableMapOf<String, List<Message>>()
-    private val messageListeners = mutableMapOf<String, ListenerRegistration>()
-
-    private val _conservations = MutableStateFlow(emptyList<Conservation>())
-    override val conservations: StateFlow<List<Conservation>> = _conservations.asStateFlow()
 
     private val _currentConservation = MutableStateFlow<Conservation?>(null)
     override val currentConservation: StateFlow<Conservation?> = _currentConservation.asStateFlow()
+    private var currentConservationsListener: ListenerRegistration? = null
+    private var messageListener: ListenerRegistration? = null
+
 
     init {
         auth.addAuthStateListener {
@@ -87,14 +89,19 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         userListeners[otherUserId] = listener
     }
 
+    private fun unObserveUser(otherUserId: String) {
+        userListeners[otherUserId]?.remove()
+        userListeners.remove(otherUserId)
+    }
+
     private suspend fun Conservation.withOtherUserData(
         otherUserId: String,
         isCache: Boolean = false,
     ): Conservation {
         if (isCache) {
             val cached = userCache[otherUserId]
+            observeUser(otherUserId)
             if (cached != null) {
-                observeUser(otherUserId)
                 return copy(userData = cached)
             }
         }
@@ -127,13 +134,10 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         messages: List<Message>,
     ) {
         messageCache[conservationId] = messages
-        _conservations.update { list ->
-            list.map { if (it.docId == conservationId) it.copy(messages = messages) else it }
-        }
         if (_currentConservation.value?.docId == conservationId) {
-            _currentConservation.value = _conservations.value.find {
-                it.docId == conservationId
-            }?.copy(messages = messages)
+            _currentConservation.update { conservation ->
+                conservation?.copy(messages = messages)
+            }
         }
     }
 
@@ -151,8 +155,6 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                 return@addSnapshotListener
             }
             if (snapshot == null) return@addSnapshotListener
-            if (snapshot.metadata.isFromCache) return@addSnapshotListener
-
 
             repoScope.launch {
                 val authUser = auth.currentUser ?: return@launch
@@ -162,9 +164,8 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                     if (otherUserId == null) return@mapNotNull null
                     Log.d("Test", cons.toString())
                     if (cons.deletedFor != null && cons.deletedFor.contains(authUser.uid)) {
-                        removeMessageListener(doc.id)
                         messageCache.remove(doc.id)
-                        userListeners[otherUserId]?.remove()
+                        unObserveUser(otherUserId)
                         userCache.remove(otherUserId)
                         return@mapNotNull null
                     }
@@ -184,25 +185,35 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         userListeners.clear()
     }
 
-    override fun registerMessageListener(conservationId: String) {
-        val authUser = auth.currentUser ?: return
-        if (messageListeners.containsKey(conservationId)) return
+    override fun registerCurrentConservationListener(conservationId: String) {
+        val authUser = auth.currentUser
+        if (authUser == null) {
+            removeCurrentConservationListener()
+            return
+        }
+        removeCurrentConservationListener()
 
-        val listener = firestore.collection("conservations").document(conservationId)
+        val conservationRef = firestore.collection("conservations").document(conservationId)
+
+        currentConservationsListener = null
+
+        messageListener = conservationRef
             .collection("messages")
             .orderBy("createdAt", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
+                val currentConservationId = _currentConservation.value?.docId
+                if (currentConservationId == null) return@addSnapshotListener
+
                 if (error != null) {
                     Log.e("MessageRepository", "Listen messages snapshot failed", error)
                     return@addSnapshotListener
                 }
+
                 if (snapshot == null) return@addSnapshotListener
-                if (snapshot.metadata.isFromCache) return@addSnapshotListener
                 val messages = (messageCache[conservationId] ?: emptyList()).toMutableList()
 
                 for(change in snapshot.documentChanges) {
                     val msg = change.document.toObject(Message::class.java)
-                    if (msg.deletedFor?.contains(authUser.uid) == true) continue
                     when(change.type) {
                         DocumentChange.Type.ADDED -> {
                             if (messages.any { it.docId == msg.docId }) continue
@@ -226,12 +237,13 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                         msg.deletedFor?.contains(authUser.uid) == true
                     }.sortedByDescending { it.createdAt })
             }
-        messageListeners[conservationId] = listener
     }
 
-    override fun removeMessageListener(conservationId: String) {
-        messageListeners[conservationId]?.remove()
-        messageListeners.remove(conservationId)
+    override fun removeCurrentConservationListener() {
+        messageListener?.remove()
+        messageListener = null
+        currentConservationsListener?.remove()
+        currentConservationsListener = null
     }
 
     override fun createConservation(conservation: Conservation, userMetadata: User) {
@@ -266,14 +278,16 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
     override fun getConservation(docId: String?): Conservation? {
-        auth.currentUser ?: throw Exception("User not logged in")
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
         if (docId == null) {
-            messageListeners[_currentConservation.value?.docId]?.remove()
+            removeCurrentConservationListener()
             _currentConservation.value = null
             return null
         } else {
             val conservation = _conservations.value.find { it.docId == docId }
                 ?: throw Exception("This conservation does not exist")
+            val otherUserId = conservation.userIds?.firstOrNull { it != authUser.uid }
+            if (otherUserId != null) observeUser(otherUserId)
             val result = conservation.copy(messages = messageCache[docId] ?: emptyList())
 
             _currentConservation.value = result
@@ -286,6 +300,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         val conservation = _conservations.value.find {
             it.userIds?.containsAll(listOf(authUser.uid, userId)) == true
         } ?: throw Exception("This conservation does not exist")
+        observeUser(userId)
         val result = conservation.copy(messages = messageCache[conservation.docId] ?: emptyList())
 
         _currentConservation.value = result
@@ -310,7 +325,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
                 if (cons.deletedFor != null && cons.deletedFor.contains(authUser.uid)) {
                     messageCache.remove(doc.id)
-                    userListeners[otherUserId]?.remove()
+                    unObserveUser(otherUserId)
                     userCache.remove(otherUserId)
                     return@mapNotNull null
                 }
@@ -328,7 +343,6 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         val messagesRef =
             firestore.collection("conservations").document(docId).collection("messages")
 
-        removeMessageListener(docId)
         val currentMessages = messageCache[docId]
         messageCache.remove(docId)
 
@@ -345,9 +359,6 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         }.await()
 
         _conservations.update { list -> list.filterNot { it.docId == docId } }
-        if (_currentConservation.value?.docId == docId) {
-            _currentConservation.value = null
-        }
     }
 
     override suspend fun updateConservationSeen(docId: String, state: Boolean) {
@@ -489,23 +500,49 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
     }
 
 
-    override suspend fun deleteMessage(conservationId: String, messageId: String) {
+    override suspend fun deleteMessage(
+        conservationId: String,
+        messageId: String,
+        isForMe: Boolean,
+    ) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
         val conservationRef = firestore.collection("conservations").document(conservationId)
         val messageRef = conservationRef.collection("messages").document(messageId)
 
-        messageRef.update("deleteFor", FieldValue.arrayUnion(authUser.uid)).await()
+        if (isForMe) {
+            messageRef.update("deleteFor", FieldValue.arrayUnion(authUser.uid)).await()
+        } else {
+            firestore.runTransaction { transaction ->
+                val conservationSnapshot = transaction.get(conservationRef)
+                if (!conservationSnapshot.exists()) {
+                    throw Exception("Conservation not found")
+                }
+                val conservation = conservationSnapshot.toObject(Conservation::class.java)
+                    ?: throw Exception("Invalid conservation data")
+                if (conservation.userIds != null) {
+                    transaction.update(
+                        messageRef,
+                        "deleteFor",
+                        FieldValue.arrayUnion(conservation.userIds)
+                    )
+                }
+            }
+        }
+        if (_currentConservation.value?.docId == conservationId) {
+            _currentConservation.update { conservation ->
+                conservation?.copy(
+                    messages = conservation.messages.filterNot { it.docId == messageId }
+                )
+            }
+        }
     }
 
     override fun clearCache() {
         repoScope.coroutineContext.cancelChildren()
         removeConservationListener()
+        removeCurrentConservationListener()
         userCache.clear()
-        userListeners.forEach { it.value.remove() }
-        userListeners.clear()
         messageCache.clear()
-        messageListeners.forEach { it.value.remove() }
-        messageListeners.clear()
         _conservations.value = emptyList()
         _currentConservation.value = null
     }
