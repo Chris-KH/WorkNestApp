@@ -836,19 +836,11 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         val noteListRef = boardRef.collection("notelists").document()
 
         try {
-            firestore.runTransaction { transaction ->
-                val boardSnapshot = transaction.get(boardRef)
-                if (!boardSnapshot.exists()) {
-                    boardNotFound(boardId)
-                    throw Exception("Board not found")
-                }
-
-                val noteListId = noteListRef.id
-                val newNoteList = noteList.copy(
-                    docId = noteListId, createdAt = Timestamp.now()
-                )
-                transaction.set(noteListRef, newNoteList)
-            }.await()
+            val noteListId = noteListRef.id
+            val newNoteList = noteList.copy(
+                docId = noteListId, createdAt = Timestamp.now()
+            )
+            noteListRef.set(newNoteList)
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 boardNotFound(boardId)
@@ -910,12 +902,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
 
         try {
             firestore.runTransaction { transaction ->
-                val boardSnapshot = transaction.get(boardRef)
-                if (!boardSnapshot.exists()) {
-                    boardNotFound(boardId)
-                    throw Exception("Board not found")
-                }
-
                 transaction.update(noteListRef, "name", name)
                 if (_currentBoard.value?.docId == boardId) {
                     _currentBoard.update { board ->
@@ -952,25 +938,28 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         val noteListRef = boardRef.collection("notelists").document(noteListId)
 
         try {
+            val notesSnapshot = noteListRef.collection("notes").get().await()
             firestore.runTransaction { transaction ->
-                val boardSnapshot = transaction.get(boardRef)
-                if (!boardSnapshot.exists()) {
-                    boardNotFound(boardId)
-                    throw Exception("Board not found")
-                }
-
                 transaction.update(noteListRef, "archived", newState)
-                if (_currentBoard.value?.docId == boardId) {
-                    _currentBoard.update { board ->
-                        if (board?.docId == boardId) board.copy(
-                            noteLists = board.noteLists.map { noteList ->
-                                if (noteList.docId == noteListId) noteList.copy(archived = newState)
-                                else noteList
-                            })
-                        else board
-                    }
+
+                for(doc in notesSnapshot.documents) {
+                    transaction.update(doc.reference, "archivedByList", newState)
                 }
             }.await()
+
+            if (_currentBoard.value?.docId == boardId) {
+                _currentBoard.update { board ->
+                    board?.copy(
+                        noteLists = board.noteLists.map { noteList ->
+                            if (noteList.docId == noteListId) noteList.copy(
+                                archived = newState,
+                                notes = noteList.notes.map { it.copy(archivedByList = newState) }
+                            )
+                            else noteList
+                        }
+                    )
+                }
+            }
         } catch(e: FirebaseFirestoreException) {
             if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
                 noteListNotFound(boardId, noteListId)
@@ -1031,12 +1020,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         val noteRef = noteListRef.collection("notes").document(noteId)
 
         try {
-            val boardSnapshot = boardRef.get().await()
-            if (!boardSnapshot.exists()) {
-                boardNotFound(boardId)
-                throw Exception("Board not found")
-            }
-
             noteRef.delete().await()
             noteNotFound(boardId, noteListId, noteId)
         } catch(e: FirebaseFirestoreException) {

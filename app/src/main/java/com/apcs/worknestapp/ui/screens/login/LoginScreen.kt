@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -111,9 +112,8 @@ fun LoginScreen(
                         isLogging = false
                         focusManager.clearFocus()
                         snackbarHost.showSnackbar(
-                            message = "Fail: Login failed",
+                            message = "Login failed: Wrong email/password or missing field",
                             withDismissAction = true,
-                            duration = SnackbarDuration.Short
                         )
                     }
                 )

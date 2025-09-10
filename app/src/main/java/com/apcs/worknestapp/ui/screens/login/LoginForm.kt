@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,9 +21,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.LocalAuthViewModel
@@ -39,6 +46,7 @@ fun LoginForm(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val focusManager = LocalFocusManager.current
     val authViewModel = LocalAuthViewModel.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -51,21 +59,48 @@ fun LoginForm(
     ) {
         EmailInput(
             value = email,
-            onValueChange = {
-                email = it
-            },
+            onValueChange = { email = it },
             enabled = enabled,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            modifier = Modifier
         )
         PasswordInput(
             value = password,
-            onValueChange = {
-                password = it
-            },
+            onValueChange = { password = it },
             enabled = enabled,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    if (email.isNotBlank() && password.isNotBlank()) {
+                        coroutineScope.launch {
+                            onSubmit()
+                            val isSuccess = authViewModel.login(email.trim(), password.trim())
+                            email = ""
+                            password = ""
+
+                            if (isSuccess) onSuccess()
+                            else onFailure()
+                        }
+                    } else {
+                        coroutineScope.launch {
+                            onFailure()
+                        }
+                    }
+                }
+            ),
+            modifier = Modifier
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = {
+                focusManager.clearFocus()
                 if (email.isNotBlank() && password.isNotBlank()) {
                     coroutineScope.launch {
                         onSubmit()
@@ -75,6 +110,10 @@ fun LoginForm(
 
                         if (isSuccess) onSuccess()
                         else onFailure()
+                    }
+                } else {
+                    coroutineScope.launch {
+                        onFailure()
                     }
                 }
             },

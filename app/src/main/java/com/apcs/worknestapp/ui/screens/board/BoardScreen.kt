@@ -286,6 +286,7 @@ fun BoardScreen(
                             showSettingModal = false
                         }
                     },
+                    navController = navController,
                     boardViewModel = boardViewModel,
                 )
             }

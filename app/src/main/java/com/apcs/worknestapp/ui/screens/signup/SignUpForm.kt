@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,8 +24,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.LocalAuthViewModel
@@ -45,6 +51,7 @@ fun SignUpForm(
     onFailure: suspend (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
     val authViewModel = LocalAuthViewModel.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -65,18 +72,9 @@ fun SignUpForm(
     }
 
     fun validData(): Boolean {
-        if (
-            name.isBlank() ||
-            email.isBlank() ||
-            password.isBlank() ||
-            passwordConfirm.isBlank()
-        ) return false
-        if (
-            nameError != null ||
-            emailError != null ||
-            passwordError != null ||
-            passwordConfirmError != null
-        ) return false
+        if (name.isBlank() || email.isBlank() || password.isBlank() || passwordConfirm.isBlank()) return false
+        if (nameError != null || emailError != null || passwordError != null || passwordConfirmError != null)
+            return false
         if (password != passwordConfirm) return false
         return true
     }
@@ -108,6 +106,10 @@ fun SignUpForm(
                     else null
             },
             enabled = enabled,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next,
+            ),
             modifier = Modifier.onFocusChanged { focusState ->
                 if (!focusState.isFocused && !firstMount) {
                     emailError =
@@ -133,6 +135,11 @@ fun SignUpForm(
                     else null
             },
             enabled = enabled,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                capitalization = KeyboardCapitalization.Words
+            ),
             modifier = Modifier.onFocusChanged { focusState ->
                 if (!focusState.isFocused && !firstMount) {
                     nameError =
@@ -158,6 +165,10 @@ fun SignUpForm(
                     else if (!Validator.isStrongPassword(it)) "Password contain spaces or to weak"
                     else null
             },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Next,
+            ),
             modifier = Modifier.onFocusChanged { focusState ->
                 if (!focusState.isFocused && !firstMount) {
                     passwordError =
@@ -183,6 +194,33 @@ fun SignUpForm(
                     else if (it != password) "Confirm password does not match"
                     else null
             },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    if (validData()) {
+                        coroutineScope.launch {
+                            onSubmit()
+                            val message = authViewModel.signUpWithEmailPassword(
+                                email = email,
+                                password = password,
+                                name = name
+                            )
+                            resetField()
+
+                            if (message == null) onSuccess()
+                            else onFailure(message)
+                        }
+                    } else {
+                        coroutineScope.launch {
+                            onFailure("Missing field or data is not valid")
+                        }
+                    }
+                }
+            ),
             modifier = Modifier.onFocusChanged { focusState ->
                 if (!focusState.isFocused && !firstMount) {
                     passwordConfirmError =
@@ -200,6 +238,7 @@ fun SignUpForm(
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = {
+                focusManager.clearFocus()
                 if (validData()) {
                     coroutineScope.launch {
                         onSubmit()
@@ -212,6 +251,11 @@ fun SignUpForm(
 
                         if (message == null) onSuccess()
                         else onFailure(message)
+                    }
+                } else {
+                    coroutineScope.launch {
+                        resetField()
+                        onFailure("Missing field or data is not valid")
                     }
                 }
             },

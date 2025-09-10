@@ -213,50 +213,53 @@ fun BoardNoteDetailScreen(
                             val horizontalPadding = 20.dp
                             val iconSize = 24.dp
 
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = if (note.value?.archived == true) "Restore"
-                                        else "Archive", style = dropdownTextStyle
-                                    )
-                                }, onClick = {
-                                    coroutineScope.launch {
-                                        showDropdownMenu = false
-                                        val isArchived = note.value?.archived == true
-                                        val message = boardViewModel.updateNoteArchive(
-                                            boardId, noteListId, noteId, !isArchived,
+                            if (note.value?.archivedByList != true) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = if (note.value?.archived == true) "Restore"
+                                            else "Archive", style = dropdownTextStyle
                                         )
-                                        if (message != null) {
-                                            snackbarHost.showSnackbar(
-                                                message = message,
-                                                withDismissAction = true,
+                                    },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            showDropdownMenu = false
+                                            val isArchived = note.value?.archived == true
+                                            val message = boardViewModel.updateNoteArchive(
+                                                boardId, noteListId, noteId, !isArchived,
                                             )
-                                        } else {
-                                            snackbarHost.showSnackbar(
-                                                message = "The note was ${
-                                                    if (isArchived) "unarchived"
-                                                    else "archived"
-                                                }",
-                                                withDismissAction = true,
-                                            )
+                                            if (message != null) {
+                                                snackbarHost.showSnackbar(
+                                                    message = message,
+                                                    withDismissAction = true,
+                                                )
+                                            } else {
+                                                snackbarHost.showSnackbar(
+                                                    message = "The note was ${
+                                                        if (isArchived) "unarchived"
+                                                        else "archived"
+                                                    }",
+                                                    withDismissAction = true,
+                                                )
+                                            }
                                         }
-                                    }
-                                }, trailingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.outline_archive),
-                                        contentDescription = "Archive note",
-                                        modifier = Modifier.size(iconSize),
-                                    )
-                                }, contentPadding = PaddingValues(horizontal = horizontalPadding)
-                            )
-                            HorizontalDivider()
+                                    },
+                                    trailingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.outline_archive),
+                                            contentDescription = "Archive note",
+                                            modifier = Modifier.size(iconSize),
+                                        )
+                                    },
+                                    contentPadding = PaddingValues(horizontal = horizontalPadding)
+                                )
+                                HorizontalDivider()
+                            }
                             DropdownMenuItem(
                                 text = {
                                     Text(text = "Delete", style = dropdownTextStyle)
                                 }, onClick = {
                                     showDropdownMenu = false
-
-
                                     coroutineScope.launch {
                                         val message = boardViewModel.removeNoteFromNoteList(
                                             boardId, noteListId, noteId
@@ -468,7 +471,7 @@ fun BoardNoteDetailScreen(
                                 }
                             }
                         }
-                        if (note.value?.archived == true) {
+                        if (note.value?.archived == true || note.value?.archivedByList == true) {
                             item(key = "ArchiveStatus") {
                                 val shape = RoundedCornerShape(15f)
                                 Spacer(modifier = Modifier.height(16.dp))

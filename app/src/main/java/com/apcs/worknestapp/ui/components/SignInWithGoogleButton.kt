@@ -31,7 +31,6 @@ fun SignInWithGoogleButton(
     val context = LocalContext.current
     val googleAuthUiClient = remember { GoogleAuthUiClient(context) }
     val coroutineScope = rememberCoroutineScope()
-
     val isDark = isSystemInDarkTheme()
 
     Button(
@@ -61,7 +60,6 @@ fun SignInWithGoogleButton(
                 else R.drawable.google_sign_in_button_dark,
             ),
             contentDescription = null,
-            modifier = Modifier.height(40.dp)
         )
     }
 }

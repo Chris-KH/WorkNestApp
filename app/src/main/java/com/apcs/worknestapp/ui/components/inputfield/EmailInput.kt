@@ -3,6 +3,8 @@ package com.apcs.worknestapp.ui.components.inputfield
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -26,9 +28,12 @@ fun EmailInput(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isError: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
 ) {
     OutlinedTextField(
         value = value,
+        onValueChange = onValueChange,
         enabled = enabled,
         isError = isError,
         singleLine = true,
@@ -47,7 +52,6 @@ fun EmailInput(
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
         ),
-        onValueChange = onValueChange,
         label = {
             Text(
                 text = "Email",
@@ -64,6 +68,8 @@ fun EmailInput(
             errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
         modifier = modifier.fillMaxWidth()
     )
 }

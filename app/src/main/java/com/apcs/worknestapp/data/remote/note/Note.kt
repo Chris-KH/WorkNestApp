@@ -14,6 +14,7 @@ data class Note(
     val endDate: Timestamp? = null,
     val completed: Boolean? = false,
     val archived: Boolean? = false,
+    val archivedByList: Boolean? = false,
     @ServerTimestamp val createdAt: Timestamp? = null,
 
     //Use-case, not fields of document Note

@@ -49,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.navigation.NavHostController
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
@@ -87,12 +89,13 @@ fun BoardModal(
     board: Board,
     sheetState: SheetState,
     onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
+    navController: NavHostController,
     boardViewModel: BoardViewModel,
+    modifier: Modifier = Modifier,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val modalSnackbarHostState = remember { SnackbarHostState() }
-    var showSubModal by remember { mutableStateOf<BoardSubModal?>(null) }
+    var showSubModal by rememberSaveable { mutableStateOf<BoardSubModal?>(null) }
     var showConfirmDialog by remember { mutableStateOf<ConfirmDialogState?>(null) }
     var isSyncing by remember { mutableStateOf(false) }
     var isBoardMenu by remember { mutableStateOf(true) }
@@ -168,6 +171,7 @@ fun BoardModal(
                 BoardArchiveModal(
                     board = board,
                     onDismissRequest = { showSubModal = null },
+                    navController = navController,
                     boardViewModel = boardViewModel,
                 )
             }

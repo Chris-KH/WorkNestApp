@@ -1,9 +1,9 @@
 package com.apcs.worknestapp.ui.screens.board
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
@@ -47,10 +48,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.navigation.NavHostController
 import com.apcs.worknestapp.data.remote.board.Board
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.ui.components.CustomSnackBar
-import kotlinx.coroutines.delay
+import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -60,6 +62,7 @@ fun BoardArchiveModal(
     board: Board,
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
+    navController: NavHostController,
     boardViewModel: BoardViewModel,
 ) {
     val modalSnackbarHostState = remember { SnackbarHostState() }
@@ -73,6 +76,9 @@ fun BoardArchiveModal(
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val titles = listOf("Notes", "Lists")
     val archivedNoteLists = board.noteLists.filter { it.archived == true }
+    val listHasArchivedNote = board.noteLists.filter { noteList ->
+        noteList.archived == true || noteList.notes.any { it.archived == true }
+    }
 
     // To avoid click spam to unarchive noteList
     val noteListClicked = remember { mutableStateMapOf<String, Boolean>() }
@@ -143,9 +149,66 @@ fun BoardArchiveModal(
                     if (tabIndex == 0) {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(vertical = 12.dp, horizontal = 12.dp)
                         ) {
+                            listHasArchivedNote.forEach { noteList ->
+                                val archivedNotes = if (noteList.archived == true) noteList.notes
+                                else noteList.notes.filter { it.archived == true }
 
+                                items(
+                                    items = archivedNotes,
+                                    key = { note -> note.docId ?: UUID.randomUUID() }
+                                ) { note ->
+                                    BoardNoteItem(
+                                        note = note,
+                                        board = board,
+                                        onClick = {
+                                            val boardId = board.docId ?: ""
+                                            val noteListId = noteList.docId ?: ""
+                                            val noteId = note.docId ?: ""
+                                            navController.navigate(
+                                                Screen.BoardNoteDetail.route + "/$boardId/$noteListId/$noteId"
+                                            ) {
+                                                restoreState = true
+                                            }
+                                        },
+                                        onCheckedChange = {
+                                            val boardId = board.docId
+                                            val noteListId = noteList.docId
+                                            val noteId = note.docId
+                                            if (boardId != null && noteListId != null && noteId != null) {
+                                                coroutineScope.launch {
+                                                    val currentState = note.completed
+                                                    val message =
+                                                        boardViewModel.updateNoteComplete(
+                                                            boardId,
+                                                            noteListId,
+                                                            noteId,
+                                                            currentState != true,
+                                                        )
+                                                    if (message != null) {
+                                                        modalSnackbarHostState.showSnackbar(
+                                                            message = message,
+                                                            withDismissAction = true,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.animateItem()
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "In list: ${noteList.name ?: ""}",
+                                        fontSize = 13.sp,
+                                        lineHeight = 16.sp,
+                                        fontWeight = FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
                         }
                     } else if (tabIndex == 1) {
                         if (archivedNoteLists.isEmpty()) {

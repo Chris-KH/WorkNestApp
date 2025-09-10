@@ -3,6 +3,8 @@ package com.apcs.worknestapp.ui.components.inputfield
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,10 +35,14 @@ fun PasswordInput(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isError: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
 ) {
     var isVisibility by remember { mutableStateOf(false) }
+    
     OutlinedTextField(
         value = value,
+        onValueChange = onValueChange,
         isError = isError,
         enabled = enabled,
         singleLine = true,
@@ -76,7 +82,6 @@ fun PasswordInput(
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
         ),
-        onValueChange = onValueChange,
         label = {
             Text(
                 text = "Password",
@@ -93,6 +98,8 @@ fun PasswordInput(
             errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
         modifier = modifier.fillMaxWidth()
     )
 }

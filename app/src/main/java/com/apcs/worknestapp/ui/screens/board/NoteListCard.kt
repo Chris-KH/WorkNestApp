@@ -267,6 +267,7 @@ fun NoteListCard(
                                 }
                             }
                         },
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
