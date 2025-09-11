@@ -72,10 +72,6 @@ fun MessageItem(
     var isShowDate by remember { mutableStateOf(false) }
     var showDropdown by remember { mutableStateOf(false) }
 
-    var lastClickTime by remember { mutableStateOf(0L) }
-    val doubleClickThreshold = 500L
-
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -137,15 +133,10 @@ fun MessageItem(
                                 )
                                 .combinedClickable(
                                     onClick = {
-
-                                        val currentTime = System.currentTimeMillis()
-                                        if (currentTime - lastClickTime < doubleClickThreshold) {
-                                            message.content?.let { onSpeech(it) }
-                                            lastClickTime = 0L
-                                        } else {
-                                            isShowDate = !isShowDate
-                                            lastClickTime = currentTime
-                                        }
+                                        isShowDate = !isShowDate
+                                    },
+                                    onDoubleClick = {
+                                        message.content?.let { onSpeech(it) }
                                     },
                                     onLongClick = { showDropdown = true },
                                 )

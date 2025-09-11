@@ -114,7 +114,9 @@ fun ChatScreen(
     }
 
     fun speak(text: String?) {
-        if (text != null && textToSpeech.value != null && textToSpeech.value?.isLanguageAvailable(Locale.US) == TextToSpeech.LANG_COUNTRY_AVAILABLE) {
+        if (text != null && textToSpeech.value != null
+            && textToSpeech.value?.isLanguageAvailable(Locale.US) == TextToSpeech.LANG_COUNTRY_AVAILABLE
+        ) {
             textToSpeech.value?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
         }
     }
