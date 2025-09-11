@@ -104,9 +104,9 @@ fun ChatScreen(
         LanguageDetectorBuilder.fromLanguages(
             Language.ENGLISH,
             Language.VIETNAMESE,
-            Language.CHINESE,
-            Language.FRENCH,
-            Language.GERMAN,
+//            Language.CHINESE,
+//            Language.FRENCH,
+//            Language.GERMAN,
         ).build()
     }
 
@@ -118,9 +118,9 @@ fun ChatScreen(
         val locale = when(detectedLanguage) {
             Language.ENGLISH -> Locale.US
             Language.VIETNAMESE -> Locale.forLanguageTag("vi-VN")
-            Language.CHINESE -> Locale.CHINESE
-            Language.FRENCH -> Locale.FRANCE
-            Language.GERMAN -> Locale.GERMANY
+//            Language.CHINESE -> Locale.CHINESE
+//            Language.FRENCH -> Locale.FRANCE
+//            Language.GERMAN -> Locale.GERMANY
             else -> Locale.US
         }
 
