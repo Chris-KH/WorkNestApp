@@ -27,6 +27,7 @@ roomCompiler = "2.7.2"
 kotlinxSerializationJson = "1.9.0"
 datastorePreferences = "1.1.7"
 playServicesAuth = "21.4.0"
+uiText = "1.9.0"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
@@ -71,6 +72,7 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
 cloudinary-android = { module = "com.cloudinary:cloudinary-android", version.ref = "cloudinaryAndroid" }
 cloudinary-android-core = { module = "com.cloudinary:cloudinary-android-core", version.ref = "cloudinaryAndroid" }
+androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

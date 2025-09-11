@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
+    implementation(libs.androidx.compose.ui.text)
 
     //Hilt
     ksp(libs.hilt.android.compiler)

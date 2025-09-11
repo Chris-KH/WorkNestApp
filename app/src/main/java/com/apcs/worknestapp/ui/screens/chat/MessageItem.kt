@@ -67,9 +67,14 @@ fun MessageItem(
     isLastMessage: Boolean,
     onDeleteMessage: (isForMe: Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onSpeech: (String) -> Unit,
 ) {
     var isShowDate by remember { mutableStateOf(false) }
     var showDropdown by remember { mutableStateOf(false) }
+
+    var lastClickTime by remember { mutableStateOf(0L) }
+    val doubleClickThreshold = 500L
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -131,7 +136,17 @@ fun MessageItem(
                                     shape = RoundedCornerShape(10.dp)
                                 )
                                 .combinedClickable(
-                                    onClick = { isShowDate = !isShowDate },
+                                    onClick = {
+
+                                        val currentTime = System.currentTimeMillis()
+                                        if (currentTime - lastClickTime < doubleClickThreshold) {
+                                            message.content?.let { onSpeech(it) }
+                                            lastClickTime = 0L
+                                        } else {
+                                            isShowDate = !isShowDate
+                                            lastClickTime = currentTime
+                                        }
+                                    },
                                     onLongClick = { showDropdown = true },
                                 )
                                 .padding(vertical = 12.dp, horizontal = 14.dp),
@@ -210,7 +225,7 @@ fun MessageItem(
                                 .aspectRatio(1f)
                                 .padding(vertical = 12.dp),
                         ) {
-                            //TODO như cứt
+                            //TODO
                             AsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
                                     .data(message.content)

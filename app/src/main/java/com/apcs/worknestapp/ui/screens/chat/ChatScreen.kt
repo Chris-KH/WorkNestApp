@@ -1,5 +1,6 @@
 package com.apcs.worknestapp.ui.screens.chat
 
+import android.speech.tts.TextToSpeech
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -36,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,6 +55,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import java.util.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -94,6 +97,29 @@ fun ChatScreen(
 
     val conservation = messageViewModel.currentConservation.collectAsState()
     var textMessage by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val textToSpeech = remember { mutableStateOf<TextToSpeech?>(null) }
+
+    DisposableEffect(key1 = Unit) {
+        textToSpeech.value = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                textToSpeech.value?.language = Locale.US
+            }
+        }
+        onDispose {
+            textToSpeech.value?.stop()
+            textToSpeech.value?.shutdown()
+        }
+    }
+
+    fun speak(text: String?) {
+        if (text != null && textToSpeech.value != null && textToSpeech.value?.isLanguageAvailable(Locale.US) == TextToSpeech.LANG_COUNTRY_AVAILABLE) {
+            textToSpeech.value?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
+        }
+    }
+
+
 
     LifecycleResumeEffect(Unit) {
         messageViewModel.registerCurrentConservationListener(conservationId)
@@ -280,6 +306,9 @@ fun ChatScreen(
                                 }
                             },
                             modifier = Modifier,
+                            onSpeech = { content ->
+                                speak(content)
+                            },
                         )
                         if (idx + 1 < messages.size && mes.sender?.id != messages[idx + 1].sender?.id) {
                             Spacer(modifier = Modifier.height(8.dp))
