@@ -111,19 +111,6 @@ fun ChatScreen(
     }
 
     val textToSpeech = remember { mutableStateOf<TextToSpeech?>(null) }
-
-    DisposableEffect(key1 = Unit) {
-        textToSpeech.value = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                textToSpeech.value?.language = Locale.US
-            }
-        }
-        onDispose {
-            textToSpeech.value?.stop()
-            textToSpeech.value?.shutdown()
-        }
-    }
-
     fun speak(text: String?) {
         if (text == null || textToSpeech.value == null) return
 
@@ -149,6 +136,7 @@ fun ChatScreen(
         messageViewModel.registerCurrentConservationListener(conservationId)
 
         onPauseOrDispose {
+            textToSpeech.value?.stop()
             messageViewModel.removeCurrentConservationListener()
         }
     }
@@ -156,6 +144,18 @@ fun ChatScreen(
     LaunchedEffect(Unit) {
         messageViewModel.getConservation(docId = conservationId)
         messageViewModel.updateConservationSeen(conservationId, true)
+    }
+
+    DisposableEffect(Unit) {
+        textToSpeech.value = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                textToSpeech.value?.language = Locale.US
+            }
+        }
+        onDispose {
+            textToSpeech.value?.stop()
+            textToSpeech.value?.shutdown()
+        }
     }
 
     Scaffold(

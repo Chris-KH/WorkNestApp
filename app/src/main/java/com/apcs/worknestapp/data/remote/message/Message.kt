@@ -11,7 +11,6 @@ enum class MessageType {
     IMAGE,
     VIDEO,
     VOICE,
-    DELETED,
 }
 
 data class Message(

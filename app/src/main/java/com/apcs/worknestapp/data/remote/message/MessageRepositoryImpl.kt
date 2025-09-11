@@ -172,7 +172,7 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
 
                     async { cons.withOtherUserData(otherUserId, isCache = true) }
                 }.awaitAll().map { it.copy(messages = messageCache[it.docId] ?: emptyList()) }
-                _conservations.value = conservationList
+                if (!snapshot.metadata.isFromCache) _conservations.value = conservationList
             }
         }
     }

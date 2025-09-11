@@ -5,6 +5,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -48,6 +50,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.Conservation
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.domain.usecase.AppDefault
+import com.apcs.worknestapp.ui.components.ConfirmDialog
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 import com.google.firebase.auth.FirebaseAuth
@@ -65,6 +68,7 @@ fun ConservationItem(
             || (authId != conservation.sender?.id && conservation.receiverSeen == true)
 
     var showDropdown by remember { mutableStateOf(false) }
+    var showConfirmDeleteDialog by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
 
     val horizontalPadding = 16.dp
@@ -72,7 +76,7 @@ fun ConservationItem(
     val spacerWidth = 12.dp
     val avatarSize = 52.dp
 
-    var isPin by remember { mutableStateOf(true) }
+    //var isPin by remember { mutableStateOf(true) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -86,17 +90,35 @@ fun ConservationItem(
             .fillMaxWidth()
             .padding(vertical = verticalPadding, horizontal = horizontalPadding),
     ) {
+        if (showConfirmDeleteDialog) {
+            ConfirmDialog(
+                title = "Delete chat with ${conservation.userData.name}",
+                message = "Are you sure you want to delete this conversation? This action cannot be undone.",
+                onDismissRequest = { showConfirmDeleteDialog = false },
+                confirmText = "Delete",
+                cancelText = "Cancel",
+                onConfirm = {
+                    showConfirmDeleteDialog = false
+                    onDelete()
+                },
+                onCancel = { showConfirmDeleteDialog = false }
+            )
+        }
+
         DropdownMenu(
             expanded = showDropdown,
             onDismissRequest = { showDropdown = false },
-            containerColor = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.widthIn(min = 200.dp)
-        ) {
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.widthIn(min = 180.dp),
+        )
+        {
             val dropdownTextStyle = TextStyle(
-                fontSize = 14.sp,
-                lineHeight = 14.sp,
-                fontWeight = FontWeight.Normal
+                fontSize = 15.sp, lineHeight = 16.sp,
+                fontFamily = Roboto, fontWeight = FontWeight.Normal,
             )
+            val horizontalPadding = 16.dp
+            val iconSize = 24.dp
 
             DropdownMenuItem(
                 text = {
@@ -112,13 +134,14 @@ fun ConservationItem(
                             else R.drawable.outline_read
                         ),
                         contentDescription = "Mark ${if (isSeen) "unread" else "read"}",
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(iconSize)
                     )
                 },
                 onClick = {
                     onMarkSeenState(!isSeen)
                     showDropdown = false
                 },
+                contentPadding = PaddingValues(horizontal = horizontalPadding)
             )
             //TODO
 //            DropdownMenuItem(
@@ -135,13 +158,14 @@ fun ConservationItem(
 //                            else R.drawable.outline_pin
 //                        ),
 //                        contentDescription = if (isPin) "Unpin" else "Pin",
-//                        modifier = Modifier.size(24.dp)
+//                        modifier = Modifier.size(iconSize)
 //                    )
 //                },
 //                onClick = {
 //                    //TODO: Future feature, but not now:))
 //                    showDropdown = false
 //                },
+//                contentPadding = PaddingValues(horizontal = horizontalPadding)
 //            )
             DropdownMenuItem(
                 text = {
@@ -154,18 +178,19 @@ fun ConservationItem(
                     Icon(
                         painter = painterResource(R.drawable.outline_trash),
                         contentDescription = "Delete conservation",
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(iconSize)
                     )
                 },
                 onClick = {
-                    onDelete()
                     showDropdown = false
+                    showConfirmDeleteDialog = true
                 },
                 colors = MenuDefaults.itemColors(
                     textColor = MaterialTheme.colorScheme.error,
                     leadingIconColor = MaterialTheme.colorScheme.error,
                     trailingIconColor = MaterialTheme.colorScheme.error,
-                )
+                ),
+                contentPadding = PaddingValues(horizontal = horizontalPadding)
             )
         }
         Box(modifier = Modifier.wrapContentSize()) {

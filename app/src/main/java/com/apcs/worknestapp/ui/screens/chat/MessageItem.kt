@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.VolumeUp
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
@@ -123,7 +124,7 @@ fun MessageItem(
                         Spacer(modifier = Modifier.width(6.dp))
                     }
 
-                    if (message.type == MessageType.TEXT.name) {
+                    if (message.type?.contains(MessageType.TEXT.name, ignoreCase = true) == true) {
                         Box(
                             modifier = Modifier
                                 .wrapContentSize()
@@ -180,6 +181,10 @@ fun MessageItem(
                                     },
                                     contentPadding = PaddingValues(horizontal = horizontalPadding)
                                 )
+                                HorizontalDivider(
+                                    thickness = 8.dp,
+                                    color = MaterialTheme.colorScheme.surfaceContainer
+                                )
                                 DropdownMenuItem(
                                     colors = MenuDefaults.itemColors(
                                         textColor = MaterialTheme.colorScheme.error,
@@ -227,7 +232,11 @@ fun MessageItem(
                                 )
                             }
                         }
-                    } else if (message.type == MessageType.IMAGE.name) {
+                    } else if (message.type?.contains(
+                            MessageType.IMAGE.name,
+                            ignoreCase = true
+                        ) == true
+                    ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(0.8f)
@@ -249,7 +258,11 @@ fun MessageItem(
 
                             )
                         }
-                    } else if (message.type == MessageType.VOICE.name) {
+                    } else if (message.type?.contains(
+                            MessageType.VOICE.name,
+                            ignoreCase = true
+                        ) == true
+                    ) {
                         //TODO here
                     }
                 }
