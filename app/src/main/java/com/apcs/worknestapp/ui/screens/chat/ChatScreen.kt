@@ -55,7 +55,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import java.util.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -77,9 +76,11 @@ import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
 import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
+import com.github.pemistahl.lingua.api.Language
+import com.github.pemistahl.lingua.api.LanguageDetectorBuilder
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Locale
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -91,6 +92,7 @@ fun ChatScreen(
     modifier: Modifier = Modifier,
     messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val authId = FirebaseAuth.getInstance().currentUser?.uid
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -98,7 +100,16 @@ fun ChatScreen(
     val conservation = messageViewModel.currentConservation.collectAsState()
     var textMessage by remember { mutableStateOf("") }
 
-    val context = LocalContext.current
+    val detector = remember {
+        LanguageDetectorBuilder.fromLanguages(
+            Language.ENGLISH,
+            Language.VIETNAMESE,
+            Language.CHINESE,
+            Language.FRENCH,
+            Language.GERMAN,
+        ).build()
+    }
+
     val textToSpeech = remember { mutableStateOf<TextToSpeech?>(null) }
 
     DisposableEffect(key1 = Unit) {
@@ -114,14 +125,25 @@ fun ChatScreen(
     }
 
     fun speak(text: String?) {
-        if (text != null && textToSpeech.value != null
-            && textToSpeech.value?.isLanguageAvailable(Locale.US) == TextToSpeech.LANG_COUNTRY_AVAILABLE
-        ) {
+        if (text == null || textToSpeech.value == null) return
+
+        val detectedLanguage = detector.detectLanguageOf(text)
+        val locale = when(detectedLanguage) {
+            Language.ENGLISH -> Locale.US
+            Language.VIETNAMESE -> Locale.forLanguageTag("vi-VN")
+            Language.CHINESE -> Locale.CHINESE
+            Language.FRENCH -> Locale.FRANCE
+            Language.GERMAN -> Locale.GERMANY
+            else -> Locale.US
+        }
+
+        textToSpeech.value?.language = locale
+
+        if (textToSpeech.value?.isLanguageAvailable(locale) == TextToSpeech.LANG_COUNTRY_AVAILABLE) {
+            textToSpeech.value?.stop()
             textToSpeech.value?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
         }
     }
-
-
 
     LifecycleResumeEffect(Unit) {
         messageViewModel.registerCurrentConservationListener(conservationId)

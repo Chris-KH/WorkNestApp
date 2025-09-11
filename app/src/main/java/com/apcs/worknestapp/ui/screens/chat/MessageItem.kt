@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.VolumeUp
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -135,9 +137,6 @@ fun MessageItem(
                                     onClick = {
                                         isShowDate = !isShowDate
                                     },
-                                    onDoubleClick = {
-                                        message.content?.let { onSpeech(it) }
-                                    },
                                     onLongClick = { showDropdown = true },
                                 )
                                 .padding(vertical = 12.dp, horizontal = 14.dp),
@@ -165,6 +164,23 @@ fun MessageItem(
                                 val horizontalPadding = 16.dp
                                 val iconSize = 24.dp
                                 DropdownMenuItem(
+                                    text = {
+                                        Text(text = "Speak", style = dropdownTextStyle)
+                                    },
+                                    onClick = {
+                                        showDropdown = false
+                                        message.content?.let { onSpeech(it) }
+                                    },
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
+                                            contentDescription = "Speak text",
+                                            modifier = Modifier.size(iconSize),
+                                        )
+                                    },
+                                    contentPadding = PaddingValues(horizontal = horizontalPadding)
+                                )
+                                DropdownMenuItem(
                                     colors = MenuDefaults.itemColors(
                                         textColor = MaterialTheme.colorScheme.error,
                                         trailingIconColor = MaterialTheme.colorScheme.error,
@@ -173,6 +189,7 @@ fun MessageItem(
                                         Text(text = "Delete for me", style = dropdownTextStyle)
                                     },
                                     onClick = {
+                                        showDropdown = false
                                         onDeleteMessage(true)
                                     },
                                     trailingIcon = {
@@ -196,6 +213,7 @@ fun MessageItem(
                                         )
                                     },
                                     onClick = {
+                                        showDropdown = false
                                         onDeleteMessage(false)
                                     },
                                     trailingIcon = {
