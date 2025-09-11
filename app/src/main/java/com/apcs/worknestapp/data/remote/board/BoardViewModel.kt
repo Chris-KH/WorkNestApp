@@ -159,6 +159,17 @@ class BoardViewModel @Inject constructor(
         }
     }
 
+    suspend fun leaveBoard(boardId: String): String? {
+        return try {
+            boardRepo.leaveBoard(boardId)
+            null
+        } catch(e: Exception) {
+            val message = "Leave bỏard failed"
+            Log.e("BoardViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
     suspend fun addNoteList(boardId: String, noteList: NoteList): String? {
         return try {
             boardRepo.addNoteList(boardId, noteList)

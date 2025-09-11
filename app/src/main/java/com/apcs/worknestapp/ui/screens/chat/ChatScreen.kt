@@ -70,6 +70,7 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.message.Message
 import com.apcs.worknestapp.data.remote.message.MessageType
 import com.apcs.worknestapp.data.remote.message.MessageViewModel
+import com.apcs.worknestapp.domain.logic.LanguageDetector
 import com.apcs.worknestapp.domain.usecase.AppDefault
 import com.apcs.worknestapp.ui.components.ChatInputSection
 import com.apcs.worknestapp.ui.components.topbar.TopBarDefault
@@ -77,7 +78,6 @@ import com.apcs.worknestapp.ui.screens.Screen
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 import com.github.pemistahl.lingua.api.Language
-import com.github.pemistahl.lingua.api.LanguageDetectorBuilder
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -93,34 +93,21 @@ fun ChatScreen(
     messageViewModel: MessageViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    val authId = FirebaseAuth.getInstance().currentUser?.uid
     val focusManager = LocalFocusManager.current
+    val authId = FirebaseAuth.getInstance().currentUser?.uid
     val coroutineScope = rememberCoroutineScope()
 
     val conservation = messageViewModel.currentConservation.collectAsState()
     var textMessage by remember { mutableStateOf("") }
-
-    val detector = remember {
-        LanguageDetectorBuilder.fromLanguages(
-            Language.ENGLISH,
-            Language.VIETNAMESE,
-//            Language.CHINESE,
-//            Language.FRENCH,
-//            Language.GERMAN,
-        ).build()
-    }
-
     val textToSpeech = remember { mutableStateOf<TextToSpeech?>(null) }
+
     fun speak(text: String?) {
         if (text == null || textToSpeech.value == null) return
 
-        val detectedLanguage = detector.detectLanguageOf(text)
+        val detectedLanguage = LanguageDetector.detector.detectLanguageOf(text)
         val locale = when(detectedLanguage) {
             Language.ENGLISH -> Locale.US
             Language.VIETNAMESE -> Locale.forLanguageTag("vi-VN")
-//            Language.CHINESE -> Locale.CHINESE
-//            Language.FRENCH -> Locale.FRANCE
-//            Language.GERMAN -> Locale.GERMANY
             else -> Locale.US
         }
 

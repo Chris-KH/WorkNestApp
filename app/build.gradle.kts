@@ -55,7 +55,7 @@ android {
 }
 
 dependencies {
-    implementation("com.github.pemistahl:lingua:1.2.2")
+    implementation(libs.lingua)
 
     //Firebase
     implementation(platform(libs.firebase.bom))
@@ -105,7 +105,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     //Emoji
-    implementation(libs.androidx.emoji2.emojipicker)
     implementation(libs.androidx.compose.material.icons.extended)
 
     //Default

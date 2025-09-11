@@ -829,6 +829,32 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         }
     }
 
+    override suspend fun leaveBoard(boardId: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val boardRef = firestore.collection("boards").document(boardId)
+        val userIdToRemove = authUser.uid
+
+        try {
+            boardRef.update("memberIds", FieldValue.arrayRemove(userIdToRemove)).await()
+            if (_currentBoard.value?.docId == boardId) {
+                _currentBoard.value = null
+            }
+            _boards.update { list ->
+                list.filterNot { it.docId == boardId }
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
+                boardNotFound(boardId)
+                throw Exception("Board not found")
+            } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                throw Exception("Missing permission to perform this action")
+            }
+            throw e
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
     // *OK
     override suspend fun addNoteList(boardId: String, noteList: NoteList) {
         auth.currentUser ?: throw Exception("User not logged in")

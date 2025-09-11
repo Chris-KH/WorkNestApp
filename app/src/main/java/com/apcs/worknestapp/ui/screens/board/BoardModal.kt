@@ -72,6 +72,7 @@ import com.apcs.worknestapp.ui.components.CustomSnackBar
 import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.utils.ColorUtils
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -93,6 +94,7 @@ fun BoardModal(
     boardViewModel: BoardViewModel,
     modifier: Modifier = Modifier,
 ) {
+    val authId = FirebaseAuth.getInstance().currentUser?.uid
     val coroutineScope = rememberCoroutineScope()
     val modalSnackbarHostState = remember { SnackbarHostState() }
     var showSubModal by rememberSaveable { mutableStateOf<BoardSubModal?>(null) }
@@ -503,56 +505,116 @@ fun BoardModal(
                                 }
 
                                 item { Spacer(modifier = Modifier.height(32.dp)) }
-                                item(key = "Delete board") {
-                                    ListItem(
-                                        headlineContent = {
-                                            Text(text = "Delete board", style = listItemTextStyle)
-                                        },
-                                        leadingContent = {
-                                            Icon(
-                                                painter = painterResource(R.drawable.outline_trash),
-                                                contentDescription = "Delete board",
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        },
-                                        colors = ListItemDefaults.colors(
-                                            headlineColor = MaterialTheme.colorScheme.error,
-                                            leadingIconColor = MaterialTheme.colorScheme.error,
-                                        ),
-                                        modifier = Modifier.clickable(
-                                            onClick = {
-                                                showConfirmDialog = ConfirmDialogState(
-                                                    title = "Delete this board",
-                                                    message = "Deleted board cannot be recovered",
-                                                    confirmText = "Delete",
-                                                    cancelText = "Cancel",
-                                                    onConfirm = {
-                                                        showConfirmDialog = null
-                                                        val boardId = board.docId
-                                                        if (boardId != null) {
-                                                            coroutineScope.launch {
-                                                                val message =
-                                                                    boardViewModel.deleteBoard(
-                                                                        boardId
-                                                                    )
-                                                                if (message != null) {
-                                                                    modalSnackbarHostState.showSnackbar(
-                                                                        message = message,
-                                                                        withDismissAction = true,
-                                                                    )
-                                                                } else {
-                                                                    modalSnackbarHostState.showSnackbar(
-                                                                        message = "Board is deleted",
-                                                                    )
+                                if (board.ownerId == authId) {
+                                    item(key = "Delete board") {
+                                        ListItem(
+                                            headlineContent = {
+                                                Text(
+                                                    text = "Delete board",
+                                                    style = listItemTextStyle
+                                                )
+                                            },
+                                            leadingContent = {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.outline_trash),
+                                                    contentDescription = "Delete board",
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            },
+                                            colors = ListItemDefaults.colors(
+                                                headlineColor = MaterialTheme.colorScheme.error,
+                                                leadingIconColor = MaterialTheme.colorScheme.error,
+                                            ),
+                                            modifier = Modifier.clickable(
+                                                onClick = {
+                                                    showConfirmDialog = ConfirmDialogState(
+                                                        title = "Delete this board",
+                                                        message = "Deleted board cannot be recovered",
+                                                        confirmText = "Delete",
+                                                        cancelText = "Cancel",
+                                                        onConfirm = {
+                                                            showConfirmDialog = null
+                                                            val boardId = board.docId
+                                                            if (boardId != null) {
+                                                                coroutineScope.launch {
+                                                                    val message =
+                                                                        boardViewModel.deleteBoard(
+                                                                            boardId
+                                                                        )
+                                                                    if (message != null) {
+                                                                        modalSnackbarHostState.showSnackbar(
+                                                                            message = message,
+                                                                            withDismissAction = true,
+                                                                        )
+                                                                    } else {
+                                                                        modalSnackbarHostState.showSnackbar(
+                                                                            message = "Board is deleted",
+                                                                        )
+                                                                    }
                                                                 }
                                                             }
-                                                        }
-                                                    },
-                                                    onCancel = { showConfirmDialog = null }
-                                                )
-                                            }
+                                                        },
+                                                        onCancel = { showConfirmDialog = null }
+                                                    )
+                                                }
+                                            )
                                         )
-                                    )
+                                    }
+                                } else {
+                                    item(key = "Leave board") {
+                                        ListItem(
+                                            headlineContent = {
+                                                Text(
+                                                    text = "Leave board",
+                                                    style = listItemTextStyle
+                                                )
+                                            },
+                                            leadingContent = {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.outline_logout),
+                                                    contentDescription = "Leave board",
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            },
+                                            colors = ListItemDefaults.colors(
+                                                headlineColor = MaterialTheme.colorScheme.error,
+                                                leadingIconColor = MaterialTheme.colorScheme.error,
+                                            ),
+                                            modifier = Modifier.clickable(
+                                                onClick = {
+                                                    showConfirmDialog = ConfirmDialogState(
+                                                        title = "Leave this board",
+                                                        message = "Are you sure",
+                                                        confirmText = "Leave",
+                                                        cancelText = "Cancel",
+                                                        onConfirm = {
+                                                            showConfirmDialog = null
+                                                            val boardId = board.docId
+                                                            if (boardId != null) {
+                                                                coroutineScope.launch {
+                                                                    val message =
+                                                                        boardViewModel.leaveBoard(
+                                                                            boardId
+                                                                        )
+                                                                    if (message != null) {
+                                                                        modalSnackbarHostState.showSnackbar(
+                                                                            message = message,
+                                                                            withDismissAction = true,
+                                                                        )
+                                                                    } else {
+                                                                        modalSnackbarHostState.showSnackbar(
+                                                                            message = "You has leaved the bỏoard",
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        onCancel = { showConfirmDialog = null }
+                                                    )
+                                                }
+                                            )
+                                        )
+                                    }
                                 }
 
                                 item { Spacer(modifier = Modifier.height(160.dp)) }

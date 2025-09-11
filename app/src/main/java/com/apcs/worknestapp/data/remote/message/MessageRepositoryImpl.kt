@@ -509,8 +509,19 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
         val conservationRef = firestore.collection("conservations").document(conservationId)
         val messageRef = conservationRef.collection("messages").document(messageId)
 
+        val deleteInfo = mapOf(
+            "sender" to firestore.collection("users").document(authUser.uid),
+            "lastTime" to Timestamp.now(),
+            "lastContent" to "!!! Some messages are deleted",
+            "senderSeen" to true,
+            "receiverSeen" to false,
+        )
+
         if (isForMe) {
-            messageRef.update("deleteFor", FieldValue.arrayUnion(authUser.uid)).await()
+            firestore.runTransaction { transaction ->
+                transaction.update(messageRef, "deletedFor", FieldValue.arrayUnion(authUser.uid))
+                transaction.update(conservationRef, deleteInfo)
+            }
         } else {
             firestore.runTransaction { transaction ->
                 val conservationSnapshot = transaction.get(conservationRef)
@@ -522,10 +533,11 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                 if (conservation.userIds != null) {
                     transaction.update(
                         messageRef,
-                        "deleteFor",
+                        "deletedFor",
                         FieldValue.arrayUnion(conservation.userIds)
                     )
                 }
+                transaction.update(conservationRef, deleteInfo)
             }
         }
         if (_currentConservation.value?.docId == conservationId) {

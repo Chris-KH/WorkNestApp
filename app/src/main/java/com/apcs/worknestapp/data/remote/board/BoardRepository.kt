@@ -32,6 +32,7 @@ interface BoardRepository {
     suspend fun updateBoardCover(docId: String, color: Int?)
     suspend fun addMemberToBoard(boardId: String, user: User)
     suspend fun removeMemberFromBoard(boardId: String, user: User)
+    suspend fun leaveBoard(boardId: String)
 
     suspend fun addNoteList(boardId: String, noteList: NoteList)
     suspend fun removeNoteList(boardId: String, noteListId: String)

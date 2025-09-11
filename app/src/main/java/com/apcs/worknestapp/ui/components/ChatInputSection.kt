@@ -24,10 +24,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +41,12 @@ import com.apcs.worknestapp.R
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.theme.Roboto
 
+enum class ChatMode {
+    TEXT_CHAT,
+    SELECT_IMAGE,
+    VOICE_CHAT,
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChatInputSection(
@@ -46,10 +55,15 @@ fun ChatInputSection(
     onSend: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
+    var currentChatMode by remember { mutableStateOf(ChatMode.TEXT_CHAT) }
     var currentText by remember(text) { mutableStateOf(text) }
     val interactionSource = remember { MutableInteractionSource() }
     var isCollapsed by remember { mutableStateOf(false) }
-    val boxButtonPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp)
+
+    val boxButtonPadding = PaddingValues(horizontal = 10.dp, vertical = 16.dp)
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -96,6 +110,7 @@ fun ChatInputSection(
                 Icon(
                     painter = painterResource(R.drawable.fill_camera),
                     contentDescription = "Camera",
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -107,7 +122,8 @@ fun ChatInputSection(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.fill_image),
-                    contentDescription = "Camera",
+                    contentDescription = "Image",
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -120,6 +136,7 @@ fun ChatInputSection(
                 Icon(
                     imageVector = Icons.Default.Mic,
                     contentDescription = "Voice",
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -150,22 +167,14 @@ fun ChatInputSection(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             contentPadding = PaddingValues(vertical = 10.dp, horizontal = 12.dp),
             shape = RoundedCornerShape(20.dp),
-            border = BorderStroke(
-                width = (0.8).dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-            ),
+            border = BorderStroke((0.8).dp, MaterialTheme.colorScheme.outlineVariant),
             maxLines = if (isCollapsed) 4 else 1,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                capitalization = KeyboardCapitalization.Sentences,
-            )
+            keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Sentences)
         )
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .clickable(
-                    enabled = text.isNotBlank(),
-                    onClick = { onSend() }
-                )
+                .clickable(enabled = text.isNotBlank(), onClick = { onSend() })
                 .padding(boxButtonPadding)
         ) {
             Icon(
