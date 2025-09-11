@@ -34,6 +34,8 @@ import com.apcs.worknestapp.data.remote.user.UserViewModel
 import com.apcs.worknestapp.ui.components.RotatingIcon
 import com.apcs.worknestapp.ui.screens.Screen
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,16 +94,20 @@ fun ContactSubScreen(
         onRefresh = {
             coroutineScope.launch {
                 isRefreshing = true
-                val isSuccess = when(currentSubScreen) {
-                    ContactSubScreenState.FRIENDS -> userViewModel.loadFriends()
-                    ContactSubScreenState.MESSAGES -> messageViewModel.loadConservations()
+                val jobRequest = async {
+                    when(currentSubScreen) {
+                        ContactSubScreenState.FRIENDS -> userViewModel.loadFriends()
+                        ContactSubScreenState.MESSAGES -> messageViewModel.loadConservations()
+                    }
                 }
+                val jobDelay = async { delay(500) }
+                jobDelay.await()
+
+                val isSuccess = jobRequest.await()
+
                 isRefreshing = false
                 if (!isSuccess) {
-                    snackbarHost.showSnackbar(
-                        message = "Refresh failed",
-                        withDismissAction = true,
-                    )
+                    snackbarHost.showSnackbar("Refresh failed", withDismissAction = true)
                 }
             }
         },

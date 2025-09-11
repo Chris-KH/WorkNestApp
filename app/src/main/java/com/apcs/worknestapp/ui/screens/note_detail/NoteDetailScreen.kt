@@ -95,6 +95,9 @@ import com.apcs.worknestapp.ui.components.topbar.CustomTopBar
 import com.apcs.worknestapp.ui.theme.Roboto
 import com.apcs.worknestapp.ui.theme.success
 import com.apcs.worknestapp.utils.ColorUtils
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -406,7 +409,10 @@ fun NoteDetailScreen(
                     onRefresh = {
                         coroutineScope.launch {
                             isRefreshing = true
-                            noteViewModel.getNote(noteId)
+                            joinAll(
+                                async { noteViewModel.getNote(noteId) },
+                                async { delay(300) }
+                            )
                             isRefreshing = false
                         }
                     },
