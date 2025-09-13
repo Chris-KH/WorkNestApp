@@ -73,16 +73,17 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
+import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.board.BoardViewModel
 import com.apcs.worknestapp.data.remote.note.Checklist
+import com.apcs.worknestapp.data.remote.note.Comment
 import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.components.CoverPickerModal
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
 import com.apcs.worknestapp.ui.components.notedetail.ChecklistItem
-import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
 import com.apcs.worknestapp.ui.components.notedetail.DateTimePickerModal
@@ -112,6 +113,7 @@ fun BoardNoteDetailScreen(
     modifier: Modifier = Modifier,
     boardViewModel: BoardViewModel = hiltViewModel(),
 ) {
+    val authProfile = LocalAuthViewModel.current.profile.collectAsState()
     val density = LocalDensity.current
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -120,14 +122,15 @@ fun BoardNoteDetailScreen(
     var modalBottomType by remember { mutableStateOf<NoteModalBottomType?>(null) }
 
     //NoteState
+    val board = boardViewModel.currentBoard.collectAsState()
     val note = boardViewModel.currentNote.collectAsState()
     val checklists = note.value?.checklists ?: emptyList()
+    val comments = note.value?.comments ?: emptyList()
     var noteName by remember(note.value?.name) { mutableStateOf(note.value?.name ?: "") }
     val noteCoverColor = note.value?.cover?.let { ColorUtils.safeParse(it) }
 
     var commentInputFocused by remember { mutableStateOf(false) }
     var commentText by remember { mutableStateOf("") }
-    var commentList by remember { mutableStateOf(emptyList<Comment>()) }
 
     //LayoutState
     val lazyListState = rememberLazyListState()
@@ -164,8 +167,10 @@ fun BoardNoteDetailScreen(
 
     LifecycleResumeEffect(boardId, noteListId, noteId) {
         boardViewModel.registerCurrentNoteListener(boardId, noteListId, noteId)
+        boardViewModel.registerCurrentBoardListener(boardId)
         onPauseOrDispose {
             boardViewModel.removeCurrentNoteListener()
+            boardViewModel.removeCurrentBoardListener()
         }
     }
 
@@ -931,7 +936,7 @@ fun BoardNoteDetailScreen(
                                 Text(text = "Comments", style = smallLabelTextStyle)
                             }
                         }
-                        if (commentList.isEmpty()) item(key = "EmptyComment") {
+                        if (comments.isEmpty()) item(key = "EmptyComment") {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -947,8 +952,50 @@ fun BoardNoteDetailScreen(
                             }
                             HorizontalDivider()
                         }
-                        else itemsIndexed(items = commentList) { index, comment ->
-                            CommentItem(comment = comment)
+                        else itemsIndexed(
+                            items = comments,
+                            key = { _, item -> item.docId ?: UUID.randomUUID() }
+                        ) { index, comment ->
+                            val createUser = board.value?.members?.find {
+                                it.docId == comment.createdBy
+                            }
+                            val isAuthor = comment.createdBy == authProfile.value?.docId
+
+                            if (createUser != null) {
+                                CommentItem(
+                                    comment = comment,
+                                    author = createUser,
+                                    isAuthor = isAuthor,
+                                    onDelete = {
+                                        val commentId = comment.docId
+                                        if (commentId != null) {
+                                            coroutineScope.launch {
+                                                val message =
+                                                    boardViewModel.deleteComment(
+                                                        boardId,
+                                                        noteListId,
+                                                        noteId,
+                                                        commentId
+                                                    )
+                                                if (message != null) {
+                                                    snackbarHost.showSnackbar(
+                                                        message = message,
+                                                        withDismissAction = true,
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                        .padding(
+                                            vertical = 12.dp,
+                                            horizontal = horizontalPadding / 2
+                                        )
+                                )
+                                HorizontalDivider()
+                            }
                         }
                         item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(200.dp)) }
                     }
@@ -957,7 +1004,21 @@ fun BoardNoteDetailScreen(
                 CommentInputSection(
                     commentText = commentText,
                     onCommentTextChange = { commentText = it },
-                    onPostComment = { },
+                    onPostComment = {
+                        coroutineScope.launch {
+                            val newComment = Comment(content = commentText)
+                            commentText = ""
+                            focusManager.clearFocus()
+                            val message =
+                                boardViewModel.addComment(boardId, noteListId, noteId, newComment)
+                            if (message != null) {
+                                snackbarHost.showSnackbar(
+                                    message = message,
+                                    withDismissAction = true,
+                                )
+                            }
+                        }
+                    },
                     modifier = Modifier.onFocusChanged { commentInputFocused = it.isFocused }
                         .fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer).let {
                             if (commentInputFocused) return@let it

@@ -8,6 +8,7 @@ import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
     private var notesListener: ListenerRegistration? = null
     private var currentNoteListener: ListenerRegistration? = null
     private var checklistsListener: ListenerRegistration? = null
+    private var commentsListener: ListenerRegistration? = null
     private var tasksListener = mutableMapOf<String, ListenerRegistration>()
 
     init {
@@ -104,6 +106,9 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         val notesRef = firestore.collection("users").document(authUser.uid)
             .collection("notes").document(noteId)
         val checklistRef = notesRef.collection("checklists")
+        val commentRef =
+            notesRef.collection("comments").orderBy("createdAt", Query.Direction.DESCENDING)
+
         fun registerTaskListener(checklistId: String) {
             val tasksRef = checklistRef.document(checklistId).collection("tasks")
             tasksListener[checklistId]?.remove()
@@ -186,7 +191,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             if (currentNoteId == null || currentNoteId != noteId) return@addSnapshotListener
 
             if (error != null) {
-                Log.e("NoteRepository", "Listen note snapshot failed", error)
+                Log.e("NoteRepository", "Listen note checklist failed", error)
                 return@addSnapshotListener
             }
 
@@ -229,6 +234,52 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                 }
             }
         }
+
+        commentsListener = commentRef.addSnapshotListener { snapshot, error ->
+            val currentNoteId = _currentNote.value?.docId
+            if (currentNoteId == null || currentNoteId != noteId) return@addSnapshotListener
+
+            if (error != null) {
+                Log.e("NoteRepository", "Listen note comment snapshot failed", error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                _currentNote.update { note ->
+                    val currentComments = note?.comments?.toMutableList() ?: mutableListOf()
+
+                    for(change in snapshot.documentChanges) {
+                        val comment = change.document.toObject(Comment::class.java)
+                        val commentId = change.document.id
+
+                        when(change.type) {
+                            DocumentChange.Type.ADDED -> {
+                                if (currentComments.none { it.docId == commentId }) {
+                                    currentComments.add(comment)
+                                }
+                            }
+
+                            DocumentChange.Type.MODIFIED -> {
+                                val index =
+                                    currentComments.indexOfFirst { it.docId == commentId }
+                                if (index != -1) {
+                                    val tempList = currentComments[index]
+                                    currentComments[index] = tempList.copy(
+                                        content = comment.content
+                                    )
+                                }
+                            }
+
+                            DocumentChange.Type.REMOVED -> {
+                                currentComments.removeAll { it.docId == commentId }
+                            }
+                        }
+                    }
+
+                    note?.copy(comments = currentComments)
+                }
+            }
+        }
     }
 
     override fun removeCurrentNoteListener() {
@@ -236,6 +287,8 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         tasksListener.clear()
         checklistsListener?.remove()
         checklistsListener = null
+        commentsListener?.remove()
+        commentsListener = null
         currentNoteListener?.remove()
         currentNoteListener = null
     }
@@ -303,7 +356,15 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         if (!noteDoc.exists()) throw Exception("Note not found")
         val note = noteDoc.toObject(Note::class.java) ?: throw Exception("Invalid note type")
 
-        val checklistsSnapshot = noteRef.collection("checklists").get().await()
+        val (checklistsSnapshot, commentsSnapshot) = coroutineScope {
+            val checklistTask = async { noteRef.collection("checklists").get().await() }
+            val commentTask = async {
+                noteRef.collection("comments").orderBy("createdAt", Query.Direction.DESCENDING)
+                    .get().await()
+            }
+            Pair(checklistTask.await(), commentTask.await())
+        }
+
         val checklists = coroutineScope {
             checklistsSnapshot.documents.map { checklistDoc ->
                 async {
@@ -320,8 +381,11 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                 }
             }.awaitAll().filterNotNull()
         }
+        val comments = commentsSnapshot.documents.mapNotNull {
+            it.toObject(Comment::class.java)
+        }
 
-        val result = note.copy(checklists = checklists)
+        val result = note.copy(checklists = checklists, comments = comments)
         _currentNote.value = result
         return result
     }
@@ -759,6 +823,55 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
                     )
                 }
             }
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun addComment(noteId: String, comment: Comment) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(noteId)
+        val commentRef = noteRef.collection("comments").document()
+        val newComment = comment.copy(
+            docId = commentRef.id,
+            createdBy = authUser.uid,
+            createdAt = Timestamp.now()
+        )
+
+        try {
+            firestore.runTransaction { transaction ->
+                val noteSnapshot = transaction.get(noteRef)
+                if (!noteSnapshot.exists()) {
+                    noteNotFound(noteId)
+                    throw Exception("Note not found")
+                }
+                transaction.set(commentRef, newComment)
+            }.await()
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun deleteComment(noteId: String, commentId: String) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+        val noteRef = firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notes")
+            .document(noteId)
+        val commentRef = noteRef.collection("comments").document(commentId)
+
+        try {
+            firestore.runTransaction { transaction ->
+                val noteSnapshot = transaction.get(noteRef)
+                if (!noteSnapshot.exists()) {
+                    noteNotFound(noteId)
+                    throw Exception("Note not found")
+                }
+                transaction.delete(commentRef)
+            }.await()
         } catch(e: Exception) {
             throw e
         }

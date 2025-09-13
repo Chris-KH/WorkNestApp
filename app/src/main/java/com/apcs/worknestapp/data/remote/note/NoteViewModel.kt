@@ -184,6 +184,26 @@ class NoteViewModel @Inject constructor(
         }
     }
 
+    suspend fun addComment(noteId: String, comment: Comment): Boolean {
+        return try {
+            noteRepo.addComment(noteId, comment)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "Add comment failed", e)
+            false
+        }
+    }
+
+    suspend fun deleteComment(noteId: String, commentId: String): Boolean {
+        return try {
+            noteRepo.deleteComment(noteId, commentId)
+            true
+        } catch(e: Exception) {
+            Log.e("NoteViewModel", "delete comment failed", e)
+            false
+        }
+    }
+
     suspend fun updateTaskName(
         noteId: String,
         checklistId: String,

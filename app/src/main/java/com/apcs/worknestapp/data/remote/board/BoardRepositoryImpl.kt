@@ -2,6 +2,7 @@ package com.apcs.worknestapp.data.remote.board
 
 import android.util.Log
 import com.apcs.worknestapp.data.remote.note.Checklist
+import com.apcs.worknestapp.data.remote.note.Comment
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.data.remote.user.User
@@ -15,6 +16,7 @@ import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +51,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     //Note detail
     private var currentNoteListener: ListenerRegistration? = null
     private var checklistsListener: ListenerRegistration? = null
+    private var commentsListener: ListenerRegistration? = null
     private var tasksListener = mutableMapOf<String, ListenerRegistration>()
 
     private val _boards = MutableStateFlow<List<Board>>(emptyList())
@@ -362,6 +365,8 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         notesListener.clear()
         noteListsListener?.remove()
         noteListsListener = null
+        commentsListener?.remove()
+        commentsListener = null
         currentBoardListener?.remove()
         currentBoardListener = null
     }
@@ -377,6 +382,9 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         val notesRef = firestore.collection("boards").document(boardId)
             .collection("notelists").document(noteListId).collection("notes").document(noteId)
         val checklistRef = notesRef.collection("checklists")
+        val commentRef =
+            notesRef.collection("comments").orderBy("createdAt", Query.Direction.DESCENDING)
+
         fun registerTaskListener(checklistId: String) {
             val tasksRef = checklistRef.document(checklistId).collection("tasks")
             tasksListener[checklistId]?.remove()
@@ -499,6 +507,52 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                     }
 
                     note?.copy(checklists = currentChecklists)
+                }
+            }
+        }
+
+        commentsListener = commentRef.addSnapshotListener { snapshot, error ->
+            val currentNoteId = _currentNote.value?.docId
+            if (currentNoteId == null || currentNoteId != noteId) return@addSnapshotListener
+
+            if (error != null) {
+                Log.e("NoteRepository", "Listen note comment snapshot failed", error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                _currentNote.update { note ->
+                    val currentComments = note?.comments?.toMutableList() ?: mutableListOf()
+
+                    for(change in snapshot.documentChanges) {
+                        val comment = change.document.toObject(Comment::class.java)
+                        val commentId = change.document.id
+
+                        when(change.type) {
+                            DocumentChange.Type.ADDED -> {
+                                if (currentComments.none { it.docId == commentId }) {
+                                    currentComments.add(comment)
+                                }
+                            }
+
+                            DocumentChange.Type.MODIFIED -> {
+                                val index =
+                                    currentComments.indexOfFirst { it.docId == commentId }
+                                if (index != -1) {
+                                    val tempList = currentComments[index]
+                                    currentComments[index] = tempList.copy(
+                                        content = comment.content
+                                    )
+                                }
+                            }
+
+                            DocumentChange.Type.REMOVED -> {
+                                currentComments.removeAll { it.docId == commentId }
+                            }
+                        }
+                    }
+
+                    note?.copy(comments = currentComments)
                 }
             }
         }
@@ -1171,7 +1225,14 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             val note =
                 noteSnapshot.toObject(Note::class.java) ?: throw Exception("Invalid note type")
 
-            val checklistsSnapshot = noteRef.collection("checklists").get().await()
+            val (checklistsSnapshot, commentsSnapshot) = coroutineScope {
+                val checklistTask = async { noteRef.collection("checklists").get().await() }
+                val commentTask = async {
+                    noteRef.collection("comments").orderBy("createdAt", Query.Direction.DESCENDING)
+                        .get().await()
+                }
+                Pair(checklistTask.await(), commentTask.await())
+            }
             val checklists = coroutineScope {
                 checklistsSnapshot.documents.map { checklistDoc ->
                     async {
@@ -1189,8 +1250,11 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                     }
                 }.awaitAll().filterNotNull()
             }
+            val comments = commentsSnapshot.documents.mapNotNull {
+                it.toObject(Comment::class.java)
+            }
 
-            val result = note.copy(checklists = checklists)
+            val result = note.copy(checklists = checklists, comments = comments)
             _currentNote.value = result
             return result
         } catch(e: FirebaseFirestoreException) {
@@ -1777,6 +1841,86 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 taskNotFound(boardId, noteListId, noteId, checklistId, taskId)
                 throw Exception("Checklist not found")
             } else if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) { //Only occur when you is not a member
+                noteNotFound(boardId, noteListId, noteId)
+                boardNotFound(boardId)
+                throw Exception("Board not found or missing permission to perform this action")
+            }
+            throw e
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun addComment(
+        boardId: String,
+        noteListId: String,
+        noteId: String,
+        comment: Comment,
+    ) {
+        val authUser = auth.currentUser ?: throw Exception("User not logged in")
+
+        val boardRef = firestore.collection("boards").document(boardId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
+        val noteRef = noteListRef.collection("notes").document(noteId)
+        val commentRef = noteRef.collection("comments").document()
+        val newComment = comment.copy(
+            docId = commentRef.id,
+            createdBy = authUser.uid,
+            createdAt = Timestamp.now()
+        )
+
+        try {
+            firestore.runTransaction { transaction ->
+                val noteSnapshot = transaction.get(noteRef)
+                if (!noteSnapshot.exists()) {
+                    noteNotFound(boardId, noteListId, noteId)
+                    throw Exception("Note not found")
+                }
+                transaction.set(commentRef, newComment)
+            }.await()
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) { //Only occur when you is not a member
+                noteNotFound(boardId, noteListId, noteId)
+                boardNotFound(boardId)
+                throw Exception("Board not found or missing permission to perform this action")
+            }
+            throw e
+        } catch(e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun deleteComment(
+        boardId: String,
+        noteListId: String,
+        noteId: String,
+        commentId: String,
+    ) {
+        auth.currentUser ?: throw Exception("User not logged in")
+
+        val boardRef = firestore.collection("boards").document(boardId)
+        val noteListRef = boardRef.collection("notelists").document(noteListId)
+        val noteRef = noteListRef.collection("notes").document(noteId)
+        val commentRef = noteRef.collection("comments").document(commentId)
+
+        try {
+            firestore.runTransaction { transaction ->
+                val noteSnapshot = transaction.get(noteRef)
+                if (!noteSnapshot.exists()) {
+                    noteNotFound(boardId, noteListId, noteId)
+                    throw Exception("Note not found")
+                }
+                transaction.delete(commentRef)
+            }.await()
+
+            if (_currentNote.value?.docId == noteId) {
+                _currentNote.update { note ->
+                    val currentComments = note?.comments ?: emptyList()
+                    note?.copy(comments = currentComments.filterNot { it.docId == commentId })
+                }
+            }
+        } catch(e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) { //Only occur when you is not a member
                 noteNotFound(boardId, noteListId, noteId)
                 boardNotFound(boardId)
                 throw Exception("Board not found or missing permission to perform this action")

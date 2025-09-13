@@ -37,7 +37,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
@@ -74,19 +73,18 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
+import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
 import com.apcs.worknestapp.data.remote.note.Checklist
+import com.apcs.worknestapp.data.remote.note.Comment
 import com.apcs.worknestapp.data.remote.note.NoteViewModel
 import com.apcs.worknestapp.data.remote.note.Task
+import com.apcs.worknestapp.data.remote.user.User
 import com.apcs.worknestapp.domain.logic.DateFormater
 import com.apcs.worknestapp.ui.components.CoverPickerModal
 import com.apcs.worknestapp.ui.components.LoadingScreen
 import com.apcs.worknestapp.ui.components.inputfield.CustomTextField
-import com.apcs.worknestapp.ui.components.notedetail.Attachment
-import com.apcs.worknestapp.ui.components.notedetail.AttachmentOption
-import com.apcs.worknestapp.ui.components.notedetail.AttachmentOptionsDropdownMenu
 import com.apcs.worknestapp.ui.components.notedetail.ChecklistItem
-import com.apcs.worknestapp.ui.components.notedetail.Comment
 import com.apcs.worknestapp.ui.components.notedetail.CommentInputSection
 import com.apcs.worknestapp.ui.components.notedetail.CommentItem
 import com.apcs.worknestapp.ui.components.notedetail.DateTimePickerModal
@@ -114,6 +112,7 @@ fun NoteDetailScreen(
     modifier: Modifier = Modifier,
     noteViewModel: NoteViewModel = hiltViewModel(),
 ) {
+    val authProfile = LocalAuthViewModel.current.profile.collectAsState()
     val density = LocalDensity.current
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -124,6 +123,7 @@ fun NoteDetailScreen(
     //NoteState
     val note = noteViewModel.currentNote.collectAsState()
     val checklists = note.value?.checklists ?: emptyList()
+    val comments = note.value?.comments ?: emptyList()
     var noteName by remember(note.value?.name) { mutableStateOf(note.value?.name ?: "") }
     val noteCoverColor = note.value?.cover?.let { ColorUtils.safeParse(it) }
 
@@ -133,10 +133,6 @@ fun NoteDetailScreen(
 
     var commentInputFocused by remember { mutableStateOf(false) }
     var commentText by remember { mutableStateOf("") }
-    var commentList by remember { mutableStateOf(emptyList<Comment>()) }
-
-    var showAttachmentMenu by remember { mutableStateOf(false) }
-    var attachmentsList by remember { mutableStateOf(emptyList<Attachment>()) }
 
     //LayoutState
     val lazyListState = rememberLazyListState()
@@ -844,95 +840,95 @@ fun NoteDetailScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
                             }
                         }
-                        item(key = "Attachments") {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = horizontalPadding),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = verticalPadding),
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.fill_attachment),
-                                        contentDescription = "Attachments",
-                                        modifier = Modifier.size(leadingIconSize),
-                                    )
-                                    Spacer(modifier = Modifier.width(spacerWidth))
-                                    Text(text = "Attachments", style = smallLabelTextStyle)
-                                }
-                                Box { // Box to anchor the DropdownMenu
-                                    IconButton(
-                                        colors = IconButtonDefaults.iconButtonColors(
-                                            contentColor = MaterialTheme.colorScheme.primary
-                                        ), onClick = { showAttachmentMenu = true }) {
-                                        Icon(
-                                            Icons.Filled.Add,
-                                            contentDescription = "Add new attachment",
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                    }
-                                    // This is the Submenu
-                                    AttachmentOptionsDropdownMenu(
-                                        expanded = showAttachmentMenu,
-                                        onDismissRequest = { showAttachmentMenu = false },
-                                        onOptionSelected = { selectedOption ->
-                                            showAttachmentMenu = false
-                                            // --- Placeholder  --- /////////////////////////////////////////////////
-                                            when(selectedOption) {
-                                                AttachmentOption.UPLOAD_FILE -> {
-                                                    println("Option Selected: Upload File")
-                                                    // TODO: Placeholder Attach File
-                                                    attachmentsList = (attachmentsList + Attachment(
-                                                        UUID.randomUUID().toString(),
-                                                        "Placeholder File",
-                                                        "File"
-                                                    ))
-                                                }
+                        /*                        item(key = "Attachments") {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(horizontal = horizontalPadding),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            modifier = Modifier
+                                                                .weight(1f)
+                                                                .padding(vertical = verticalPadding),
+                                                        ) {
+                                                            Icon(
+                                                                painter = painterResource(R.drawable.fill_attachment),
+                                                                contentDescription = "Attachments",
+                                                                modifier = Modifier.size(leadingIconSize),
+                                                            )
+                                                            Spacer(modifier = Modifier.width(spacerWidth))
+                                                            Text(text = "Attachments", style = smallLabelTextStyle)
+                                                        }
+                                                        Box { // Box to anchor the DropdownMenu
+                                                            IconButton(
+                                                                colors = IconButtonDefaults.iconButtonColors(
+                                                                    contentColor = MaterialTheme.colorScheme.primary
+                                                                ), onClick = { showAttachmentMenu = true }) {
+                                                                Icon(
+                                                                    Icons.Filled.Add,
+                                                                    contentDescription = "Add new attachment",
+                                                                    modifier = Modifier.size(24.dp),
+                                                                )
+                                                            }
+                                                            // This is the Submenu
+                                                            AttachmentOptionsDropdownMenu(
+                                                                expanded = showAttachmentMenu,
+                                                                onDismissRequest = { showAttachmentMenu = false },
+                                                                onOptionSelected = { selectedOption ->
+                                                                    showAttachmentMenu = false
+                                                                    // --- Placeholder  --- /////////////////////////////////////////////////
+                                                                    when(selectedOption) {
+                                                                        AttachmentOption.UPLOAD_FILE -> {
+                                                                            println("Option Selected: Upload File")
+                                                                            // TODO: Placeholder Attach File
+                                                                            attachmentsList = (attachmentsList + Attachment(
+                                                                                UUID.randomUUID().toString(),
+                                                                                "Placeholder File",
+                                                                                "File"
+                                                                            ))
+                                                                        }
 
-                                                AttachmentOption.ADD_LINK -> {
-                                                    println("Option Selected: Add Link")
-                                                    attachmentsList = (attachmentsList + Attachment(
-                                                        UUID.randomUUID().toString(),
-                                                        "Placeholder Link",
-                                                        "Link"
-                                                    ))
-                                                }
+                                                                        AttachmentOption.ADD_LINK -> {
+                                                                            println("Option Selected: Add Link")
+                                                                            attachmentsList = (attachmentsList + Attachment(
+                                                                                UUID.randomUUID().toString(),
+                                                                                "Placeholder Link",
+                                                                                "Link"
+                                                                            ))
+                                                                        }
 
-                                                AttachmentOption.ADD_IMAGE_FROM_GALLERY -> {
-                                                    println("Option Selected: Add Image from Gallery")
-                                                    attachmentsList = attachmentsList + Attachment(
-                                                        UUID.randomUUID().toString(),
-                                                        "Placeholder Gallery Image",
-                                                        "Image"
-                                                    )
-                                                }
+                                                                        AttachmentOption.ADD_IMAGE_FROM_GALLERY -> {
+                                                                            println("Option Selected: Add Image from Gallery")
+                                                                            attachmentsList = attachmentsList + Attachment(
+                                                                                UUID.randomUUID().toString(),
+                                                                                "Placeholder Gallery Image",
+                                                                                "Image"
+                                                                            )
+                                                                        }
 
-                                                AttachmentOption.TAKE_PHOTO -> {
-                                                    println("Option Selected: Take Photo")
-                                                    attachmentsList = attachmentsList + Attachment(
-                                                        UUID.randomUUID().toString(),
-                                                        "Placeholder Camera Photo",
-                                                        "Image"
-                                                    )
-                                                }
-                                            }
-                                        })
-                                }
-                            }
+                                                                        AttachmentOption.TAKE_PHOTO -> {
+                                                                            println("Option Selected: Take Photo")
+                                                                            attachmentsList = attachmentsList + Attachment(
+                                                                                UUID.randomUUID().toString(),
+                                                                                "Placeholder Camera Photo",
+                                                                                "Image"
+                                                                            )
+                                                                        }
+                                                                    }
+                                                                })
+                                                        }
+                                                    }
 
-                            /*                        if (attachmentsList.isNotEmpty()) {
+                                                    *//*                        if (attachmentsList.isNotEmpty()) {
                                                         attachmentsList.forEach { attachment ->
                                                             //TODO: Add AttachmentItemRow
                                                             HorizontalDivider()
                                                         }
-                                                    }*/
-                        }
+                                                    }*//*
+                        }*/
                         item(key = "CommentLabel") {
                             Row(
                                 modifier = Modifier
@@ -951,7 +947,7 @@ fun NoteDetailScreen(
                                 Text(text = "Comments", style = smallLabelTextStyle)
                             }
                         }
-                        if (commentList.isEmpty()) item(key = "EmptyComment") {
+                        if (comments.isEmpty()) item(key = "EmptyComment") {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -967,8 +963,41 @@ fun NoteDetailScreen(
                             }
                             HorizontalDivider()
                         }
-                        else itemsIndexed(items = commentList) { index, comment ->
-                            CommentItem(comment = comment)
+                        else itemsIndexed(
+                            items = comments,
+                            key = { _, item -> item.docId ?: UUID.randomUUID() }
+                        ) { index, comment ->
+                            val createUser = User(
+                                docId = authProfile.value?.docId,
+                                name = authProfile.value?.name,
+                                avatar = authProfile.value?.avatar,
+                            )
+
+                            CommentItem(
+                                comment = comment,
+                                author = createUser,
+                                isAuthor = true,
+                                onDelete = {
+                                    val commentId = comment.docId
+                                    if (commentId != null) {
+                                        coroutineScope.launch {
+                                            val isSuccess =
+                                                noteViewModel.deleteComment(noteId, commentId)
+                                            if (!isSuccess) {
+                                                snackbarHost.showSnackbar(
+                                                    message = "Delete comment failed",
+                                                    withDismissAction = true,
+                                                )
+                                            }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                    .padding(vertical = 12.dp, horizontal = horizontalPadding / 2)
+                            )
+                            HorizontalDivider()
                         }
                         item(key = "BottomSpacer") { Spacer(modifier = Modifier.height(160.dp)) }
                     }
@@ -976,7 +1005,20 @@ fun NoteDetailScreen(
                 CommentInputSection(
                     commentText = commentText,
                     onCommentTextChange = { commentText = it },
-                    onPostComment = { },
+                    onPostComment = {
+                        coroutineScope.launch {
+                            val newComment = Comment(content = commentText)
+                            commentText = ""
+                            focusManager.clearFocus()
+                            val isSuccess = noteViewModel.addComment(noteId, newComment)
+                            if (!isSuccess) {
+                                snackbarHost.showSnackbar(
+                                    message = "Add comment failed",
+                                    withDismissAction = true,
+                                )
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .onFocusChanged { commentInputFocused = it.isFocused }
                         .fillMaxWidth()

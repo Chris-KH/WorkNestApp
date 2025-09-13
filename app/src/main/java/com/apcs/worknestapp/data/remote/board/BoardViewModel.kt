@@ -3,6 +3,7 @@ package com.apcs.worknestapp.data.remote.board
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.apcs.worknestapp.data.remote.note.Checklist
+import com.apcs.worknestapp.data.remote.note.Comment
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.data.remote.user.User
@@ -499,6 +500,36 @@ class BoardViewModel @Inject constructor(
             null
         } catch(e: Exception) {
             val message = "Update task done to $done failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun addComment(
+        boardId: String,
+        noteListId: String,
+        noteId: String, comment: Comment,
+    ): String? {
+        return try {
+            boardRepo.addComment(boardId, noteListId, noteId, comment)
+            null
+        } catch(e: Exception) {
+            val message = "Add comment to note failed"
+            Log.e("NoteViewModel", message, e)
+            e.message ?: message
+        }
+    }
+
+    suspend fun deleteComment(
+        boardId: String,
+        noteListId: String,
+        noteId: String, commentId: String,
+    ): String? {
+        return try {
+            boardRepo.deleteComment(boardId, noteListId, noteId, commentId)
+            null
+        } catch(e: Exception) {
+            val message = "Delete comment in note failed"
             Log.e("NoteViewModel", message, e)
             e.message ?: message
         }

@@ -19,7 +19,7 @@ data class Note(
 
     //Use-case, not fields of document Note
     @get:Exclude val checklists: List<Checklist> = emptyList(),
-    @get:Exclude val comments: List<String> = emptyList(),
+    @get:Exclude val comments: List<Comment> = emptyList(),
     @get:Exclude val isLoading: Boolean? = null,
 )
 
@@ -35,4 +35,11 @@ data class Task(
     @DocumentId val docId: String? = null,
     val name: String? = "Task",
     val done: Boolean? = false,
+)
+
+data class Comment(
+    @DocumentId val docId: String? = null,
+    val content: String? = null,
+    val createdBy: String? = null,
+    @ServerTimestamp val createdAt: Timestamp? = null,
 )

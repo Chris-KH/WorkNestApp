@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.data.remote.board
 
 import com.apcs.worknestapp.data.remote.note.Checklist
+import com.apcs.worknestapp.data.remote.note.Comment
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.note.Task
 import com.apcs.worknestapp.data.remote.user.User
@@ -122,6 +123,18 @@ interface BoardRepository {
         boardId: String,
         noteListId: String,
         noteId: String, checklistId: String, taskId: String, done: Boolean,
+    )
+
+    suspend fun addComment(
+        boardId: String,
+        noteListId: String,
+        noteId: String, comment: Comment,
+    )
+
+    suspend fun deleteComment(
+        boardId: String,
+        noteListId: String,
+        noteId: String, commentId: String,
     )
 
     fun clearCache()

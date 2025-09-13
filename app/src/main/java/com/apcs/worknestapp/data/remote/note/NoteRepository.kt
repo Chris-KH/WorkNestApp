@@ -31,6 +31,10 @@ interface NoteRepository {
     suspend fun updateTaskName(noteId: String, checklistId: String, taskId: String, name: String)
     suspend fun updateTaskDone(noteId: String, checklistId: String, taskId: String, done: Boolean)
 
+    //Comment in note
+    suspend fun addComment(noteId: String, comment: Comment)
+    suspend fun deleteComment(noteId: String, commentId: String)
+
     //Update note
     suspend fun updateNoteName(docId: String, name: String)
     suspend fun updateNoteCover(docId: String, color: Int?)
