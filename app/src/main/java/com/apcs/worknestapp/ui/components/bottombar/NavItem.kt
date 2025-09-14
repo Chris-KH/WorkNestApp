@@ -60,7 +60,7 @@ fun RowScope.NavItem(
         label = {
             Text(
                 text = screen.title,
-                fontSize = TextUnit(2.5f, TextUnitType.Em),
+                fontSize = TextUnit(2.6f, TextUnitType.Em),
                 lineHeight = TextUnit(1f, TextUnitType.Em),
                 letterSpacing = 0.sp,
                 fontFamily = Roboto,

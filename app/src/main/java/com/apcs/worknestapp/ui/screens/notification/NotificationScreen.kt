@@ -196,6 +196,7 @@ fun NotificationScreen(
                                     }
                                 }
                             },
+                            modifier = Modifier.animateItem()
                         )
                     }
                 }

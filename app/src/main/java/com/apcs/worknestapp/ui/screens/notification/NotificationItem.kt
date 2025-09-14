@@ -49,6 +49,7 @@ fun NotificationItem(
     onClick: (String) -> Unit,
     onDelete: (String?) -> Unit,
     onMarkRead: (String, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var showModal by remember { mutableStateOf(false) }
 
@@ -60,7 +61,7 @@ fun NotificationItem(
         )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(6.dp))
             .clickable(onClick = {
