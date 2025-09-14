@@ -108,7 +108,7 @@ fun MyProfileScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 24.dp, horizontal = 16.dp),
+                contentPadding = PaddingValues(vertical = 24.dp, horizontal = 20.dp),
             ) {
                 item {
                     MyProfileHeader(

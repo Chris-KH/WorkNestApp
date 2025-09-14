@@ -52,6 +52,7 @@ fun SettingLanguage(
                 message = "Change language failed. Language does not supported",
                 withDismissAction = true,
             )
+            languageViewModel.saveLanguage(LanguageMode.EN_US)
         }
     }
 
