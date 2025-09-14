@@ -1,6 +1,7 @@
 package com.apcs.worknestapp.data.remote.user
 
 import android.util.Log
+import com.apcs.worknestapp.data.remote.notification.Notification
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.Filter
@@ -163,6 +164,7 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         val friendshipRef = firestore.collection("friendships").document(pairId)
         val senderRef = firestore.collection("users").document(authUser.uid)
         val receiverRef = firestore.collection("users").document(receiverId)
+        val receiverNotificationRef = receiverRef.collection("notifications").document()
 
         val friendship = Friendship(
             docId = pairId,
@@ -173,9 +175,22 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         )
 
         firestore.runTransaction { transaction ->
-            val snapshot = transaction.get(friendshipRef)
-            if (snapshot.exists()) throw Exception("Friend request already exits")
-            else transaction.set(friendshipRef, friendship)
+            val friendshipSnapshot = transaction.get(friendshipRef)
+            if (friendshipSnapshot.exists()) throw Exception("Friend request already exits")
+
+            val senderSnapshot = transaction.get(senderRef)
+            if (!senderSnapshot.exists()) throw Exception("Sender is not exist")
+            val sender = senderSnapshot.toObject(User::class.java)
+                ?: throw Exception("Invalid user data")
+
+            val notification = Notification(
+                title = "Friend request",
+                message = "You received a friend request from ${sender.name}",
+                read = false,
+            )
+
+            transaction.set(friendshipRef, friendship)
+            transaction.set(receiverNotificationRef, notification)
         }.await()
         _friendships.update { it + friendship }
     }

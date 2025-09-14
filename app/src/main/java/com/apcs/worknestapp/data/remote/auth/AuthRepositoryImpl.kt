@@ -1,11 +1,15 @@
 package com.apcs.worknestapp.data.remote.auth
 
+import android.util.Log
+import com.apcs.worknestapp.data.remote.notification.Notification
 import com.apcs.worknestapp.domain.logic.Validator
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +29,45 @@ class AuthRepositoryImpl @Inject constructor(
 
     private val _profile = MutableStateFlow<UserProfile?>(null)
     override val profile: StateFlow<UserProfile?> = _profile
+
+    private var profileListener: ListenerRegistration? = null
+
+    init {
+        auth.addAuthStateListener {
+            val user = it.currentUser
+            if (user == null) removeProfileListener()
+        }
+    }
+
+    private fun registerProfileListener() {
+        val authUser = auth.currentUser
+        if (authUser == null) {
+            registerProfileListener()
+            return
+        }
+        removeProfileListener()
+
+        val profileRef = firestore
+            .collection("users")
+            .document(authUser.uid)
+
+        profileListener = profileRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("AuthRepository", "Listen user profile failed", error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                val updatedProfile = snapshot.toObject(UserProfile::class.java)
+                updatedProfile?.let { _profile.value = updatedProfile }
+            }
+        }
+    }
+
+    private fun removeProfileListener() {
+        profileListener?.remove()
+        profileListener = null
+    }
 
     private suspend fun getUserRemoteProfile(uid: String): UserProfile {
         val snapshot = firestore.collection("users")
@@ -83,6 +126,7 @@ class AuthRepositoryImpl @Inject constructor(
         _profile.value = newProfile
         _user.value = authUser
         updateUserStatus(isOnline = true)
+        registerProfileListener()
     }
 
     override suspend fun login(email: String, password: String) {
@@ -94,6 +138,7 @@ class AuthRepositoryImpl @Inject constructor(
         _profile.value = getUserRemoteProfile(authUser.uid)
         _user.value = authUser
         updateUserStatus(isOnline = true)
+        registerProfileListener()
     }
 
     override suspend fun loginWithGoogle(idToken: String) {
@@ -128,6 +173,7 @@ class AuthRepositoryImpl @Inject constructor(
 
         _user.value = authUser
         updateUserStatus(isOnline = true)
+        registerProfileListener()
     }
 
     override suspend fun updateUserName(name: String) {

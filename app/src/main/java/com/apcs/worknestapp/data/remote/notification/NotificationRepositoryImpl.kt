@@ -1,8 +1,10 @@
 package com.apcs.worknestapp.data.remote.notification
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -22,10 +24,43 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
         auth.addAuthStateListener {
             val user = it.currentUser
             if (user == null) clearCache()
+            else {
+                removeNotificationsListener()
+                registerNotificationsListener()
+            }
         }
     }
 
-    override fun removeListener() {
+    override fun registerNotificationsListener() {
+        val authUser = auth.currentUser
+        if (authUser == null) {
+            removeNotificationsListener()
+            return
+        }
+        removeNotificationsListener()
+
+        val notificationsRef = firestore
+            .collection("users")
+            .document(authUser.uid)
+            .collection("notifications")
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+
+        listenerRegistration = notificationsRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("NotificationRepository", "Listen notifications failed", error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                val notificationList = snapshot.documents.mapNotNull {
+                    it.toObject(Notification::class.java)
+                }
+                _notifications.value = notificationList
+            }
+        }
+    }
+
+    override fun removeNotificationsListener() {
         listenerRegistration?.remove()
         listenerRegistration = null
     }
@@ -33,13 +68,11 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
     override suspend fun refreshNotifications() {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        listenerRegistration?.remove() //Remove old listener
-
         val notificationsRef = firestore
             .collection("users")
             .document(authUser.uid)
             .collection("notifications")
-//          .orderBy("createdAt", Query.Direction.DESCENDING)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
 //          .limit(20)
 
         val snapshot = notificationsRef.get().await()
@@ -47,44 +80,24 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
             it.toObject(Notification::class.java)
         }
         _notifications.value = notificationList
-
-        /*listenerRegistration = notificationsRef.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                Log.e("NotificationRepository", "Listen failed", error)
-                return@addSnapshotListener
-            }
-
-            if (snapshot != null && !snapshot.isEmpty) {
-                val notificationList = snapshot.documents.mapNotNull {
-                    it.toObject(Notification::class.java)
-                }
-                _notifications.value = notificationList
-            }
-        }*/
     }
 
     override suspend fun deleteNotification(docId: String) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
-        try {
-            firestore.collection("users")
-                .document(authUser.uid)
-                .collection("notifications")
-                .document(docId)
-                .delete()
-                .await()
+        firestore.collection("users")
+            .document(authUser.uid)
+            .collection("notifications")
+            .document(docId)
+            .delete()
+            .await()
 
-            _notifications.update { list ->
-                list.filterNot { it.docId == docId }
-            }
-        } catch(e: Exception) {
-            _notifications.update { list ->
-                list.filterNot { it.docId == docId }
-            }
+        _notifications.update { list ->
+            list.filterNot { it.docId == docId }
         }
     }
 
-    override suspend fun markRead(docId: String) {
+    override suspend fun markRead(docId: String, read: Boolean) {
         val authUser = auth.currentUser ?: throw Exception("User not logged in")
 
         val notificationRef = firestore
@@ -93,10 +106,10 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
             .collection("notifications")
 
         val docRef = notificationRef.document(docId)
-        docRef.update("read", true).await()
+        docRef.update("read", read).await()
 
         _notifications.update { list ->
-            list.map { if (it.docId == docId) it.copy(read = true) else it }
+            list.map { if (it.docId == docId) it.copy(read = read) else it }
         }
     }
 
@@ -122,7 +135,7 @@ class NotificationRepositoryImpl @Inject constructor() : NotificationRepository 
     }
 
     override fun clearCache() {
-        removeListener()
+        removeNotificationsListener()
         _notifications.value = emptyList()
     }
 }

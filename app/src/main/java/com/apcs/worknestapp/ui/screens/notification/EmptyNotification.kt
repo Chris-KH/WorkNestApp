@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apcs.worknestapp.R
@@ -38,6 +39,7 @@ fun EmptyNotification(
             text = "You don't have any notifications.",
             fontSize = 16.sp,
             lineHeight = 16.sp,
+            textAlign = TextAlign.Center,
             fontWeight = FontWeight.Medium,
         )
         TextButton(

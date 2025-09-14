@@ -24,7 +24,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,6 +35,7 @@ import com.apcs.worknestapp.ui.components.bottombar.MainBottomBar
 import com.apcs.worknestapp.ui.components.topbar.MainTopBar
 import com.apcs.worknestapp.ui.screens.Screen
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +70,7 @@ fun NotificationScreen(
     Scaffold(
         topBar = {
             MainTopBar(
-                title = Screen.Notification.title,
+                title = "Notifications",
                 actions = {
                     IconButton(
                         enabled = notifications.value.isNotEmpty() && !showModalBottom,
@@ -97,18 +97,19 @@ fun NotificationScreen(
                             modifier = Modifier.size(24.dp),
                         )
                     }
-                    IconButton(
-                        enabled = !showModalBottom,
-                        onClick = { showModalBottom = true },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.symbol_three_dot),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(24.dp)
-                                .rotate(-90f)
-                        )
-                    }
+                    //TODO
+//                    IconButton(
+//                        enabled = !showModalBottom,
+//                        onClick = { showModalBottom = true },
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.symbol_three_dot),
+//                            contentDescription = null,
+//                            modifier = Modifier
+//                                .size(24.dp)
+//                                .rotate(-90f)
+//                        )
+//                    }
                 }
             )
         },
@@ -128,9 +129,7 @@ fun NotificationScreen(
         }
 
         if (isFirstLoad) {
-            LoadingScreen(
-                modifier = Modifier.padding(innerPadding),
-            )
+            LoadingScreen(modifier = Modifier.padding(innerPadding))
         } else if (notifications.value.isEmpty()) {
             EmptyNotification(
                 isRefreshing = isRefreshing,
@@ -152,24 +151,37 @@ fun NotificationScreen(
                 ) {
                     items(
                         items = notifications.value,
-                        key = { it.docId.hashCode() }
-                    ) { item ->
+                        key = { it.docId ?: UUID.randomUUID() }
+                    ) { notification ->
                         NotificationItem(
-                            notification = item,
-                            onClick = {
+                            notification = notification,
+                            onClick = { notificationId ->
                                 coroutineScope.launch {
-                                    notificationViewModel.markRead(it)
+                                    notificationViewModel.markRead(notificationId, true)
                                 }
                             },
-                            onDelete = {
+                            onMarkRead = { notificationId, read ->
                                 coroutineScope.launch {
-                                    if (it == null) {
+                                    val isSuccess =
+                                        notificationViewModel.markRead(notificationId, read)
+                                    if (!isSuccess) {
+                                        snackbarHost.showSnackbar(
+                                            message = "Delete notification failed",
+                                            withDismissAction = true,
+                                        )
+                                    }
+                                }
+                            },
+                            onDelete = { notificationId ->
+                                coroutineScope.launch {
+                                    if (notificationId == null) {
                                         snackbarHost.showSnackbar(
                                             message = "Delete notification failed",
                                             withDismissAction = true,
                                         )
                                     } else {
-                                        val isSuccess = notificationViewModel.deleteNotification(it)
+                                        val isSuccess =
+                                            notificationViewModel.deleteNotification(notificationId)
                                         if (isSuccess) {
                                             snackbarHost.showSnackbar(
                                                 message = "Notification successfully deleted",

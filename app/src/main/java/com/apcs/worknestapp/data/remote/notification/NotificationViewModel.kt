@@ -11,16 +11,10 @@ class NotificationViewModel @Inject constructor(
 ) : ViewModel() {
     val notifications = notificationRepo.notifications
 
-    override fun onCleared() {
-        super.onCleared()
-        notificationRepo.removeListener()
-    }
-
     suspend fun refreshNotificationsIfEmpty(): Boolean {
         if (notifications.value.isEmpty()) {
             return refreshNotifications()
         }
-
         return true
     }
 
@@ -44,9 +38,9 @@ class NotificationViewModel @Inject constructor(
         }
     }
 
-    suspend fun markRead(docId: String): Boolean {
+    suspend fun markRead(docId: String, read: Boolean): Boolean {
         return try {
-            notificationRepo.markRead(docId)
+            notificationRepo.markRead(docId, read)
             true
         } catch(e: Exception) {
             Log.e("NotificationViewModel", "Mark read notification $docId failed", e)

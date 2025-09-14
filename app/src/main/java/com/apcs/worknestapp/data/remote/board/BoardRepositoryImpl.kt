@@ -5,6 +5,7 @@ import com.apcs.worknestapp.data.remote.note.Checklist
 import com.apcs.worknestapp.data.remote.note.Comment
 import com.apcs.worknestapp.data.remote.note.Note
 import com.apcs.worknestapp.data.remote.note.Task
+import com.apcs.worknestapp.data.remote.notification.Notification
 import com.apcs.worknestapp.data.remote.user.User
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -817,11 +818,23 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
     // *OK
     override suspend fun addMemberToBoard(boardId: String, user: User) {
         auth.currentUser ?: throw Exception("User not logged in")
+
         val boardRef = firestore.collection("boards").document(boardId)
         val userIdToAdd = user.docId ?: throw Exception("User not founded")
+        val receiverNotificationRef = firestore.collection("users").document(userIdToAdd)
+            .collection("notifications").document()
 
         try {
-            boardRef.update("memberIds", FieldValue.arrayUnion(userIdToAdd)).await()
+            firestore.runTransaction { transaction ->
+                val notification = Notification(
+                    title = "Add to board",
+                    message = "You added to board ${_currentBoard.value?.name}",
+                    read = false,
+                )
+                transaction.update(boardRef, "memberIds", FieldValue.arrayUnion(userIdToAdd))
+                transaction.set(receiverNotificationRef, notification)
+            }.await()
+
             if (_currentBoard.value?.docId == boardId) {
                 _currentBoard.update {
                     it?.copy(

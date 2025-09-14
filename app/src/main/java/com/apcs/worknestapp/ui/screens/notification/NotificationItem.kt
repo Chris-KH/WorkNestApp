@@ -48,6 +48,7 @@ fun NotificationItem(
     notification: Notification,
     onClick: (String) -> Unit,
     onDelete: (String?) -> Unit,
+    onMarkRead: (String, Boolean) -> Unit,
 ) {
     var showModal by remember { mutableStateOf(false) }
 
@@ -96,6 +97,41 @@ fun NotificationItem(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Delete this notification",
+                        fontSize = 14.sp,
+                        lineHeight = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable(onClick = {
+                            if (notification.docId != null) {
+                                onMarkRead(notification.docId, notification.read != true)
+                            }
+
+                            showModal = false
+                        })
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (notification.read == true) R.drawable.outline_read_mail
+                            else R.drawable.outline_unread_mail
+                        ),
+                        contentDescription = "Mark notification",
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                shape = CircleShape,
+                            )
+                            .padding(10.dp),
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Mark this notification as ${if (notification.read == true) "unread" else "read"}",
                         fontSize = 14.sp,
                         lineHeight = 14.sp,
                         fontWeight = FontWeight.Normal,
