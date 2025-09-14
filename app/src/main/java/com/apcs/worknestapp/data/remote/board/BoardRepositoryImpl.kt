@@ -367,8 +367,6 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         notesListener.clear()
         noteListsListener?.remove()
         noteListsListener = null
-        commentsListener?.remove()
-        commentsListener = null
         currentBoardListener?.remove()
         currentBoardListener = null
     }
@@ -382,10 +380,11 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         removeCurrentNoteListener()
 
         val notesRef = firestore.collection("boards").document(boardId)
-            .collection("notelists").document(noteListId).collection("notes").document(noteId)
+            .collection("notelists").document(noteListId)
+            .collection("notes").document(noteId)
         val checklistRef = notesRef.collection("checklists")
         val commentRef =
-            notesRef.collection("comments").orderBy("createdAt", Query.Direction.DESCENDING)
+            notesRef.collection("comments").orderBy("createdAt", Query.Direction.ASCENDING)
 
         fun registerTaskListener(checklistId: String) {
             val tasksRef = checklistRef.document(checklistId).collection("tasks")
@@ -513,7 +512,9 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             }
         }
 
+        Log.d("Test4", "Hello")
         commentsListener = commentRef.addSnapshotListener { snapshot, error ->
+            Log.d("Test3", "Hello")
             val currentNoteId = _currentNote.value?.docId
             if (currentNoteId == null || currentNoteId != noteId) return@addSnapshotListener
 
@@ -521,7 +522,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                 Log.e("NoteRepository", "Listen note comment snapshot failed", error)
                 return@addSnapshotListener
             }
-
+            Log.d("Test", "Hello")
             if (snapshot != null) {
                 _currentNote.update { note ->
                     val currentComments = note?.comments?.toMutableList() ?: mutableListOf()
@@ -533,6 +534,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
                         when(change.type) {
                             DocumentChange.Type.ADDED -> {
                                 if (currentComments.none { it.docId == commentId }) {
+                                    Log.d("Test1", comment.toString())
                                     currentComments.add(comment)
                                 }
                             }
@@ -565,6 +567,8 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
         tasksListener.clear()
         checklistsListener?.remove()
         checklistsListener = null
+        commentsListener?.remove()
+        commentsListener = null
         currentNoteListener?.remove()
         currentNoteListener = null
     }
@@ -1242,7 +1246,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             val (checklistsSnapshot, commentsSnapshot) = coroutineScope {
                 val checklistTask = async { noteRef.collection("checklists").get().await() }
                 val commentTask = async {
-                    noteRef.collection("comments").orderBy("createdAt", Query.Direction.DESCENDING)
+                    noteRef.collection("comments").orderBy("createdAt", Query.Direction.ASCENDING)
                         .get().await()
                 }
                 Pair(checklistTask.await(), commentTask.await())

@@ -60,7 +60,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
@@ -262,6 +262,7 @@ fun ChatScreen(
             LaunchedEffect(messages.size) {
                 if (messages.firstOrNull()?.sender?.id == authId)
                     listState.animateScrollToItem(0)
+                messageViewModel.updateConservationSeen(conservationId, true)
             }
 
             Column(

@@ -107,7 +107,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
             .collection("notes").document(noteId)
         val checklistRef = notesRef.collection("checklists")
         val commentRef =
-            notesRef.collection("comments").orderBy("createdAt", Query.Direction.DESCENDING)
+            notesRef.collection("comments").orderBy("createdAt", Query.Direction.ASCENDING)
 
         fun registerTaskListener(checklistId: String) {
             val tasksRef = checklistRef.document(checklistId).collection("tasks")
@@ -359,7 +359,7 @@ class NoteRepositoryImpl @Inject constructor() : NoteRepository {
         val (checklistsSnapshot, commentsSnapshot) = coroutineScope {
             val checklistTask = async { noteRef.collection("checklists").get().await() }
             val commentTask = async {
-                noteRef.collection("comments").orderBy("createdAt", Query.Direction.DESCENDING)
+                noteRef.collection("comments").orderBy("createdAt", Query.Direction.ASCENDING)
                     .get().await()
             }
             Pair(checklistTask.await(), commentTask.await())

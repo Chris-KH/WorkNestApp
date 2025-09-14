@@ -12,7 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.apcs.worknestapp.data.local.theme.ThemeMode
 import com.apcs.worknestapp.data.local.theme.ThemeViewModel
 import com.apcs.worknestapp.data.remote.auth.AuthViewModel
