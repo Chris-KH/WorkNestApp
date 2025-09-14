@@ -7,8 +7,5 @@ object LanguageDetector {
     val detector = LanguageDetectorBuilder.fromLanguages(
         Language.ENGLISH,
         Language.VIETNAMESE,
-        Language.CHINESE,
-        Language.FRENCH,
-        Language.GERMAN,
     ).build()
 }

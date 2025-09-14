@@ -530,21 +530,14 @@ class MessageRepositoryImpl @Inject constructor() : MessageRepository {
                 }
                 val conservation = conservationSnapshot.toObject(Conservation::class.java)
                     ?: throw Exception("Invalid conservation data")
-                if (conservation.userIds != null) {
-                    transaction.update(
-                        messageRef,
-                        "deletedFor",
-                        FieldValue.arrayUnion(conservation.userIds)
-                    )
-                }
-                transaction.update(conservationRef, deleteInfo)
-            }
-        }
-        if (_currentConservation.value?.docId == conservationId) {
-            _currentConservation.update { conservation ->
-                conservation?.copy(
-                    messages = conservation.messages.filterNot { it.docId == messageId }
+                val otherUserId = conservation.userIds?.firstOrNull { it != authUser.uid }
+                    ?: throw Exception("Missing user in conservation")
+                transaction.update(
+                    messageRef,
+                    "deletedFor",
+                    FieldValue.arrayUnion(otherUserId, authUser.uid)
                 )
+                transaction.update(conservationRef, deleteInfo)
             }
         }
     }

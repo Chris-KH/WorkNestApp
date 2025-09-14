@@ -590,7 +590,7 @@ fun ChecklistItem(
                                     noteListId,
                                     noteId, checklistId, taskId, newName
                                 )
-                            return@TaskItem message != null
+                            return@TaskItem message == null
                         },
                         onDeleteTask = {
                             val checklistId = checklist.docId ?: return@TaskItem

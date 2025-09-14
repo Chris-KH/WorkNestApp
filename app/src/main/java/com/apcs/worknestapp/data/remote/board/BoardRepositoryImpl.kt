@@ -207,6 +207,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             removeCurrentBoardListener()
             return
         }
+        removeCurrentBoardListener()
 
         val boardRef = firestore.collection("boards").document(boardId)
         val noteListsRef = boardRef.collection("notelists")
@@ -214,7 +215,7 @@ class BoardRepositoryImpl @Inject constructor() : BoardRepository {
             val notesRef = noteListsRef.document(noteListId).collection("notes")
 
             notesListener[noteListId]?.remove()
-            notesListener[boardId] = notesRef.addSnapshotListener { snapshot, error ->
+            notesListener[noteListId] = notesRef.addSnapshotListener { snapshot, error ->
                 val currentBoardId = _currentBoard.value?.docId
                 if (currentBoardId == null || currentBoardId != boardId) return@addSnapshotListener
 

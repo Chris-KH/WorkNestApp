@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -15,8 +16,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.apcs.worknestapp.LocalAuthViewModel
 import com.apcs.worknestapp.R
+import com.apcs.worknestapp.data.local.theme.ThemeMode
+import com.apcs.worknestapp.data.local.theme.ThemeViewModel
 import com.apcs.worknestapp.data.remote.auth.GoogleAuthUiClient
 import kotlinx.coroutines.launch
 
@@ -26,12 +30,15 @@ fun SignInWithGoogleButton(
     onSuccess: suspend () -> Unit,
     onFailure: suspend () -> Unit,
     enabled: Boolean = true,
+    themeViewModel: ThemeViewModel = hiltViewModel(),
 ) {
     val authViewModel = LocalAuthViewModel.current
     val context = LocalContext.current
     val googleAuthUiClient = remember { GoogleAuthUiClient(context) }
     val coroutineScope = rememberCoroutineScope()
     val isDark = isSystemInDarkTheme()
+    val themeState = themeViewModel.theme.collectAsState()
+    val themeMode = themeState.value
 
     Button(
         onClick = {
@@ -56,8 +63,12 @@ fun SignInWithGoogleButton(
     ) {
         Image(
             painter = painterResource(
-                if (isDark) R.drawable.google_sign_in_button_light
-                else R.drawable.google_sign_in_button_dark,
+                if (themeMode == ThemeMode.DARK) R.drawable.google_sign_in_button_light
+                else if (themeMode == ThemeMode.LIGHT) R.drawable.google_sign_in_button_dark
+                else {
+                    if (isDark) R.drawable.google_sign_in_button_light
+                    else R.drawable.google_sign_in_button_dark
+                },
             ),
             contentDescription = null,
         )

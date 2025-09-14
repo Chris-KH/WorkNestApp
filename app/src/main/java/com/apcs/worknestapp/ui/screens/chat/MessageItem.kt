@@ -206,30 +206,32 @@ fun MessageItem(
                                     },
                                     contentPadding = PaddingValues(horizontal = horizontalPadding)
                                 )
-                                DropdownMenuItem(
-                                    colors = MenuDefaults.itemColors(
-                                        textColor = MaterialTheme.colorScheme.error,
-                                        trailingIconColor = MaterialTheme.colorScheme.error,
-                                    ),
-                                    text = {
-                                        Text(
-                                            text = "Delete for everyone",
-                                            style = dropdownTextStyle
-                                        )
-                                    },
-                                    onClick = {
-                                        showDropdown = false
-                                        onDeleteMessage(false)
-                                    },
-                                    trailingIcon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.outline_trash),
-                                            contentDescription = "Delete message",
-                                            modifier = Modifier.size(iconSize),
-                                        )
-                                    },
-                                    contentPadding = PaddingValues(horizontal = horizontalPadding)
-                                )
+                                if (isMyMessage) {
+                                    DropdownMenuItem(
+                                        colors = MenuDefaults.itemColors(
+                                            textColor = MaterialTheme.colorScheme.error,
+                                            trailingIconColor = MaterialTheme.colorScheme.error,
+                                        ),
+                                        text = {
+                                            Text(
+                                                text = "Delete for everyone",
+                                                style = dropdownTextStyle
+                                            )
+                                        },
+                                        onClick = {
+                                            showDropdown = false
+                                            onDeleteMessage(false)
+                                        },
+                                        trailingIcon = {
+                                            Icon(
+                                                painter = painterResource(R.drawable.outline_trash),
+                                                contentDescription = "Delete message",
+                                                modifier = Modifier.size(iconSize),
+                                            )
+                                        },
+                                        contentPadding = PaddingValues(horizontal = horizontalPadding)
+                                    )
+                                }
                             }
                         }
                     } else if (message.type?.contains(

@@ -810,7 +810,7 @@ fun BoardNoteDetailScreen(
                                     val message = boardViewModel.updateChecklistName(
                                         boardId, noteListId, noteId, checklistId, newName
                                     )
-                                    return@ChecklistItem message != null
+                                    return@ChecklistItem message == null
                                 },
                                 onDeleteChecklist = {
                                     val checklistId = checklist.docId ?: return@ChecklistItem
